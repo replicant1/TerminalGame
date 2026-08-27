@@ -23,6 +23,7 @@ import time
 
 from ..presentation.state import (
     COLOR_DEFAULT,
+    COLOR_PILL,
     COLOR_GHOST,
     COLOR_PLAYER,
     COLOR_STATUS,
@@ -31,6 +32,19 @@ from ..presentation.state import (
     PLAYFIELD_ROWS,
     ViewState,
 )
+
+# Shades from the 256 colour cube. 226 is full yellow, 178 a darker gold, so
+# the player reads as lit and the pills as something lying on the floor.
+#
+# 213 is a bright pink for the ghost. Measured against a black background it
+# comes out at 8.3 to 1, where the terminal's own ANSI red manages 3.8 -- the
+# dimmest thing on the screen apart from the walls, which are meant to recede.
+# Pink rather than a brighter red because its hue is nowhere near the yellow
+# of the player or the gold of the pills, so the ghost is told apart at a
+# glance rather than by shade.
+_BRIGHT_YELLOW = 226
+_GOLD = 178
+_BRIGHT_PINK = 213
 
 # Terminals honouring the xterm window-manipulation sequence resize on this.
 _RESIZE_SEQUENCE = "\033[8;{rows};{cols}t"
@@ -110,15 +124,31 @@ class GameScreen:
         except curses.error:
             background = curses.COLOR_BLACK
 
+        # The player and the pills are both yellow, and the player has to be
+        # the brighter of the two or it disappears into the pills it is eating.
+        # Where 256 colours are available the two shades are named outright,
+        # which is exact. Otherwise the player falls back to bold yellow, which
+        # most terminals render brighter -- though that depends on a setting
+        # the terminal owns, which is why it is the fallback and not the rule.
+        if curses.COLORS >= 256:
+            player, player_attribute = _BRIGHT_YELLOW, curses.A_NORMAL
+            pill = _GOLD
+            ghost, ghost_attribute = _BRIGHT_PINK, curses.A_NORMAL
+        else:
+            player, player_attribute = curses.COLOR_YELLOW, curses.A_BOLD
+            pill = curses.COLOR_YELLOW
+            ghost, ghost_attribute = curses.COLOR_RED, curses.A_BOLD
+
         palette = {
-            COLOR_WALL: curses.COLOR_BLUE,
-            COLOR_PLAYER: curses.COLOR_YELLOW,
-            COLOR_GHOST: curses.COLOR_RED,
-            COLOR_STATUS: curses.COLOR_CYAN,
+            COLOR_WALL: (curses.COLOR_BLUE, curses.A_NORMAL),
+            COLOR_PLAYER: (player, player_attribute),
+            COLOR_GHOST: (ghost, ghost_attribute),
+            COLOR_STATUS: (curses.COLOR_CYAN, curses.A_NORMAL),
+            COLOR_PILL: (pill, curses.A_NORMAL),
         }
-        for slot, foreground in palette.items():
+        for slot, (foreground, attribute) in palette.items():
             curses.init_pair(slot, foreground, background)
-            self._color_pairs[slot] = curses.color_pair(slot)
+            self._color_pairs[slot] = curses.color_pair(slot) | attribute
 
     # -- wiring ----------------------------------------------------------
 
@@ -155,10 +185,15 @@ class GameScreen:
 
         window.erase()
 
-        for row_index, row_text in enumerate(state.background):
-            if row_index >= min(self._rows, height):
-                break
-            self._put(window, row_index, 0, row_text, COLOR_WALL, height, width)
+        # One pass per layer, each in its own colour. Only the non-blank runs
+        # of a layer are drawn: a space is a character like any other, so
+        # writing a layer whole would paint its gaps over the layer beneath.
+        # erase() has already blanked the window, so the gaps need no drawing.
+        for rows, color in ((state.walls, COLOR_WALL), (state.pills, COLOR_PILL)):
+            for row_index, row_text in enumerate(rows):
+                if row_index >= min(self._rows, height):
+                    break
+                self._put_runs(window, row_index, row_text, color, height, width)
 
         for sprite in state.sprites:
             # One _put per character row of the sprite. Bounds are checked
@@ -181,6 +216,21 @@ class GameScreen:
 
         window.noutrefresh()
         curses.doupdate()  # single atomic write of only the changed cells
+
+    def _put_runs(self, window, row, text, color_slot, height, width):
+        """Draw each run of non-space characters, skipping the gaps."""
+        col, end_of_text = 0, len(text)
+        while col < end_of_text:
+            if text[col] == " ":
+                col += 1
+                continue
+            run_end = col
+            while run_end < end_of_text and text[run_end] != " ":
+                run_end += 1
+            self._put(
+                window, row, col, text[col:run_end], color_slot, height, width
+            )
+            col = run_end
 
     def _put(self, window, row, col, text, color_slot, height, width):
         """Bounds-safe addnstr. Writing the bottom-right cell raises in curses."""

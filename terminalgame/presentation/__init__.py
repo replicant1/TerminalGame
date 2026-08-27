@@ -8,6 +8,7 @@ re-exported here: the UI depends on this package, not on the module layout
 inside it.
 """
 
+from .maze import Maze
 from .state import (
     COLOR_DEFAULT,
     COLOR_GHOST,
@@ -23,6 +24,7 @@ from .view_model import GameViewModel
 
 __all__ = [
     "GameViewModel",
+    "Maze",
     "Sprite",
     "ViewState",
     "PLAYFIELD_ROWS",
