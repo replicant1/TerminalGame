@@ -16,10 +16,6 @@ from .state import (
     ViewState,
 )
 
-# The maze is a whole number of cells tall, which need not fill every character
-# row available to it. Any row left over sits blank above the status line.
-MAZE_ROWS = GRID_ROWS * CELL_ROWS
-
 # One cell of wall and one of open floor, each CELL_ROWS strings of CELL_COLS
 # characters. Block glyphs rather than box-drawing: a border one cell thick has
 # no corners to draw, and a solid block reads as a wall at this size.
@@ -114,9 +110,12 @@ class GameViewModel:
         self._state.emit(self._build_state())
 
     def _build_state(self) -> ViewState:
-        # Kept short enough to fit PLAYFIELD_COLS. The last row loses its final
-        # cell to curses, so the budget is one less than the playfield width.
-        status = " tick {:<5} at {:>2},{:<2}  arrows, q quits ".format(
+        # The last row loses its final cell to curses, so the budget is
+        # PLAYFIELD_COLS - 1, which is 39. Row and column are two digits at
+        # most, so the tick count is the only part that can grow: six digits
+        # give 38 characters and seven give 39. Beyond 9,999,999 ticks, which
+        # is about seventeen days of play, _put clips the trailing space.
+        status = " tick {:<6} at {:>2},{:<2} arrows, q quits ".format(
             self._tick_count, self._player_row, self._player_col
         )
         return ViewState(

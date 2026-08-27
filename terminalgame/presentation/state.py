@@ -14,7 +14,10 @@ PLAYFIELD_ROWS = 30
 PLAYFIELD_COLS = 40
 
 # One game cell is a block of characters. The game's logic is expressed in
-# cells; only GameScreen and the sprite art deal in characters.
+# cells: positions, movement and collisions are all counted in them. The
+# conversion to character coordinates happens in one place only, where
+# GameViewModel builds its sprites, so GameScreen is handed character
+# positions and never learns that cells exist.
 #
 # A terminal's own character cell is about twice as tall as it is wide -- 11.9
 # by 24.6 points at the size the launcher asks for -- so one row by two columns
