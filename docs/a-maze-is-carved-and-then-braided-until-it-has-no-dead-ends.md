@@ -29,6 +29,22 @@ second pass, **braiding**, opens a second way out of every place that has only
 one. It destroys the perfectness deliberately. What it leaves behind is a maze
 with loops in it, and with solid blocks of wall that corridors run around.
 
+![Three panels, each an eleven by eleven maze drawn as dark wall cells and white
+corridors. In the first panel seven corridor cells are ringed in red: each is a
+dead end, a corridor that goes somewhere and then stops. In the second panel the
+same maze has seven wall cells filled amber, one opened next to each dead end,
+and the corridors now join up into loops. In the third panel the same maze
+again, with twenty-five of its wall cells shaded pale blue: these are the seven
+islands, blocks of wall that no longer touch the
+border.](images/braiding-removes-dead-ends.svg)
+
+*Hand-drawn, from a maze the code actually produced. Notice that the three
+pictures are the same maze at three moments, not three different mazes. Every
+retreat the carve makes leaves a dead end behind it, which is why the first
+panel has so many. Braiding opens exactly one wall beside each. The islands in
+the third panel were not sought out and are not chosen: they are simply the wall
+that those openings happened to cut off from the border.*
+
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`GameViewModel`](../terminalgame/presentation/view_model.py#L199) | Everything the game knows about where things are. In this scenario it is only the **customer**: it asks for a maze of a particular size during its own construction, and everything it does afterwards — placing the player and the ghost, deciding whether a move is allowed — is a question put to the maze it was given |
