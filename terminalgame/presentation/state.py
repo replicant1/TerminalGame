@@ -38,6 +38,7 @@ COLOR_WALL = 1
 COLOR_PLAYER = 2
 COLOR_GHOST = 3
 COLOR_STATUS = 4
+COLOR_PILL = 5
 
 
 @dataclass(frozen=True)
@@ -61,12 +62,17 @@ class Sprite:
 class ViewState:
     """One complete frame.
 
-    `background` is the static maze; `sprites` are the things that move. They
-    are separated only for clarity -- GameScreen redraws both every frame and
-    lets ncurses work out what actually changed.
+    The maze arrives as two layers rather than one, because a layer is drawn
+    in a single colour: `walls` carries the blocks and `pills` the pellets,
+    each blank where the other has something. Splitting them is what lets the
+    pills be a different colour from the walls they sit between.
+
+    `sprites` are the things that move. All three are redrawn every frame, and
+    ncurses works out what actually changed.
     """
 
-    background: Tuple[str, ...]
+    walls: Tuple[str, ...]
+    pills: Tuple[str, ...]
     sprites: Tuple[Sprite, ...]
     status_line: str
     tick: int = 0
