@@ -36,28 +36,129 @@ from .state import (
 # Quadrants rather than half blocks because a half block pair fills the cell's
 # full height, which at this size reads as a bar rather than a pellet. The
 # quadrant pair is half as tall and very nearly square.
-_WALL_CELL = ("██",) * CELL_ROWS
-_PILL_CELL = ("▗▖",) * CELL_ROWS
+# The pill sits in the *left* character of its cell, because that is where a
+# wall's line sits too -- a cell is two characters wide and one tall, so there
+# is no column between them for a vertical line to occupy, and the left column
+# is the centre line everything has to share.
+#
+# Put the pill anywhere else and it stops being centred. A pill straddling the
+# two characters lands half a character to the right of the corridor's middle,
+# and one drawn with quadrant blocks sits on the floor of the row while the
+# horizontal walls run through the middle of theirs. A small square centred in
+# its own character is centred both ways at once.
+_PILL_CELL = ("▪" + " " * (CELL_COLS - 1),) * CELL_ROWS
+
+# Walls are drawn as lines rather than solid blocks, so a wall cell needs to
+# know which of its neighbours are also wall before it can pick a glyph. The
+# four bits below say which sides a line leaves by.
+_NORTH, _SOUTH, _WEST, _EAST = 1, 2, 4, 8
+
+# The line leaving each side, by the set of sides it has. Double lines: they
+# carry more weight than the single-line set at this size, which matters when
+# a wall is one cell thick and has pills either side of it.
+#
+# A cell with a single arm is drawn as the through-line rather than a stub.
+# The single-line set at least has half-lines to reach for; the double-line
+# set has none at all, so there is nothing else it could be.
+_WALL_GLYPH = {
+    # A one-cell island has no line to join, so it is a pillar rather than a
+    # length of wall: a filled square, centred in the cell's left character
+    # like everything else, and larger than a pill so the two do not read as
+    # the same thing.
+    0: "■",
+    _NORTH: "║", _SOUTH: "║", _NORTH | _SOUTH: "║",
+    _WEST: "═", _EAST: "═", _WEST | _EAST: "═",
+    _NORTH | _EAST: "╚", _NORTH | _WEST: "╝",
+    _SOUTH | _EAST: "╔", _SOUTH | _WEST: "╗",
+    _NORTH | _SOUTH | _EAST: "╠", _NORTH | _SOUTH | _WEST: "╣",
+    _SOUTH | _WEST | _EAST: "╦", _NORTH | _WEST | _EAST: "╩",
+    _NORTH | _SOUTH | _WEST | _EAST: "╬",
+}
 # What a layer holds where the other layer has something. GameScreen skips
 # these rather than drawing them: a space is a character like any other, and
 # writing one would paint over whatever the earlier pass put there.
 _BLANK_CELL = (" " * CELL_COLS,) * CELL_ROWS
 
-# Sprites are one cell each. Quadrant glyphs, which every monospaced font that
-# has box-drawing also has, chosen so the two read differently in shape as well
-# as in colour: the player is weighted to the top, the ghost to the bottom.
-_PLAYER_ART = ("▛▜",)
-_GHOST_ART = ("▙▟",)
+# Sprites sit on the same centre line as the walls and the pills, and are drawn
+# centred on it -- which is why their art has an *odd* number of characters.
+# Ink centred on a character's middle can be one character wide, or three, but
+# never two: two characters are centred on the join between them, half a
+# character off the line everything else sits on.
+#
+# Three characters with half blocks at the edges gives two characters' worth of
+# ink, which is the full width of a corridor, while still being centred. It
+# overhangs into the blank right-hand character of the cell either side, and
+# those are always blank next to an open cell: a wall only carries its line
+# eastward when the next cell is also wall.
+#
+# The player is a solid block. The ghost has a full-height middle with lower
+# halves either side, so it reads as narrower on top and wider at the foot,
+# and the two are told apart by shape as well as by colour.
+_PLAYER_ART = ("▐█▌",)
+_GHOST_ART = ("▗█▖",)
 
-# A sprite whose art does not match the cell would draw over its neighbours or
-# leave part of the cell showing through. Cheap to check once, at import.
+# Art with an even width cannot be centred on the corridor's centre line, and
+# art of the wrong height would spill into the row above or below. Cheap to
+# check once, at import, rather than discovering it as a drawing that looks
+# very slightly wrong.
 for _name, _art in (("player", _PLAYER_ART), ("ghost", _GHOST_ART)):
-    if len(_art) != CELL_ROWS or any(len(line) != CELL_COLS for line in _art):
+    if len(_art) != CELL_ROWS:
         raise ValueError(
-            "{} art is {}x{}, but a cell is {}x{}".format(
-                _name, len(_art), len(_art[0]), CELL_ROWS, CELL_COLS
+            "{} art is {} rows, but a cell is {}".format(
+                _name, len(_art), CELL_ROWS
             )
         )
+    if any(len(line) % 2 == 0 for line in _art):
+        raise ValueError(
+            "{} art is {} characters wide - sprite art has to be an odd "
+            "width to sit centred on the corridor".format(
+                _name, len(_art[0])
+            )
+        )
+
+def _odd(size: int) -> int:
+    """The largest odd number of cells that fits.
+
+    A maze needs a wall cell on both sides of every junction, so its border
+    only comes out one cell thick if it is an odd number of cells across.
+    Given an even number, the last column has no junction to serve and is
+    drawn as a second border running alongside the first -- invisible while
+    walls were solid blocks, and an obvious ladder once they became lines.
+    """
+    return size if size % 2 else size - 1
+
+
+def _wall_cell(maze, row: int, col: int) -> str:
+    """The CELL_COLS characters that draw one wall cell.
+
+    A cell's line meets its neighbours' lines in the *left* of its two
+    characters, which is therefore the wall's centre line. That is the only
+    way vertical runs can line up: a cell is two characters wide and one tall,
+    so there is no column between them for a vertical line to sit in. A
+    horizontal run then reaches its neighbour through the right-hand
+    character, which carries a dash whenever the cell continues eastwards.
+
+    Out of bounds counts as not-wall, which is what closes the border into a
+    rectangle instead of leaving it with arms pointing off the playfield.
+    """
+    def wall(r: int, c: int) -> bool:
+        return 0 <= r < maze.rows and 0 <= c < maze.cols and not maze.is_open(r, c)
+
+    sides = 0
+    if wall(row - 1, col):
+        sides |= _NORTH
+    if wall(row + 1, col):
+        sides |= _SOUTH
+    if wall(row, col - 1):
+        sides |= _WEST
+    if wall(row, col + 1):
+        sides |= _EAST
+    # The right-hand character carries the line onward only when the cell
+    # really does continue eastwards into another wall. Filling it in any
+    # other case leaves the wall touching the pill in the next cell, with none
+    # of the gap every other wall cell leaves.
+    return _WALL_GLYPH[sides] + ("═" if sides & _EAST else " ")
+
 
 def _to_layers(maze) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
     """Turn a Maze into the two character layers GameScreen draws.
@@ -76,7 +177,11 @@ def _to_layers(maze) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
         pill_lines = [""] * CELL_ROWS
         for cell_col in range(maze.cols):
             open_cell = maze.is_open(cell_row, cell_col)
-            wall = _BLANK_CELL if open_cell else _WALL_CELL
+            wall = (
+                _BLANK_CELL
+                if open_cell
+                else (_wall_cell(maze, cell_row, cell_col),) * CELL_ROWS
+            )
             pill = _PILL_CELL if open_cell else _BLANK_CELL
             for i in range(CELL_ROWS):
                 wall_lines[i] += wall[i]
@@ -92,7 +197,7 @@ class GameViewModel:
     def __init__(self, seed: Optional[int] = None) -> None:
         # A seed makes a maze reproducible, which is what lets a test assert
         # anything about one. Left out, every run gets a different maze.
-        self._maze = Maze.generate(GRID_ROWS, GRID_COLS, seed=seed)
+        self._maze = Maze.generate(_odd(GRID_ROWS), _odd(GRID_COLS), seed=seed)
         self._walls, self._pills = _to_layers(self._maze)
         self._rng = random.Random(seed)
         self._tick_count = 0
@@ -180,11 +285,13 @@ class GameViewModel:
                 # Cell coordinates become character coordinates here, and
                 # nowhere else.
                 Sprite(
-                    self._ghost_row * CELL_ROWS, self._ghost_col * CELL_COLS,
+                    self._ghost_row * CELL_ROWS,
+                    self._ghost_col * CELL_COLS - len(_GHOST_ART[0]) // 2,
                     _GHOST_ART, COLOR_GHOST,
                 ),
                 Sprite(
-                    self._player_row * CELL_ROWS, self._player_col * CELL_COLS,
+                    self._player_row * CELL_ROWS,
+                    self._player_col * CELL_COLS - len(_PLAYER_ART[0]) // 2,
                     _PLAYER_ART, COLOR_PLAYER,
                 ),
             ),
