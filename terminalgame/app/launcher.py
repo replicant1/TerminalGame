@@ -7,8 +7,8 @@ snap. `tty` on the same tab is what lets us find the window we just made and
 close it again when the game exits.
 
 The launcher process stays alive in the original terminal, waiting on a
-sentinel file the game writes, so `python3 main.py` behaves like a normal
-blocking command and forwards the game's exit code.
+sentinel file the game writes, so `python3 -m terminalgame.app.main` behaves
+like a normal blocking command and forwards the game's exit code.
 """
 
 import os
