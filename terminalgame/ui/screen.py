@@ -161,9 +161,14 @@ class GameScreen:
             self._put(window, row_index, 0, row_text, COLOR_WALL, height, width)
 
         for sprite in state.sprites:
-            self._put(
-                window, sprite.row, sprite.col, sprite.glyph, sprite.color, height, width
-            )
+            # One _put per character row of the sprite. Bounds are checked
+            # inside _put, so a sprite hanging off an edge simply loses the
+            # rows and columns that fall outside.
+            for offset, line in enumerate(sprite.art):
+                self._put(
+                    window, sprite.row + offset, sprite.col, line,
+                    sprite.color, height, width,
+                )
 
         status_row = min(self._rows, height) - 1
         self._put(window, status_row, 0, state.status_line, COLOR_STATUS, height, width)
