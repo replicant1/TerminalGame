@@ -29,6 +29,19 @@ MAIN_MODULE = "terminalgame.app.main"
 # Shown in the window's title bar, in place of the internal command line.
 WINDOW_TITLE = "Terminal Game"
 
+# Point size for the game window only, set on the tab rather than in a profile,
+# so no other Terminal window is affected. Rows and columns are counted in
+# characters, so a larger font grows the window in pixels and leaves the
+# playfield at exactly PLAYFIELD_ROWS x PLAYFIELD_COLS. Raise it far enough and
+# the window will not fit the display, Terminal will hand back fewer rows than
+# were asked for, and GameScreen raises TerminalTooSmall.
+FONT_SIZE = 18
+
+# The game window's own background, independent of whatever profile the user's
+# other Terminal windows use. Set on the tab, so nothing else is affected.
+# AppleScript wants an RGB triple of 16-bit components, so black is three zeros.
+BACKGROUND_COLOR = "{0, 0, 0}"
+
 # Terminal appends the running process's arguments to the window title and that
 # part is not scriptable per-tab, so the child is configured through the
 # environment instead of argv -- the title then reads just the module name,
@@ -43,6 +56,10 @@ _SPAWN_SCRIPT = '''
 tell application "Terminal"
     set gameTab to do script "{command}"
     set gameTty to tty of gameTab
+    -- Before the row and column counts, so those are settled against the final
+    -- character size and a window too big for the display is caught at startup.
+    set font size of gameTab to {font_size}
+    set background color of gameTab to {background}
     set number of rows of gameTab to {rows}
     set number of columns of gameTab to {cols}
     -- Otherwise the title bar shows the --child --sentinel plumbing.
@@ -204,7 +221,8 @@ def _spawn_window(command: str, rows: int, cols: int) -> int:
     # and double quotes have to survive one more level of escaping.
     escaped = command.replace("\\", "\\\\").replace('"', '\\"')
     script = _SPAWN_SCRIPT.format(
-        command=escaped, rows=rows, cols=cols, title=WINDOW_TITLE
+        command=escaped, rows=rows, cols=cols, title=WINDOW_TITLE,
+        font_size=FONT_SIZE, background=BACKGROUND_COLOR,
     )
     try:
         result = subprocess.run(

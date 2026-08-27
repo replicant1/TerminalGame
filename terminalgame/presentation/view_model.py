@@ -6,25 +6,51 @@ pushed a complete ViewState whenever something changes.
 
 from ..util.flow import StateFlow
 from .state import (
+    CELL_COLS,
+    CELL_ROWS,
     COLOR_GHOST,
     COLOR_PLAYER,
-    PLAYFIELD_COLS,
-    PLAYFIELD_ROWS,
+    GRID_COLS,
+    GRID_ROWS,
     Sprite,
     ViewState,
 )
 
-# The maze occupies every row except the last, which is the status line.
-MAZE_ROWS = PLAYFIELD_ROWS - 1
+# The maze is a whole number of cells tall, which need not fill every character
+# row available to it. Any row left over sits blank above the status line.
+MAZE_ROWS = GRID_ROWS * CELL_ROWS
+
+# One cell of wall and one of open floor, each CELL_ROWS strings of CELL_COLS
+# characters. Block glyphs rather than box-drawing: a border one cell thick has
+# no corners to draw, and a solid block reads as a wall at this size.
+_WALL_CELL = ("██",) * CELL_ROWS
+_FLOOR_CELL = ("··",) * CELL_ROWS
+
+# Sprites are one cell each. Quadrant glyphs, which every monospaced font that
+# has box-drawing also has.
+_PLAYER_ART = ("▛▜", "▙▟")
+_GHOST_ART = ("▟▙", "▛▜")
 
 
 def _build_maze() -> tuple:
-    """A placeholder bordered arena. Swap this for a real Pac-Man maze later."""
-    inner_width = PLAYFIELD_COLS - 2
-    top = "╔" + "═" * inner_width + "╗"
-    bottom = "╚" + "═" * inner_width + "╝"
-    middle = "║" + "·" * inner_width + "║"
-    return (top,) + (middle,) * (MAZE_ROWS - 2) + (bottom,)
+    """A placeholder bordered arena, one cell thick, built cell by cell.
+
+    Returns character rows, because that is what GameScreen draws. The cell
+    structure exists only while this runs.
+    """
+    rows = []
+    for cell_row in range(GRID_ROWS):
+        lines = [""] * CELL_ROWS
+        for cell_col in range(GRID_COLS):
+            edge = (
+                cell_row in (0, GRID_ROWS - 1)
+                or cell_col in (0, GRID_COLS - 1)
+            )
+            cell = _WALL_CELL if edge else _FLOOR_CELL
+            for i in range(CELL_ROWS):
+                lines[i] += cell[i]
+        rows.extend(lines)
+    return tuple(rows)
 
 
 class GameViewModel:
@@ -33,10 +59,11 @@ class GameViewModel:
     def __init__(self) -> None:
         self._maze = _build_maze()
         self._tick_count = 0
-        self._player_row = MAZE_ROWS // 2
-        self._player_col = PLAYFIELD_COLS // 2
-        self._ghost_row = MAZE_ROWS // 2 - 3
-        self._ghost_col = 2
+        # Positions are in game cells, not characters.
+        self._player_row = GRID_ROWS // 2
+        self._player_col = GRID_COLS // 2
+        self._ghost_row = GRID_ROWS // 2 - 2
+        self._ghost_col = 1
         self._ghost_direction = 1
         self._state: StateFlow[ViewState] = StateFlow(self._build_state())
 
@@ -54,32 +81,46 @@ class GameViewModel:
         self._publish()
 
     def on_direction(self, d_row: int, d_col: int) -> None:
-        """Called by GameScreen when the player presses an arrow key."""
-        self._player_row = self._clamp(self._player_row + d_row, 1, MAZE_ROWS - 2)
-        self._player_col = self._clamp(self._player_col + d_col, 1, PLAYFIELD_COLS - 2)
+        """Called by GameScreen when the player presses an arrow key.
+
+        One press moves one whole cell, so the player never lands straddling
+        two of them.
+        """
+        self._player_row = self._clamp(self._player_row + d_row, 1, GRID_ROWS - 2)
+        self._player_col = self._clamp(self._player_col + d_col, 1, GRID_COLS - 2)
         self._publish()
 
     # -- internals -------------------------------------------------------
 
     def _advance_ghost(self) -> None:
         next_col = self._ghost_col + self._ghost_direction
-        if next_col <= 1 or next_col >= PLAYFIELD_COLS - 2:
+        if next_col <= 1 or next_col >= GRID_COLS - 2:
             self._ghost_direction *= -1
-        self._ghost_col = self._clamp(next_col, 1, PLAYFIELD_COLS - 2)
+        self._ghost_col = self._clamp(next_col, 1, GRID_COLS - 2)
 
     def _publish(self) -> None:
         # StateFlow drops this silently if nothing actually changed.
         self._state.emit(self._build_state())
 
     def _build_state(self) -> ViewState:
-        status = " tick {:<5} player {:>2},{:<2}   arrows to move, q to quit ".format(
+        # Kept short enough to fit PLAYFIELD_COLS. The last row loses its final
+        # cell to curses, so the budget is one less than the playfield width.
+        status = " tick {:<5} at {:>2},{:<2}  arrows, q quits ".format(
             self._tick_count, self._player_row, self._player_col
         )
         return ViewState(
             background=self._maze,
             sprites=(
-                Sprite(self._ghost_row, self._ghost_col, "M", COLOR_GHOST),
-                Sprite(self._player_row, self._player_col, "C", COLOR_PLAYER),
+                # Cell coordinates become character coordinates here, and
+                # nowhere else.
+                Sprite(
+                    self._ghost_row * CELL_ROWS, self._ghost_col * CELL_COLS,
+                    _GHOST_ART, COLOR_GHOST,
+                ),
+                Sprite(
+                    self._player_row * CELL_ROWS, self._player_col * CELL_COLS,
+                    _PLAYER_ART, COLOR_PLAYER,
+                ),
             ),
             status_line=status,
             tick=self._tick_count,
