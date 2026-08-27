@@ -1,6 +1,6 @@
 # The launcher opens the game in its own Terminal window
 
-**Priority: `MEDIUM`** — this happens once for each run of the program, and only on the ordinary way of starting it. A player can still play the game in the window they are already using by adding the word `--here`, so a fault here costs the separate window rather than the picture. [What the priorities mean](scenario-priorities.md).
+**Priority: `MEDIUM`** — this happens once for each run of the program, and only on the ordinary way of starting it. A player can still play the game in the window they are already using by adding the word `--here`, so a fault here costs the separate window rather than the picture. [What the priorities mean](SCENARIO_INDEX.md#what-the-priorities-mean).
 
 A player types one command. A new window appears, already the exact size the
 game needs, and the game is running inside it.
@@ -60,14 +60,14 @@ sequenceDiagram
     Main->>Launcher: launch(30, 80, [])
     Launcher->>Launcher: is_supported()
     Launcher->>Launcher: makes a temporary folder to hold the sentinel file
-    Launcher->>Launcher: _build_command(sentinel, [])
-    Launcher->>Terminal: hands _SPAWN_SCRIPT to osascript
+    Launcher->>Launcher: builds the line of shell text the new window will run
+    Launcher->>Terminal: hands the AppleScript instruction to osascript
     Terminal->>Child: runs the built command in a brand new tab
     Terminal->>Terminal: sets the tab to 30 rows and 80 columns
     Terminal->>Terminal: sets the custom title to Terminal Game
     Terminal-->>Launcher: the identifying number of the new window
     Child->>Child: announce_started(sentinel)
-    Launcher->>Launcher: _wait_for_child(sentinel)
+    Launcher->>Launcher: waits for news in the sentinel file
 ```
 
 | Step | Message | What is going on |
@@ -77,14 +77,14 @@ sequenceDiagram
 | 3 | [`launch`](../terminalgame/app/launcher.py#L131)`(30, 80, [])` | The 30 and the 80 are the height and width the game needs, measured in character positions rather than in dots. They come from [`PLAYFIELD_ROWS`](../terminalgame/presentation/state.py#L12) and [`PLAYFIELD_COLS`](../terminalgame/presentation/state.py#L13), which the program chooses for itself. The first thing `launch` does is not shown as a message because nothing is called: it checks its own environment for `TERMINALGAME_CHILD` and refuses immediately if it is there. That is the guard that stops a window opening a window opening a window |
 | 4 | [`is_supported`](../terminalgame/app/launcher.py#L95)`()` | Asking for a window this way only works on macOS, and only when the tool that runs AppleScript[^applescript] instructions is present on the machine. If either is missing, the program says so and tells the player to use `--here` instead. It does not fail silently and it does not try anything clever |
 | 5 | makes a temporary folder to hold the sentinel file | A sentinel file[^sentinel] is a small file used purely as a message between the two copies of the program. It is made now, before the window exists, so that the second copy has somewhere agreed to write to the moment it starts |
-| 6 | [`_build_command`](../terminalgame/app/launcher.py#L167)`(sentinel, [])` | This writes out the single line of shell text the new window will run. The line moves to the folder holding the program, clears the window, sets the two settings that mark the second copy, and then starts the program again. It uses the word `exec`, which replaces the shell with the program rather than running the program underneath it. That detail matters at the very end of the game: a tab with nothing running in it closes without the terminal program stopping to ask the player whether they really mean it |
-| 7 | hands [`_SPAWN_SCRIPT`](../terminalgame/app/launcher.py#L42) to osascript | This is the instruction written in AppleScript[^applescript] that actually makes the window. It is handed to a separate tool, named `osascript`, which is what carries instructions from a program to another application on macOS |
+| 6 | [builds the line of shell text](../terminalgame/app/launcher.py#L167) the new window will run | This writes out the single line of shell text the new window will run. The line moves to the folder holding the program, clears the window, sets the two settings that mark the second copy, and then starts the program again. It uses the word `exec`, which replaces the shell with the program rather than running the program underneath it. That detail matters at the very end of the game: a tab with nothing running in it closes without the terminal program stopping to ask the player whether they really mean it |
+| 7 | hands the [AppleScript instruction](../terminalgame/app/launcher.py#L42) to osascript | This is the instruction written in AppleScript[^applescript] that actually makes the window. It is handed to a separate tool, named `osascript`, which is what carries instructions from a program to another application on macOS |
 | 8 | runs the built command in a brand new tab | The new window starts running the line built earlier. From this moment the second copy of the program exists and is starting up. What it does next is a separate scenario, linked at the bottom of this document |
 | 9 | sets the tab to 30 rows and 80 columns | This is the step that avoids the visible jump. The terminal program allows these two numbers to be set directly on a tab, so the window can be made the right size rather than corrected afterwards |
 | 10 | sets the custom title to Terminal Game | The title is fixed to the words in [`WINDOW_TITLE`](../terminalgame/app/launcher.py#L30), and the parts of the title the terminal program would otherwise fill in for itself are switched off. Without this the player would see the folder name and the words of the running command instead |
 | 11 | the identifying number of the new window | Every window has a number that identifies it. The launcher finds the right one by matching the terminal device[^tty] of the tab it just made, then remembers the number so that it can close that exact window later. Windows that were closed a moment ago linger in the terminal program's own list for a while as empty shells, and asking one of those about its tabs causes an error, so every single window is examined inside its own guard |
 | 12 | [`announce_started`](../terminalgame/app/launcher.py#L103)`(sentinel)` | The second copy writes its own process number[^pid] into the sentinel file. This is the first word the first copy hears from it. The file is written under a different name and then renamed into place, which on this kind of computer happens all at once, so the reader can never catch the file half written |
-| 13 | [`_wait_for_child`](../terminalgame/app/launcher.py#L226)`(sentinel)` | The first copy now settles into waiting. It reads the sentinel file every [tenth of a second](../terminalgame/app/launcher.py#L40). That is a cheap thing to do, because it only touches a small local file, and it deliberately sends no further instructions to the terminal program while the game is running. It also watches whether the process number it was given is still alive, so that a player who closes the window by hand does not leave the first copy waiting forever. If nothing at all is heard within [twenty seconds](../terminalgame/app/launcher.py#L24), the launcher gives up and says the window never started |
+| 13 | [waits for news](../terminalgame/app/launcher.py#L226) in the sentinel file | The first copy now settles into waiting. It reads the sentinel file every [tenth of a second](../terminalgame/app/launcher.py#L40). That is a cheap thing to do, because it only touches a small local file, and it deliberately sends no further instructions to the terminal program while the game is running. It also watches whether the process number it was given is still alive, so that a player who closes the window by hand does not leave the first copy waiting forever. If nothing at all is heard within [twenty seconds](../terminalgame/app/launcher.py#L24), the launcher gives up and says the window never started |
 
 This diagram has no coloured bands marking threads, and that is deliberate
 rather than an omission. Each copy of the program runs on a single thread from

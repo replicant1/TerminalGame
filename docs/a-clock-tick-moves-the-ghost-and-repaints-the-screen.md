@@ -1,6 +1,6 @@
 # A clock tick moves the ghost and repaints the screen
 
-**Priority: `HIGH`** — this is the path every drawn frame after the first one takes. It runs several times a second for as long as the game is open. If it is wrong the ghost stops moving, or the picture stops arriving, and there is no other route by which either could happen. [What the priorities mean](scenario-priorities.md).
+**Priority: `HIGH`** — this is the path every drawn frame after the first one takes. It runs several times a second for as long as the game is open. If it is wrong the ghost stops moving, or the picture stops arriving, and there is no other route by which either could happen. [What the priorities mean](SCENARIO_INDEX.md#what-the-priorities-mean).
 
 Enough time has passed since the last tick. The ghost moves one column, the
 count of ticks goes up by one, a new picture is built, and roughly forty-six
@@ -64,8 +64,8 @@ sequenceDiagram
     Clock->>Clock: moves the recorded moment forward by 0.15 seconds
     Clock->>ViewModel: tick()
     ViewModel->>ViewModel: adds one to the count of ticks
-    ViewModel->>ViewModel: _advance_ghost()
-    ViewModel->>ViewModel: _build_state()
+    ViewModel->>ViewModel: moves the ghost one column
+    ViewModel->>ViewModel: builds an entirely new picture
     ViewModel->>Flow: emit(the newly built picture)
     Flow->>Flow: compares it against the picture already held
     Flow->>Screen: render(the new picture)
@@ -87,8 +87,8 @@ sequenceDiagram
 | 8 | moves the recorded moment forward by 0.15 seconds | This time the moment has passed. Notice **how** it moves: the interval is added to the old moment, rather than the moment being set to now plus the interval. Those sound the same and are not. Setting it to now would push the moment slightly later every single time, because a little time always passes between the moment arriving and the program noticing. Over a long game the ghost would visibly slow down. Adding the interval to the old moment keeps the average exactly right |
 | 9 | [`tick`](../terminalgame/presentation/view_model.py#L50)`()` | This is the function the clock was handed when it was built. The clock has no idea what it does, and no idea that a game exists. It holds a function and calls it. That is the whole of the arrangement |
 | 10 | adds one to the count of ticks | The count is shown in the line of readings under the arena, so it is a visible part of the picture rather than private bookkeeping. It is also what guarantees that every tick produces a genuinely different picture, which matters at the comparing step below |
-| 11 | [`_advance_ghost`](../terminalgame/presentation/view_model.py#L64)`()` | The ghost moves one column in whichever direction it is currently going. If that would put it into a wall, the direction is reversed first. So the ghost paces from side to side forever. It is the only thing in the game that moves without the player doing anything |
-| 12 | [`_build_state`](../terminalgame/presentation/view_model.py#L74)`()` | An entirely new picture is built rather than the old one being altered. It can be built cheaply because the arena rows are reused rather than copied: the same rows are handed to every picture, since they never change. What is new each time is the pair of moving characters, the line of readings, and the tick number |
+| 11 | [moves the ghost one column](../terminalgame/presentation/view_model.py#L64) | The ghost moves in whichever direction it is currently going. If that would put it into a wall, the direction is reversed first. So the ghost paces from side to side forever. It is the only thing in the game that moves without the player doing anything |
+| 12 | [builds an entirely new picture](../terminalgame/presentation/view_model.py#L74) | The new picture is built from scratch rather than the old one being altered. It can be built cheaply because the arena rows are reused rather than copied: the same rows are handed to every picture, since they never change. What is new each time is the pair of moving characters, the line of readings, and the tick number |
 | 13 | [`emit`](../terminalgame/util/flow.py#L44)`(the newly built picture)` | The new picture is offered to the carrier. The view model does not know or care whether anybody is listening. It has finished its work at this point |
 | 14 | compares it against the picture already held | Pictures are frozen[^frozen], which makes comparing them a comparison of their contents rather than a question of whether they are the same object. If they matched, nothing further would happen and no bytes would reach the terminal. Running the program confirms that offering an identical value returns false and does not disturb anybody. On this path they never match, because the tick number has just changed |
 | 15 | `render(the new picture)` | Nothing asked for this. The screen is called because it subscribed once during startup and has been registered ever since. There is no request here, no return value that matters, and no way for the screen to ask for a picture even if it wanted one |
@@ -128,15 +128,15 @@ nobody can tell, and the game keeps responding, which everybody can.
 - [The first frame is painted when the screen subscribes to the view model](the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md)
   — where the subscription used in this document was made, and why the first
   picture costs 5,214 bytes against this one's 46.
-- **An arrow key moves the player and repaints the screen** — the other way a
-  new picture is produced. It joins this path at the point where the picture is
-  offered to the carrier, and it is the only route by which a player changes
-  anything.
+- [An arrow key moves the player and repaints the screen](an-arrow-key-moves-the-player-and-repaints-the-screen.md)
+  — the other way a new picture is produced. It joins this path at the point
+  where the picture is offered to the carrier, and it is the only route by which
+  a player changes anything.
 - **An unchanged frame is dropped before it reaches the terminal** — the other
   outcome of the comparing step, where the pictures match and nothing is drawn
   at all.
 
-*(The entries above that are not links are documents that have not been written
+*(The entry above that is not a link is a document that has not been written
 yet.)*
 
 ### Footnotes

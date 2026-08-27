@@ -1,4 +1,9 @@
-# What the priorities mean
+# Scenario index
+
+Every scenario document in this folder, what it is worth, and the ones still to
+be written.
+
+## What the priorities mean
 
 Every scenario document in this folder carries a priority on the line under its
 headline. The priority is one of `HIGH`, `MEDIUM` or `LOW`.
@@ -28,6 +33,7 @@ happens on that path matters less.
 | [The launcher opens the game in its own Terminal window](the-launcher-opens-the-game-in-its-own-terminal-window.md) | `MEDIUM` |
 | [The first frame is painted when the screen subscribes to the view model](the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md) | `HIGH` |
 | [A clock tick moves the ghost and repaints the screen](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `HIGH` |
+| [An arrow key moves the player and repaints the screen](an-arrow-key-moves-the-player-and-repaints-the-screen.md) | `HIGH` |
 
 ## Scenarios not yet written
 
@@ -35,8 +41,6 @@ Each of these is a real collaboration in the program that no document covers
 yet. They are listed in bold rather than linked, because a link to a document
 that does not exist would be a broken link.
 
-- **An arrow key moves the player and repaints the screen** — `HIGH`. The only
-  way a player can change anything the game does.
 - **A quit key ends the game and closes the window** — `MEDIUM`. Covers how the
   game tells the waiting launcher that it has finished, and how the window is
   then closed without the terminal program asking the player to confirm.
