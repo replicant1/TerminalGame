@@ -27,9 +27,20 @@ _WALL_CELL = ("██",) * CELL_ROWS
 _FLOOR_CELL = ("··",) * CELL_ROWS
 
 # Sprites are one cell each. Quadrant glyphs, which every monospaced font that
-# has box-drawing also has.
-_PLAYER_ART = ("▛▜", "▙▟")
-_GHOST_ART = ("▟▙", "▛▜")
+# has box-drawing also has, chosen so the two read differently in shape as well
+# as in colour: the player is weighted to the top, the ghost to the bottom.
+_PLAYER_ART = ("▛▜",)
+_GHOST_ART = ("▙▟",)
+
+# A sprite whose art does not match the cell would draw over its neighbours or
+# leave part of the cell showing through. Cheap to check once, at import.
+for _name, _art in (("player", _PLAYER_ART), ("ghost", _GHOST_ART)):
+    if len(_art) != CELL_ROWS or any(len(line) != CELL_COLS for line in _art):
+        raise ValueError(
+            "{} art is {}x{}, but a cell is {}x{}".format(
+                _name, len(_art), len(_art[0]), CELL_ROWS, CELL_COLS
+            )
+        )
 
 
 def _build_maze() -> tuple:

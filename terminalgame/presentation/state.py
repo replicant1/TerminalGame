@@ -17,9 +17,10 @@ PLAYFIELD_COLS = 40
 # cells; only GameScreen and the sprite art deal in characters.
 #
 # A terminal's own character cell is about twice as tall as it is wide -- 11.9
-# by 24.6 points at the size the launcher asks for -- so a 2x2 block is a tall
-# rectangle rather than a square. Two columns by one row would be square.
-CELL_ROWS = 2
+# by 24.6 points at the size the launcher asks for -- so one row by two columns
+# comes out very nearly square, at 23.9 by 24.6. That is why the cell is this
+# shape and not 2x2, which would be a rectangle twice as tall as it is wide.
+CELL_ROWS = 1
 CELL_COLS = 2
 
 # The playfield measured in game cells. The last character row is the status
