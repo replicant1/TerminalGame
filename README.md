@@ -7,7 +7,8 @@ No dependencies — the system Python 3.9 already ships everything needed.
     python3 -m terminalgame.app.main         # opens the game in its own 30x40 window
     python3 -m terminalgame.app.main --here  # runs in the current terminal instead
 
-Arrows move, `q` or Esc quits. The maze is different every game.
+Arrows move, `q` or Esc quits. The maze is different every game. To drive it from a
+script instead of by hand, see [Driving it headlessly](#driving-it-headlessly).
 
 ## Structure
 
@@ -142,6 +143,37 @@ is what would size an iTerm2 window if you taught the launcher to use one.
 
 A larger window is fine either way — the playfield stays 30x40 in the top-left.
 `KEY_RESIZE` is handled mid-game.
+
+## Driving it headlessly
+
+A curses screen cannot be read back from stdout, which makes the game awkward
+to check without playing it. `.claude/skills/run-terminalgame/driver.py` gives
+it the two things curses needs that a pipe cannot: `pty.fork()` for a real
+terminal, and `pyte` to replay the escape codes it writes into a character
+grid. Keys go in, whole frames come back as text:
+
+    ./.claude/skills/run-terminalgame/driver.py <<'EOF'
+    show start
+    right 3
+    down 3
+    status
+    quit
+    EOF
+
+`show` prints the 30x40 screen, `status` prints just the bottom row — which is
+what to assert on, since the maze is carved fresh each game and the ghost moves
+on its own, while `at 13,12` changes only in response to your keys. The driver
+installs `pyte` into a virtualenv beside itself on first run; the game itself
+still needs nothing beyond the stdlib.
+
+Arrows have to be sent as `ESC O C`, not `ESC [ C`. `keypad(True)` emits `smkx`
+at startup, and in application cursor mode ncurses recognises only that form —
+the CSI form arrives as a bare `27`, which is in `_QUIT_KEYS`, so the game
+exits on the first arrow press and the next write to the pty fails with `EIO`.
+It looks exactly like a crash on input and is nothing of the kind. That trap
+and the rest of them are written down in the skill's
+[`SKILL.md`](.claude/skills/run-terminalgame/SKILL.md), which Claude Code loads
+by itself when asked to run the game.
 
 ## Tuning knobs
 
