@@ -14,7 +14,8 @@ program is wrong.**
 
 The answer depends on how the program is normally run, not on how the code
 reads. This program is normally started with the plain command
-`python3 -m terminalgame.app.main`. That command opens a separate window and
+`python3 -m terminalgame.app.main`. That command opens a separate window, sized
+to 30 rows by 40 columns and set to an 18 point font on a black background, and
 plays the game inside it. There is a second way to start it, by adding the word
 `--here`, which plays the game in the window the player is already using. The
 second way is useful but it is not the ordinary way in, so work that only
@@ -30,6 +31,7 @@ happens on that path matters less.
 
 | Scenario | Priority |
 |---|---|
+| [A maze is carved and then braided until it has no dead ends](a-maze-is-carved-and-then-braided-until-it-has-no-dead-ends.md) | `MEDIUM` |
 | [The launcher opens the game in its own Terminal window](the-launcher-opens-the-game-in-its-own-terminal-window.md) | `MEDIUM` |
 | [The first frame is painted when the screen subscribes to the view model](the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md) | `HIGH` |
 | [A clock tick moves the ghost and repaints the screen](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `HIGH` |
@@ -47,4 +49,9 @@ that does not exist would be a broken link.
 - **A terminal too small to hold the playfield is refused** — `LOW`. The
   failure path out of opening the screen.
 - **An unchanged frame is dropped before it reaches the terminal** — `LOW`. The
-  comparison that stops identical pictures being drawn twice.
+  comparison that stops identical pictures being drawn twice. A press into a
+  wall now stops earlier than this, without building a picture at all, so the
+  comparison matters less than it did.
+- **A wall cell chooses its box-drawing glyph from its neighbours** — `LOW`.
+  How corners close, tees form and a lone wall becomes a pillar, and why
+  everything in the picture shares one centre line.
