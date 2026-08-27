@@ -42,6 +42,21 @@ FONT_SIZE = 18
 # AppleScript wants an RGB triple of 16-bit components, so black is three zeros.
 BACKGROUND_COLOR = "{0, 0, 0}"
 
+# How far below and to the right of the window that was in front the game's own
+# window is placed.
+#
+# Terminal remembers where a window of a given profile was last put, and puts
+# the next one back there. That is usually helpful and occasionally useless: a
+# remembered position can be on a display that is no longer attached, or -- on a
+# machine with several displays -- in the gap between two of them, where no
+# screen covers the pixels and the window is invisible while being, as far as
+# the window server is concerned, perfectly fine.
+#
+# Placing the game relative to a window the user demonstrably has in front of
+# them avoids the whole question. It cannot land somewhere unseen, because it
+# lands next to something being looked at.
+WINDOW_OFFSET = 48
+
 # Terminal appends the running process's arguments to the window title and that
 # part is not scriptable per-tab, so the child is configured through the
 # environment instead of argv -- the title then reads just the module name,
@@ -54,6 +69,15 @@ POLL_INTERVAL_SECONDS = 0.1
 
 _SPAWN_SCRIPT = '''
 tell application "Terminal"
+    -- Captured *before* the new tab exists, so there is no question of which
+    -- window this is. Matching a window by its name or its tab's title after
+    -- the fact is unreliable: Terminal puts the running command in the name,
+    -- and a window running this very script can match a search for it.
+    set anchorBounds to missing value
+    try
+        if (count of windows) > 0 then set anchorBounds to bounds of front window
+    end try
+
     set gameTab to do script "{command}"
     set gameTty to tty of gameTab
     -- Before the row and column counts, so those are settled against the final
@@ -78,6 +102,23 @@ tell application "Terminal"
             end repeat
         end try
     end repeat
+
+    -- Same size, new position: the row and column counts settled the size
+    -- already, and changing it here would resize the playfield out from under
+    -- a game that has started drawing into it.
+    if anchorBounds is not missing value and windowId is not 0 then
+        try
+            tell window id windowId
+                set b to bounds
+                set wd to (item 3 of b) - (item 1 of b)
+                set ht to (item 4 of b) - (item 2 of b)
+                set nx to (item 1 of anchorBounds) + {offset}
+                set ny to (item 2 of anchorBounds) + {offset}
+                set bounds to {{nx, ny, nx + wd, ny + ht}}
+            end tell
+        end try
+    end if
+
     activate
     return windowId
 end tell
@@ -223,6 +264,7 @@ def _spawn_window(command: str, rows: int, cols: int) -> int:
     script = _SPAWN_SCRIPT.format(
         command=escaped, rows=rows, cols=cols, title=WINDOW_TITLE,
         font_size=FONT_SIZE, background=BACKGROUND_COLOR,
+        offset=WINDOW_OFFSET,
     )
     try:
         result = subprocess.run(
