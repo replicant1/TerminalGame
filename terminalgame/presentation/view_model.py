@@ -108,12 +108,17 @@ for _name, _art in (("player", _PLAYER_ART), ("ghost", _GHOST_ART)):
                 _name, len(_art), CELL_ROWS
             )
         )
-    if any(len(line) % 2 == 0 for line in _art):
+    _widths = {len(_line) for _line in _art}
+    if len(_widths) != 1:
+        raise ValueError(
+            "{} art has rows of differing widths {} - a sprite is a "
+            "rectangle".format(_name, sorted(_widths))
+        )
+    _width = _widths.pop()
+    if _width % 2 == 0:
         raise ValueError(
             "{} art is {} characters wide - sprite art has to be an odd "
-            "width to sit centred on the corridor".format(
-                _name, len(_art[0])
-            )
+            "width to sit centred on the corridor".format(_name, _width)
         )
 
 def _odd(size: int) -> int:

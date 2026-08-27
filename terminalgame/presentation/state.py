@@ -67,8 +67,9 @@ class ViewState:
     each blank where the other has something. Splitting them is what lets the
     pills be a different colour from the walls they sit between.
 
-    `sprites` are the things that move. All three are redrawn every frame, and
-    ncurses works out what actually changed.
+    `sprites` are the things that move, and `status_line` the row of readings
+    underneath. Every part of a frame is redrawn every time, and ncurses works
+    out which character positions actually changed.
     """
 
     walls: Tuple[str, ...]
