@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Entry point.
 
-    python3 -m terminalgame.app.main           # opens the game in its own 30x80 window
+    python3 -m terminalgame.app.main           # opens the game in its own 30x40 window
     python3 -m terminalgame.app.main --here    # runs in the current terminal instead
 
 Without --here the process re-launches itself inside a new Terminal.app window

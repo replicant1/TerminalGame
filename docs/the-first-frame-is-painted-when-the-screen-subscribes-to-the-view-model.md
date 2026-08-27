@@ -33,8 +33,8 @@ to go.
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`main`](../terminalgame/app/main.py) | The way into the program, and a module of plain functions rather than a class. In this scenario it is the **assembler**: [`run`](../terminalgame/app/main.py#L43) builds each of the other three parts, joins them together in one particular order, and then hands over to the loop that reads keys |
-| [`GameScreen`](../terminalgame/ui/screen.py#L45) | The only part of the program that knows anything about curses[^curses] or about terminals. In this scenario it is the **painter**: [`open`](../terminalgame/ui/screen.py#L65) takes control of the terminal, and [`render`](../terminalgame/ui/screen.py#L149) turns one finished picture into characters on the screen. It never asks anybody for a picture. It is given them |
-| [`GameViewModel`](../terminalgame/presentation/view_model.py#L30) | Everything the game knows about where things are and what has happened. In this scenario it is the **picture maker**: during its own construction it builds the arena, places the player and the ghost, and produces the first complete picture. It contains no mention of curses anywhere |
+| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses] or about terminals. In this scenario it is the **painter**: [`open`](../terminalgame/ui/screen.py#L79) takes control of the terminal, and [`render`](../terminalgame/ui/screen.py#L179) turns one finished picture into characters on the screen. It never asks anybody for a picture. It is given them |
+| [`GameViewModel`](../terminalgame/presentation/view_model.py#L199) | Everything the game knows about where things are and what has happened. In this scenario it is the **picture maker**: during its own construction it builds the arena, places the player and the ghost, and produces the first complete picture. It contains no mention of curses anywhere |
 | [`StateFlow`](../terminalgame/util/flow.py#L13) | The carrier that holds the current picture and tells interested parties when it changes. In this scenario it is the **connector**, and the single most important part of the document: [`subscribe`](../terminalgame/util/flow.py#L30) both registers the screen and immediately hands it the picture it is already holding |
 
 ## Taking over the terminal, building the picture, and drawing it once
@@ -46,6 +46,7 @@ sequenceDiagram
     participant Screen as GameScreen<br/>the only part that knows curses
     participant Curses as curses<br/>part of the Python library
     participant ViewModel as GameViewModel<br/>knows nothing about terminals
+    participant Maze as Maze<br/>knows nothing about characters
     participant Flow as StateFlow<br/>always holds a value
 
     Main->>Screen: open()
@@ -54,10 +55,12 @@ sequenceDiagram
     Screen->>Curses: initscr()
     Screen->>Curses: noecho, cbreak and curs_set(0)
     Screen->>Curses: keypad(True) on the window
-    Screen->>Screen: sets up the five colour slots
+    Screen->>Screen: sets up the six colour slots
     Screen->>Curses: getmaxyx() confirms the window is big enough
     Main->>ViewModel: GameViewModel()
-    ViewModel->>ViewModel: builds the arena rows
+    ViewModel->>Maze: generate(29, 19)
+    Maze-->>ViewModel: a carved and braided maze
+    ViewModel->>ViewModel: turns the maze into a wall layer and a pill layer
     ViewModel->>ViewModel: builds the first complete picture
     ViewModel->>Flow: StateFlow(the first complete picture)
     Main->>Screen: attach(view_model)
@@ -65,33 +68,35 @@ sequenceDiagram
     Flow->>Screen: render(the picture it is already holding)
     Screen->>Curses: erase and then addnstr for every row
     Screen->>Curses: noutrefresh() and then doupdate()
-    Curses->>Curses: writes 5214 bytes to the terminal
+    Curses->>Curses: writes 10657 bytes to the terminal
     Flow-->>Screen: the function that cancels the subscription
     Main->>Screen: set_input_timeout(33)
 ```
 
 | Step | Message | What is going on |
 |---:|---|---|
-| 1 | [`open`](../terminalgame/ui/screen.py#L65)`()` | This is reached through a `with` statement in [`play`](../terminalgame/app/main.py#L69). Writing it that way means the matching [`close`](../terminalgame/ui/screen.py#L86) is guaranteed to run when the game ends, including when it ends because something went wrong. That guarantee matters more here than in most places. A program that stops without putting the terminal back leaves the player with a window that no longer echoes what they type |
-| 2 | writes the ten byte resize request | This is [a short run of characters](../terminalgame/ui/screen.py#L36) that politely asks the terminal to become 30 rows by 80 columns. It is exactly ten characters long, which was measured by counting the bytes the program writes. Terminals that understand it resize themselves. Terminals that do not simply ignore it, which is why the size is checked properly further down. When the game is running in a window the launcher made, this request changes nothing at all, because that window was already made the right size |
-| 3 | waits 0.15 seconds for the window to settle | The terminal program does not resize instantly, and it does not report back when it has finished. So the program waits a fixed [fifteen hundredths of a second](../terminalgame/ui/screen.py#L38) before measuring. Waiting a fixed time is not elegant, but there is nothing to wait for that can be asked |
+| 1 | [`open`](../terminalgame/ui/screen.py#L79)`()` | This is reached through a `with` statement in [`play`](../terminalgame/app/main.py#L69). Writing it that way means the matching [`close`](../terminalgame/ui/screen.py#L100) is guaranteed to run when the game ends, including when it ends because something went wrong. That guarantee matters more here than in most places. A program that stops without putting the terminal back leaves the player with a window that no longer echoes what they type |
+| 2 | writes the ten byte resize request | This is [a short run of characters](../terminalgame/ui/screen.py#L50) that politely asks the terminal to become 30 rows by 40 columns. It is exactly ten characters long, which was measured by counting the bytes the program writes. Terminals that understand it resize themselves. Terminals that do not simply ignore it, which is why the size is checked properly further down. When the game is running in a window the launcher made, this request changes nothing at all, because that window was already made the right size |
+| 3 | waits 0.15 seconds for the window to settle | The terminal program does not resize instantly, and it does not report back when it has finished. So the program waits a fixed [fifteen hundredths of a second](../terminalgame/ui/screen.py#L52) before measuring. Waiting a fixed time is not elegant, but there is nothing to wait for that can be asked |
 | 4 | `initscr()` | This is the point where curses[^curses] takes control of the terminal. From here until the game ends, the program decides what every single character position contains |
 | 5 | `noecho`, `cbreak` and `curs_set(0)` | Three separate settings, each removing something a terminal normally does. Without the first, every key the player presses would also be printed onto the playfield[^playfield]. Without the second, nothing would reach the game until the player pressed the return key. Without the third, the blinking cursor would visibly chase the drawing around the screen |
 | 6 | `keypad(True)` on the window | The arrow keys do not arrive as single characters. Each one arrives as a short run of several characters. This setting asks curses to recognise those runs and hand back one tidy value for each arrow, so the game never has to decode them itself |
-| 7 | [sets up the five colour slots](../terminalgame/ui/screen.py#L103) | The game thinks about colour as five numbered slots, such as [`COLOR_GHOST`](../terminalgame/presentation/state.py#L20) and [`COLOR_PLAYER`](../terminalgame/presentation/state.py#L19). This is the only place those slots are attached to real colours. That indirection is what allows the view model to describe a red ghost without importing curses, and it is the reason the two halves of this program can be understood separately |
+| 7 | [sets up the six colour slots](../terminalgame/ui/screen.py#L117) | The game thinks about colour as five numbered slots, such as [`COLOR_GHOST`](../terminalgame/presentation/state.py#L39) and [`COLOR_PLAYER`](../terminalgame/presentation/state.py#L38). This is the only place those slots are attached to real colours. That indirection is what allows the view model to describe a red ghost without importing curses, and it is the reason the two halves of this program can be understood separately |
 | 8 | `getmaxyx()` confirms the window is big enough | This is the real check, and it is the reason the polite request earlier is allowed to fail quietly. The program measures the window it actually has. If it is smaller than 30 by 80 it puts the terminal back the way it found it and stops with a clear explanation. The refusal path is a separate scenario, listed at the bottom |
 | 9 | `GameViewModel()` | Building the view model is where the whole first picture comes from. Notice this happens **after** the terminal has been taken over and measured. Doing it the other way round would mean building a picture and then discovering there was nowhere to put it |
-| 10 | [builds the arena rows](../terminalgame/presentation/view_model.py#L21) | The arena is 29 rows tall, not 30. The last row of the window is kept for the line of readings underneath. That is [`MAZE_ROWS`](../terminalgame/presentation/view_model.py#L18), which is simply the playfield height with one taken off. The arena itself is a placeholder: a plain rectangle drawn with box-drawing characters, meant to be replaced later by a real maze |
-| 11 | [builds the first complete picture](../terminalgame/presentation/view_model.py#L74) | This gathers everything into one finished picture: the arena rows, the two moving characters, the line of readings, and the tick number, which starts at zero. Running the program confirms the starting arrangement. The player is at row 14 and column 40, which is the middle. The ghost is at row 11 and column 2, which is three rows above the player and hard against the left wall |
-| 12 | `StateFlow(the first complete picture)` | The carrier is created with that picture already inside it. This is the step that makes the rest of the scenario work. A carrier that could be empty would allow a view model that was not yet ready, and then something would have to remember to fill it in later |
-| 13 | [`attach`](../terminalgame/ui/screen.py#L125)`(view_model)` | One short instruction, and the only one in the program that joins the drawing half to the picture-making half. Everything after this happens because of it, without anything else being asked for |
-| 14 | [`subscribe`](../terminalgame/util/flow.py#L30)`(self.render)` | The screen hands over its own drawing function and says "call this whenever the picture changes". Note what it does **not** do. It does not ask what the picture is now, and it never will. Information only ever travels in one direction here, from the view model towards the screen |
-| 15 | `render(the picture it is already holding)` | **This is the first painting of the game, and nothing asked for it.** Subscribing calls the new subscriber straight away with the value already held. So registering an interest and receiving the current picture are the same single action, and it is impossible to do one without the other |
-| 16 | `erase` and then `addnstr` for every row | The whole picture is drawn every time, rather than working out which parts changed. The program uses `erase` rather than the similar-looking `clear`, and the difference is important. `clear` would force the terminal to be completely repainted on the next refresh, which is exactly the flicker this is trying to avoid |
-| 17 | `noutrefresh()` and then `doupdate()` | These two together are what make a frame arrive all at once instead of in pieces. The first prepares the changes without sending anything. The second sends them, in a single write. A picture that arrived in several separate writes could be caught half drawn |
-| 18 | `writes 5214 bytes to the terminal` | Measured, not estimated. The game was run inside a false terminal of exactly 30 rows by 80 columns and every byte it wrote was counted. This first burst is larger than every later one put together, because it carries the whole arena as well as all the setting-up instructions. What a later frame costs is covered in the tick scenario |
-| 19 | the function that cancels the subscription | Subscribing hands back a small function that undoes it. The screen keeps hold of it and calls it when the game ends. Without that, the screen would still be registered as interested in pictures after it had given the terminal back, and a late picture would be drawn into a terminal the program no longer controls |
-| 20 | [`set_input_timeout`](../terminalgame/ui/screen.py#L133)`(33)` | The last piece of setting up, and it is about the future rather than about this picture. It says that waiting for a key should give up after [thirty-three thousandths of a second](../terminalgame/app/main.py#L32) so that the loop can go and check the clock. This is done after the first painting because it has no bearing on it. What it is for belongs to the tick scenario |
+| 10 | [`generate`](../terminalgame/presentation/maze.py#L45)`(29, 19)` | The playfield is 29 cells tall and 20 wide, but the maze is carved at 29 by **19**. A maze needs a wall cell on either side of every junction, so its border only comes out one cell thick if it is an odd number of cells across. Given an even number the spare column has no junction to serve and is drawn as a second border beside the first. The maze knows nothing about characters or colours: a cell is open or it is not |
+| 11 | a carved and braided maze | Two passes. A depth-first walk between junctions carves a *perfect* maze, meaning exactly one route between any two cells — and therefore a great many dead ends. A braiding pass then opens a second way out of every junction that has only one, which removes the dead ends and is also what gives the maze its loops and its solid islands. That collaboration has its own scenario, linked at the bottom |
+| 12 | turns the maze into a wall layer and a pill layer | Two layers rather than one, because a layer is drawn in a single colour and the pills are not the colour of the walls. Each is blank where the other has something. Every open cell gets exactly one pill: a sprite occupies one cell, so a pill marks one place a sprite can stand. Island interiors get none without anything having to find them — a cell that was never carved is simply never given a pill |
+| 13 | [builds the first complete picture](../terminalgame/presentation/view_model.py#L277) | This gathers everything into one finished picture: the arena rows, the two moving characters, the line of readings, and the tick number, which starts at zero. Running the program confirms the starting arrangement. The player is at row 14 and column 40, which is the middle. The ghost is at row 11 and column 2, which is three rows above the player and hard against the left wall |
+| 14 | `StateFlow(the first complete picture)` | The carrier is created with that picture already inside it. This is the step that makes the rest of the scenario work. A carrier that could be empty would allow a view model that was not yet ready, and then something would have to remember to fill it in later |
+| 15 | [`attach`](../terminalgame/ui/screen.py#L155)`(view_model)` | One short instruction, and the only one in the program that joins the drawing half to the picture-making half. Everything after this happens because of it, without anything else being asked for |
+| 16 | [`subscribe`](../terminalgame/util/flow.py#L30)`(self.render)` | The screen hands over its own drawing function and says "call this whenever the picture changes". Note what it does **not** do. It does not ask what the picture is now, and it never will. Information only ever travels in one direction here, from the view model towards the screen |
+| 17 | `render(the picture it is already holding)` | **This is the first painting of the game, and nothing asked for it.** Subscribing calls the new subscriber straight away with the value already held. So registering an interest and receiving the current picture are the same single action, and it is impossible to do one without the other |
+| 18 | `erase` and then `addnstr` for every row | The whole picture is drawn every time, rather than working out which parts changed. The program uses `erase` rather than the similar-looking `clear`, and the difference is important. `clear` would force the terminal to be completely repainted on the next refresh, which is exactly the flicker this is trying to avoid |
+| 19 | `noutrefresh()` and then `doupdate()` | These two together are what make a frame arrive all at once instead of in pieces. The first prepares the changes without sending anything. The second sends them, in a single write. A picture that arrived in several separate writes could be caught half drawn |
+| 20 | `writes 10657 bytes to the terminal` | Measured, not estimated. The game was run inside a false terminal of exactly 30 rows by 40 columns and every byte it wrote was counted. This first burst is far larger than every later one put together: it carries the whole maze, a pill in every corridor cell, and a colour change at every point where walls give way to pills. What a later frame costs is covered in the tick scenario |
+| 21 | the function that cancels the subscription | Subscribing hands back a small function that undoes it. The screen keeps hold of it and calls it when the game ends. Without that, the screen would still be registered as interested in pictures after it had given the terminal back, and a late picture would be drawn into a terminal the program no longer controls |
+| 22 | [`set_input_timeout`](../terminalgame/ui/screen.py#L163)`(33)` | The last piece of setting up, and it is about the future rather than about this picture. It says that waiting for a key should give up after [thirty-three thousandths of a second](../terminalgame/app/main.py#L32) so that the loop can go and check the clock. This is done after the first painting because it has no bearing on it. What it is for belongs to the tick scenario |
 
 This diagram has no coloured bands marking threads, and the absence is a
 decision worth naming. The whole of this program runs on one single thread.
@@ -131,7 +136,7 @@ yet.)*
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It holds where
     the player is, where the ghost is, and how many ticks have passed. It is
-    [`GameViewModel`](../terminalgame/presentation/view_model.py#L30). It never
+    [`GameViewModel`](../terminalgame/presentation/view_model.py#L199). It never
     draws anything and contains no mention of curses[^curses] at all, which is
     what allows it to be read and tested without a terminal being involved.
 
@@ -145,9 +150,13 @@ yet.)*
     actually differ.
 
 [^playfield]: The **playfield** is the fixed rectangle of character positions
-    the game draws into: 30 rows tall and 80 columns wide, set by
-    [`PLAYFIELD_ROWS`](../terminalgame/presentation/state.py#L12) and
-    [`PLAYFIELD_COLS`](../terminalgame/presentation/state.py#L13). The top 29
-    rows hold the arena. The last row holds a line of readings showing the tick
-    number and where the player is. A window larger than this is perfectly
-    acceptable, and the game simply draws in the top left corner of it.
+    the game draws into: 30 rows tall and 40 columns wide, set by
+    [`PLAYFIELD_ROWS`](../terminalgame/presentation/state.py#L13) and
+    [`PLAYFIELD_COLS`](../terminalgame/presentation/state.py#L14). The top 29
+    rows hold the maze. The last row holds a line of readings showing the tick
+    number and where the player is.
+
+    The game itself thinks in **cells** rather than characters. A cell is
+    [one row by two columns](../terminalgame/presentation/state.py#L26), which
+    is very nearly square because a terminal's character is about twice as tall
+    as it is wide. That makes the playfield 29 cells tall and 20 wide.

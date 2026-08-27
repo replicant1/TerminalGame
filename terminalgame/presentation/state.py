@@ -45,11 +45,15 @@ COLOR_PILL = 5
 class Sprite:
     """A block of glyphs drawn on top of the background.
 
-    `art` is one string per character row, so a CELL_ROWS x CELL_COLS sprite is
-    a tuple of CELL_ROWS strings of CELL_COLS characters. `row` and `col` are
-    the character position of its top-left corner, not its cell -- the
-    conversion happens in the ViewModel, so GameScreen never has to know that
-    cells exist.
+    `art` is one string per character row, and its width is odd rather than a
+    cell's width. A sprite is drawn centred on the corridor's centre line,
+    which is the left character of its cell, and only an odd width can sit
+    centred on a character -- so a sprite wider than one character overhangs
+    into the blank character either side of it.
+
+    `row` and `col` are the character position of the art's top-left corner,
+    not its cell. The conversion happens in the ViewModel, so GameScreen never
+    has to know that cells exist.
     """
 
     row: int

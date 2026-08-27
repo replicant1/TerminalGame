@@ -1,7 +1,7 @@
 """Spawns the game in its own correctly-sized Terminal.app window.
 
 Terminal.app's scripting interface exposes writable `number of rows` and
-`number of columns` on a tab, so the window is created at exactly 30x80 rather
+`number of columns` on a tab, so the window is created at exactly 30x40 rather
 than being opened at the default size and resized afterwards -- no visible
 snap. `tty` on the same tab is what lets us find the window we just made and
 close it again when the game exits.

@@ -4,7 +4,7 @@ The app's classes: a diagram carrying every public member, then each class's own
 docstring. Generated from the source by walking the AST, so signatures and
 docstrings are verbatim.
 
-**Six classes** are covered: two frozen dataclasses and four that carry the
+**Seven classes** are covered: two frozen dataclasses and five that carry the
 behaviour. The two exception types are deliberately left out.
 
 The diagram carries the members. Each class entry below it is the class's own
@@ -25,14 +25,49 @@ everything is wired together.
 classDiagram
     direction TB
 
-    class GameClock {
-        <<util>>
-        +MAX_CATCH_UP_TICKS int
-        +running() bool
-        +start() None
-        +stop() None
-        +seconds_until_next_tick() float
-        +poll() int
+    class Maze {
+        <<presentation>>
+        +generate(rows, cols, seed) Maze
+        +from_rows(rows, open_char) Maze
+        +rows() int
+        +cols() int
+        +is_open(row, col) bool
+        +open_cells() Tuple~Cell~
+        +wall_cells() Tuple~Cell~
+        +neighbours(row, col) Tuple~Cell~
+        +open_neighbours(row, col) Tuple~Cell~
+        +dead_ends() Tuple~Cell~
+        +reachable_from(row, col) FrozenSet~Cell~
+        +is_fully_connected() bool
+        +islands() Tuple~FrozenSet~
+        +nearest_open(row, col) Cell
+        +farthest_open(row, col) Cell
+        +to_rows(wall, corridor) Tuple~str~
+    }
+
+    class GameViewModel {
+        <<presentation>>
+        +state() StateFlow~ViewState~
+        +tick() None
+        +on_direction(d_row, d_col) None
+    }
+
+    class Sprite {
+        <<presentation · frozen dataclass>>
+        +row int
+        +col int
+        +art Tuple~str~
+        +color int
+    }
+
+    class ViewState {
+        <<presentation · frozen dataclass>>
+        +walls Tuple~str~
+        +pills Tuple~str~
+        +sprites Tuple~Sprite~
+        +status_line str
+        +tick int
+        +with_sprites(sprites) ViewState
     }
 
     class StateFlow~T~ {
@@ -43,28 +78,14 @@ classDiagram
         +update(transform) bool
     }
 
-    class Sprite {
-        <<presentation · frozen dataclass>>
-        +row int
-        +col int
-        +glyph str
-        +color int
-    }
-
-    class ViewState {
-        <<presentation · frozen dataclass>>
-        +background Tuple~str~
-        +sprites Tuple~Sprite~
-        +status_line str
-        +tick int
-        +with_sprites(sprites) ViewState
-    }
-
-    class GameViewModel {
-        <<presentation>>
-        +state() StateFlow~ViewState~
-        +tick() None
-        +on_direction(d_row, d_col) None
+    class GameClock {
+        <<util>>
+        +MAX_CATCH_UP_TICKS int
+        +running() bool
+        +start() None
+        +stop() None
+        +seconds_until_next_tick() float
+        +poll() int
     }
 
     class GameScreen {
@@ -94,6 +115,7 @@ classDiagram
         +launch(rows, cols, child_arguments) int
     }
 
+    GameViewModel *-- Maze : carves one at startup
     GameViewModel *-- StateFlow : owns the state flow
     StateFlow ..> ViewState : T holds
     ViewState o-- Sprite : sprites
@@ -115,11 +137,54 @@ for anything — it subscribes once and is pushed complete frames.
 
 ---
 
-## `GameClock`
+## `Maze`
 
-`terminalgame/util/clock.py`
+`terminalgame/presentation/maze.py`
 
-> Calls `on_tick` once every `interval_seconds`, driven by poll().
+> A grid of cells. Open cells are corridor, the rest are wall.
+
+---
+
+## `GameViewModel`
+
+`terminalgame/presentation/view_model.py`
+
+> Turns ticks and key presses into ViewStates.
+
+---
+
+## `Sprite`
+
+`terminalgame/presentation/state.py` — `@dataclass(frozen=True)`
+
+> A block of glyphs drawn on top of the background.
+>
+> `art` is one string per character row, and its width is odd rather than a
+> cell's width. A sprite is drawn centred on the corridor's centre line, which
+> is the left character of its cell, and only an odd width can sit centred on a
+> character — so a sprite wider than one character overhangs into the blank
+> character either side of it.
+>
+> `row` and `col` are the character position of the art's top-left corner, not
+> its cell. The conversion happens in the ViewModel, so GameScreen never has to
+> know that cells exist.
+
+---
+
+## `ViewState`
+
+`terminalgame/presentation/state.py` — `@dataclass(frozen=True)`
+
+> One complete frame.
+>
+> The maze arrives as two layers rather than one, because a layer is drawn in a
+> single colour: `walls` carries the blocks and `pills` the pellets, each blank
+> where the other has something. Splitting them is what lets the pills be a
+> different colour from the walls they sit between.
+>
+> `sprites` are the things that move, and `status_line` the row of readings
+> underneath. Every part of a frame is redrawn every time, and ncurses works out
+> which character positions actually changed.
 
 ---
 
@@ -136,31 +201,11 @@ for anything — it subscribes once and is pushed complete frames.
 
 ---
 
-## `Sprite`
+## `GameClock`
 
-`terminalgame/presentation/state.py` — `@dataclass(frozen=True)`
+`terminalgame/util/clock.py`
 
-> A single moving glyph drawn on top of the background.
-
----
-
-## `ViewState`
-
-`terminalgame/presentation/state.py` — `@dataclass(frozen=True)`
-
-> One complete frame.
->
-> `background` is the static maze; `sprites` are the things that move. They are
-> separated only for clarity — GameScreen redraws both every frame and lets
-> ncurses work out what actually changed.
-
----
-
-## `GameViewModel`
-
-`terminalgame/presentation/view_model.py`
-
-> Turns ticks and key presses into ViewStates.
+> Calls `on_tick` once every `interval_seconds`, driven by poll().
 
 ---
 
@@ -174,18 +219,23 @@ for anything — it subscribes once and is pushed complete frames.
 
 ## Module constants — `terminalgame/presentation/state.py`
 
-`Sprite.color` and `GameScreen` speak in these logical slots, so the ViewModel
-never has to import curses.
+The playfield is measured twice over: in terminal character positions, which is
+what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 
 | Signature | Description |
 |---|---|
-| `PLAYFIELD_ROWS = 30` | The fixed playfield height. The terminal window is resized to match at startup. |
-| `PLAYFIELD_COLS = 80` | The fixed playfield width. |
+| `PLAYFIELD_ROWS = 30` | The playfield's height in character rows. The terminal window is resized to match at startup. |
+| `PLAYFIELD_COLS = 40` | The playfield's width in character columns. |
+| `CELL_ROWS = 1` | A game cell's height in character rows. |
+| `CELL_COLS = 2` | A game cell's width. A terminal character is about twice as tall as it is wide, so two columns by one row is very nearly square. |
+| `GRID_ROWS = 29` | The playfield in cells, derived. The last character row is the status line, so it is taken off before dividing. |
+| `GRID_COLS = 20` | The playfield's width in cells, derived. |
 | `COLOR_DEFAULT = 0` | No colour pair; drawn with `A_NORMAL`. |
 | `COLOR_WALL = 1` | Mapped to blue by `GameScreen` when it opens. |
-| `COLOR_PLAYER = 2` | Mapped to yellow. |
-| `COLOR_GHOST = 3` | Mapped to red. |
+| `COLOR_PLAYER = 2` | Mapped to a bright yellow. |
+| `COLOR_GHOST = 3` | Mapped to a bright pink. |
 | `COLOR_STATUS = 4` | Mapped to cyan. |
+| `COLOR_PILL = 5` | Mapped to a darker gold, so a pill is dimmer than the player moving over it. |
 
 ---
 
@@ -198,7 +248,7 @@ diagram above as `<<module>>` boxes.
 
 > Entry point.
 >
->     python3 -m terminalgame.app.main           # opens the game in its own 30x80 window
+>     python3 -m terminalgame.app.main           # opens the game in its own 30x40 window
 >     python3 -m terminalgame.app.main --here    # runs in the current terminal instead
 >
 > Without --here the process re-launches itself inside a new Terminal.app window
@@ -226,7 +276,7 @@ diagram above as `<<module>>` boxes.
 > Spawns the game in its own correctly-sized Terminal.app window.
 >
 > Terminal.app's scripting interface exposes writable `number of rows` and
-> `number of columns` on a tab, so the window is created at exactly 30x80 rather
+> `number of columns` on a tab, so the window is created at exactly 30x40 rather
 > than being opened at the default size and resized afterwards — no visible snap.
 > `tty` on the same tab is what lets us find the window we just made and close it
 > again when the game exits.
@@ -242,6 +292,8 @@ diagram above as `<<module>>` boxes.
 | `STARTUP_TIMEOUT_SECONDS = 20.0` | How long to wait for the child to announce itself before assuming it never started. |
 | `MAIN_MODULE = "terminalgame.app.main"` | The child is re-run as a module, so the project root — not the launcher's directory — is what the shell must `cd` to. |
 | `WINDOW_TITLE = "Terminal Game"` | Shown in the title bar, in place of the internal command line. |
+| `FONT_SIZE = 18` | Point size for the game window only, set on the tab so no other Terminal window is affected. |
+| `BACKGROUND_COLOR = "{0, 0, 0}"` | The game window's own background, also set per tab. An RGB triple of 16-bit components, so black is three zeros. |
 | `ENV_CHILD = "TERMINALGAME_CHILD"` | Set to `1` in the spawned child's environment. |
 | `ENV_SENTINEL = "TERMINALGAME_SENTINEL"` | Path of the sentinel file the child writes. |
 | `POLL_INTERVAL_SECONDS = 0.1` | Sentinel polling interval — a `stat()` on a local file, not an AppleScript call. |
