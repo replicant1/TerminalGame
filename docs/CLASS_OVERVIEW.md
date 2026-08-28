@@ -11,6 +11,11 @@ The diagram carries the members. Each class entry below it is the class's own
 docstring and nothing else — what the class is for, in the words of whoever
 wrote it. For the signatures, read the diagram.
 
+The docstrings follow the Google convention, so some of them end in a labelled
+list of attributes. Those are shown as bullets here: the words are the
+docstring's, and only the indentation changed, because four-space indentation
+inside a quotation renders as a code block and an attribute list is not code.
+
 **Public members only.** Anything named with a leading underscore is omitted:
 private fields, private methods, and private module constants.
 
@@ -141,7 +146,10 @@ for anything — it subscribes once and is pushed complete frames.
 
 `terminalgame/presentation/maze.py`
 
-> A grid of cells. Open cells are corridor, the rest are wall.
+> A rectangular grid of cells, each either open corridor or wall.
+>
+> Nothing here knows about characters, colours or sprites, which is what
+> lets a maze be built, queried and asserted about without a terminal.
 
 ---
 
@@ -150,6 +158,9 @@ for anything — it subscribes once and is pushed complete frames.
 `terminalgame/presentation/view_model.py`
 
 > Turns ticks and key presses into ViewStates.
+>
+> Owns the maze, the score and where everything stands. Knows nothing about
+> curses: it publishes frames and never learns who is collecting them.
 
 ---
 
@@ -159,15 +170,11 @@ for anything — it subscribes once and is pushed complete frames.
 
 > A block of glyphs drawn on top of the background.
 >
-> `art` is one string per character row, and its width is odd rather than a
-> cell's width. A sprite is drawn centred on the corridor's centre line, which
-> is the left character of its cell, and only an odd width can sit centred on a
-> character — so a sprite wider than one character overhangs into the blank
-> character either side of it.
->
-> `row` and `col` are the character position of the art's top-left corner, not
-> its cell. The conversion happens in the ViewModel, so GameScreen never has to
-> know that cells exist.
+> **Attributes**
+> - `row` — Character row of the art's top-left corner, not its cell. The conversion from cells happens in the ViewModel, so GameScreen never has to know that cells exist.
+> - `col` — Character column of that same corner.
+> - `art` — One string per character row. Its width is odd rather than a cell's width: a sprite is drawn centred on the corridor's centre line, which is the left character of its cell, and only an odd width can sit centred on a character -- so a sprite wider than one character overhangs into the blank character either side of it.
+> - `color` — Which logical colour slot to draw the art in.
 
 ---
 
@@ -177,14 +184,15 @@ for anything — it subscribes once and is pushed complete frames.
 
 > One complete frame.
 >
-> The maze arrives as two layers rather than one, because a layer is drawn in a
-> single colour: `walls` carries the blocks and `pills` the pellets, each blank
-> where the other has something. Splitting them is what lets the pills be a
-> different colour from the walls they sit between.
+> Every part of a frame is redrawn every time, and ncurses works out which
+> character positions actually changed.
 >
-> `sprites` are the things that move, and `status_line` the row of readings
-> underneath. Every part of a frame is redrawn every time, and ncurses works out
-> which character positions actually changed.
+> **Attributes**
+> - `walls` — The wall layer, one string per character row, blank wherever the pill layer has something. The maze arrives as two layers rather than one because a layer is drawn in a single colour, and splitting them is what lets the pills be a different colour from the walls they sit between.
+> - `pills` — The pellet layer, blank wherever the wall layer has something.
+> - `sprites` — The things that move, drawn over both layers in the order given.
+> - `status_line` — The row of readings underneath the playfield.
+> - `tick` — How many times the clock has fired, carried so a test can tell two otherwise identical frames apart.
 
 ---
 
@@ -195,9 +203,9 @@ for anything — it subscribes once and is pushed complete frames.
 > Holds a current value and notifies subscribers when it changes.
 >
 > Mirrors StateFlow semantics:
-> - always has a value (no "empty" state)
-> - new subscribers immediately receive the current value
-> - conflated / distinct-until-changed: emitting an equal value is a no-op
+>   - always has a value (no "empty" state)
+>   - new subscribers immediately receive the current value
+>   - conflated / distinct-until-changed: emitting an equal value is a no-op
 
 ---
 
@@ -205,7 +213,10 @@ for anything — it subscribes once and is pushed complete frames.
 
 `terminalgame/util/clock.py`
 
-> Calls `on_tick` once every `interval_seconds`, driven by poll().
+> Calls a callback once every interval, driven by poll().
+>
+> Nothing here runs on its own: the clock only advances when the main loop
+> polls it, which is what keeps ticks on the same thread as the rendering.
 
 ---
 
@@ -266,10 +277,10 @@ diagram above as `<<module>>` boxes.
 
 | Signature | Docstring |
 |---|---|
-| `run(screen: GameScreen) -> None` | — |
-| `play(sentinel: str, spawned: bool) -> int` | Run the game in whatever terminal this process already owns. |
-| `parse_arguments(argv)` | — |
-| `main(argv=None) -> int` | — |
+| `run(screen: GameScreen) -> None` | Runs the game loop until the player quits. |
+| `play(sentinel: str, spawned: bool) -> int` | Plays the game in whatever terminal this process already owns. |
+| `parse_arguments(argv)` | Reads the command line, falling back to the launcher's environment. |
+| `main(argv=None) -> int` | Plays the game here, or opens a window and plays it there. |
 
 ## `terminalgame.app.launcher`
 
@@ -294,6 +305,7 @@ diagram above as `<<module>>` boxes.
 | `WINDOW_TITLE = "Terminal Game"` | Shown in the title bar, in place of the internal command line. |
 | `FONT_SIZE = 18` | Point size for the game window only, set on the tab so no other Terminal window is affected. |
 | `BACKGROUND_COLOR = "{0, 0, 0}"` | The game window's own background, also set per tab. An RGB triple of 16-bit components, so black is three zeros. |
+| `WINDOW_OFFSET = 48` | How far below and to the right of the frontmost window the game's window is placed. Terminal remembers where a window of a given profile was last put, and a remembered position can be on a display that is no longer attached; placing the game next to a window the player is demonstrably looking at cannot land somewhere unseen. |
 | `ENV_CHILD = "TERMINALGAME_CHILD"` | Set to `1` in the spawned child's environment. |
 | `ENV_SENTINEL = "TERMINALGAME_SENTINEL"` | Path of the sentinel file the child writes. |
 | `POLL_INTERVAL_SECONDS = 0.1` | Sentinel polling interval — a `stat()` on a local file, not an AppleScript call. |
@@ -303,10 +315,10 @@ diagram above as `<<module>>` boxes.
 
 | Signature | Docstring |
 |---|---|
-| `is_supported() -> bool` | True when we can drive Terminal.app on this machine. |
-| `announce_started(sentinel_path: Optional[str]) -> None` | Called by the child once it is running, so the launcher can watch it. |
-| `announce_finished(sentinel_path: Optional[str], exit_code: int) -> None` | Called by the child on the way out, cleanly or otherwise. |
-| `launch(rows: int, cols: int, child_arguments: List[str]) -> int` | Open the game in a new window and block until it exits.<br><br>Returns the game's exit code. |
+| `is_supported() -> bool` | Reports whether Terminal.app can be driven on this machine. |
+| `announce_started(sentinel_path: Optional[str]) -> None` | Records the child's pid, so the launcher knows it started. |
+| `announce_finished(sentinel_path: Optional[str], exit_code: int) -> None` | Records the exit code, so the launcher knows the game is finished. |
+| `launch(rows: int, cols: int, child_arguments: List[str]) -> int` | Opens the game in a new window and blocks until it exits. |
 
 ---
 
@@ -314,8 +326,14 @@ diagram above as `<<module>>` boxes.
 
 Constants have no docstrings, so the **Description** column in the three
 constants tables is drawn from the inline comment above the declaration where
-one exists, and written from the code where one doesn't. A `—` in a
-**Docstring** column means the function genuinely has none in the source.
+one exists, and written from the code where one doesn't.
+
+The **Docstring** column carries each function's summary line, which is its
+first line. Since the docstrings moved to the Google convention every one of
+them also has an Args section, and most have Returns; those are in the source
+rather than here, because a table of them would be longer than the code. No
+function in either module is without a docstring now, so the column has no
+dashes left in it.
 
 Every class docstring above is reproduced word for word. A class whose entry
 looks short has a short docstring, not a missing one.
