@@ -47,7 +47,7 @@ that those openings happened to cut off from the border.*
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220) | Everything the game knows about where things are. In this scenario it is only the **customer**: it asks for a maze of a particular size during its own construction, and everything it does afterwards — placing the player and the ghost, deciding whether a move is allowed — is a question put to the maze it was given |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are. In this scenario it is only the **customer**: it asks for a maze of a particular size during its own construction, and everything it does afterwards — placing the player and the ghost, deciding whether a move is allowed — is a question put to the maze it was given |
 | [`Maze`](../../terminalgame/presentation/maze.py#L31) | A grid of cells, each either open corridor or wall. In this scenario it is the **maker and the judge at once**: [`generate`](../../terminalgame/presentation/maze.py#L60) carves and braids, and [`dead_ends`](../../terminalgame/presentation/maze.py#L190) and [`islands`](../../terminalgame/presentation/maze.py#L237) are how anybody checks what came out. It knows nothing about characters, colours or sprites, which is what lets it be built and examined without a terminal anywhere near it |
 
 ## Carving a perfect maze, then braiding its dead ends away

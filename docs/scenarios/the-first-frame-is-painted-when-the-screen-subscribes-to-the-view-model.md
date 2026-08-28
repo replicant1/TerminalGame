@@ -34,7 +34,7 @@ to go.
 |---|---|
 | [`main`](../../terminalgame/app/main.py) | The way into the program, and a module of plain functions rather than a class. In this scenario it is the **assembler**: [`run`](../../terminalgame/app/main.py#L43) builds each of the other three parts, joins them together in one particular order, and then hands over to the loop that reads keys |
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses] or about terminals. In this scenario it is the **painter**: [`open`](../../terminalgame/ui/screen.py#L79) takes control of the terminal, and [`render`](../../terminalgame/ui/screen.py#L234) turns one finished picture into characters on the screen. It never asks anybody for a picture. It is given them |
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220) | Everything the game knows about where things are and what has happened. In this scenario it is the **picture maker**: during its own construction it builds the arena, places the player and the ghost, and produces the first complete picture. It contains no mention of curses anywhere |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are and what has happened. In this scenario it is the **picture maker**: during its own construction it builds the arena, places the player and the ghost, and produces the first complete picture. It contains no mention of curses anywhere |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier that holds the current picture and tells interested parties when it changes. In this scenario it is the **connector**, and the single most important part of the document: [`subscribe`](../../terminalgame/util/flow.py#L30) both registers the screen and immediately hands it the picture it is already holding |
 
 ## Taking over the terminal, building the picture, and drawing it once
@@ -133,7 +133,7 @@ while a picture is halfway drawn would corrupt the display.
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It holds where
     the player is, where the ghost is, and how many ticks have passed. It is
-    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220). It never
+    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226). It never
     draws anything and contains no mention of curses[^curses] at all, which is
     what allows it to be read and tested without a terminal being involved.
 

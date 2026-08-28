@@ -236,12 +236,17 @@ by itself when asked to run the game.
 
 ## Next steps
 
-The ghost cannot catch anyone. It walks the maze and passes straight through
-the player, so there is nothing to avoid and nowhere to lose. Capture is the
-obvious next feature, and unlike the pills it needs decisions this skeleton has
-so far been able to avoid: what a life is, what happens to the score and the
-maze when one is lost, and whether a finished game can be played again without
-quitting and starting another.
+A game is lost outright. The ghost catching the player ends it there and then,
+with no lives to spend and no way to start another without quitting and running
+the command again. Lives are the obvious next feature, and they need the
+decisions a single ending let the skeleton avoid: what a life costs, whether
+the maze is recarved or the eaten pills stay eaten, and where the player and
+the ghost stand when play resumes.
+
+The ghost does not hunt. It carries straight on until it runs out of corridor
+and then turns at random, so it finds the player by wandering into them. It
+knows where the player is -- the same object holds both positions -- and does
+nothing with that.
 
 The maze is random rather than authored. A real Pac-Man maze is 28x31 cells,
 which at one row by two columns per cell needs a 56 by 32 window rather than

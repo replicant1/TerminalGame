@@ -40,7 +40,7 @@ the whole point of carving corridors would be lost.
 |---|---|
 | [`main`](../../terminalgame/app/main.py) | The way into the program, and a module of plain functions rather than a class. In this scenario it is the **translator**: the loop inside [`run`](../../terminalgame/app/main.py#L43) is the only place a key is turned into a direction, and the only place that knows which keys mean quit and which mean move |
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses]. In this scenario it does two separate jobs at opposite ends of the story. First it is the **ear**: [`read_key`](../../terminalgame/ui/screen.py#L218) hands back one plain number and attaches no meaning to it. Later it is the **painter**: [`render`](../../terminalgame/ui/screen.py#L234) draws the finished picture, and it is called without having asked for anything |
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220) | Everything the game knows about where things are. In this scenario it is the **mover**: [`on_direction`](../../terminalgame/presentation/view_model.py#L285) applies the step, keeps the result inside the walls, and builds an entirely new picture. It is told a direction and never learns what caused it |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are. In this scenario it is the **mover**: [`on_direction`](../../terminalgame/presentation/view_model.py#L285) applies the step, keeps the result inside the walls, and builds an entirely new picture. It is told a direction and never learns what caused it |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier that holds the current picture. In this scenario it is the **gatekeeper**, and it matters more here than on any other path: [`emit`](../../terminalgame/util/flow.py#L44) compares the new picture against the one it holds, and a player pressing into a wall produces a picture identical to the one already on screen |
 
 ## A key press becoming a moved character, without waiting for the clock
@@ -132,7 +132,7 @@ against a wall costs the terminal nothing at all — not one byte.
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It holds where
     the player is, where the ghost is, and how many ticks have passed. It is
-    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220). It never
+    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226). It never
     draws anything and contains no mention of curses[^curses] at all, which is
     what allows it to be read and tested without a terminal being involved.
 
