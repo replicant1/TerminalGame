@@ -17,14 +17,15 @@ All paths below are relative to the project root (the directory holding
 
 ## Prerequisites
 
-System Python 3.9 (`/usr/bin/python3`) is enough for the game. The driver also
-needs `pyte`, which it installs for itself on first run into
-`.claude/skills/run-terminalgame/.venv` and then re-execs — no action needed, it
-just prints `driver: installing pyte into ...` once. Nothing is installed
-system-wide; delete the `.venv` to reset.
+The game needs nothing but system Python 3.9 (`/usr/bin/python3`) — no build
+step, no dependency install, no test suite. The driver is the check.
 
-There is no build step, no dependency install, and no test suite. The driver is
-the check.
+The driver itself needs `pyte`, which it installs for itself on first run into
+`.claude/skills/run-terminalgame/.venv` and then re-execs — no action needed, it
+prints `driver: creating ...` / `driver: installing pyte into ...` that once and
+is silent on later runs. Nothing is installed system-wide; delete the `.venv` to
+reset, and it will rebuild it. If pyte is somehow still missing after that
+install the driver says so and exits 1 rather than re-execing again.
 
 ## Run (agent path)
 
@@ -43,7 +44,9 @@ EOF
 ```
 
 It starts the game, waits 1.5s for the first paint, runs the commands, and
-exits with the game's exit code. Output goes to stdout — the boxed frames are
+exits with the game's own exit code — 0 for a clean quit, 1 for
+`TerminalTooSmall`, 127 if the game could not be exec'd at all — or 1 of its
+own if a command was malformed. Output goes to stdout — the boxed frames are
 what the player would be looking at:
 
 ```

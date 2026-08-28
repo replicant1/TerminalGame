@@ -24,13 +24,14 @@ Commands
     quit               send q, wait for exit, report the exit code
 
 Every command settles for SETTLE seconds afterwards so the ticks it caused
-land before the next `show`. Exit code is the game's, or 1 if a command failed.
+land before the next `show`. The driver exits with the game's own exit code,
+or 1 if a command was malformed.
 """
 
+import errno
 import fcntl
 import os
 import pty
-import re
 import select
 import signal
 import struct
@@ -65,27 +66,53 @@ class Bad(Exception):
     """A command the driver could not make sense of."""
 
 
+# Set on the child of the one permitted bootstrap re-exec, so a venv that
+# cannot produce a working pyte fails loudly instead of looping.
+RE_EXECED = "TERMINALGAME_DRIVER_REEXECED"
+
 SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SKILL_DIR, "..", "..", ".."))
 VENV = os.path.join(SKILL_DIR, ".venv")
 
 
+def has_pyte(python):
+    """Can that interpreter import pyte? Cheaper than a pip run per invocation."""
+    if not os.path.exists(python):
+        return False
+    return subprocess.run([python, "-c", "import pyte"],
+                          capture_output=True).returncode == 0
+
+
 def ensure_pyte():
-    """Import pyte, building a private venv for it on first run."""
+    """Import pyte, building a private venv for it on first run.
+
+    The install runs whenever the import fails, not only when the venv is
+    missing -- a venv that exists but has lost pyte is otherwise a re-exec into
+    an interpreter that fails the same import, forever. RE_EXECED caps it at
+    one re-exec whatever happens.
+    """
     try:
         import pyte  # noqa: F401
         return
     except ImportError:
         pass
+    if os.environ.get(RE_EXECED):
+        sys.exit("driver: pyte still missing after installing it into {}.\n"
+                 "Delete that directory and run again.".format(VENV))
     venv_python = os.path.join(VENV, "bin", "python")
-    if not os.path.exists(venv_python):
+    if not has_pyte(venv_python):
+        # Reached on the first run, and again if the venv loses pyte -- but not
+        # on every run merely because the *calling* interpreter lacks it.
+        if not os.path.exists(venv_python):
+            print("driver: creating {}".format(VENV), file=sys.stderr)
+            subprocess.run([sys.executable, "-m", "venv", VENV], check=True)
         print("driver: installing pyte into {}".format(VENV), file=sys.stderr)
-        subprocess.run([sys.executable, "-m", "venv", VENV], check=True)
         subprocess.run(
             [venv_python, "-m", "pip", "--quiet", "--disable-pip-version-check",
              "install", "pyte"],
             check=True,
         )
+    os.environ[RE_EXECED] = "1"
     os.execv(venv_python, [venv_python, os.path.abspath(__file__)] + sys.argv[1:])
 
 
@@ -135,8 +162,12 @@ class Game:
                 continue
             try:
                 data = os.read(self.fd, 65536)
-            except OSError:
-                data = b""  # macOS: EIO on the master once the child is gone
+            except OSError as error:
+                # EIO on the master is how the kernel reports the child gone;
+                # anything else is a real fault and must not read as EOF.
+                if error.errno != errno.EIO:
+                    raise
+                data = b""
             if not data:
                 self.reap()
                 return
@@ -145,7 +176,9 @@ class Game:
     def send(self, data, settle=SETTLE):
         try:
             os.write(self.fd, data)
-        except OSError:
+        except OSError as error:
+            if error.errno != errno.EIO:
+                raise
             self.reap()
             return
         self.pump(settle)
@@ -265,7 +298,9 @@ def run(commands):
             game.send(b"q", 1.0)
             game.reap()
         print("exit code:", game.exit_code)
-        return 0 if game.exit_code == 0 else 1
+        # The game's own code, so a 127 from a failed exec and a 1 from
+        # TerminalTooSmall stay told apart. Driver errors return 1 above.
+        return game.exit_code
     finally:
         # Any exit -- bad command, exception, quit -- takes the game with it,
         # so nothing is left holding a pty.
