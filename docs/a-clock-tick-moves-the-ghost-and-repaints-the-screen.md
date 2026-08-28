@@ -37,10 +37,10 @@ leaving them out would make the loop look far busier than it is.
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`main`](../terminalgame/app/main.py) | The way into the program, and a module of plain functions rather than a class. In this scenario it is the **asker**: the loop inside [`run`](../terminalgame/app/main.py#L43) does nothing but read a key and then ask the clock whether a tick is due, round and round, forever. It never touches the terminal on this path |
-| [`GameClock`](../terminalgame/util/clock.py#L13) | A recorded moment in the future, and the rule for moving it forward. In this scenario it is the **timekeeper**: [`poll`](../terminalgame/util/clock.py#L43) is the only thing that decides whether the game advances, and it only ever decides when it is asked |
-| [`GameViewModel`](../terminalgame/presentation/view_model.py#L199) | Everything the game knows about where things are and what has happened. In this scenario it is the **mover**: [`tick`](../terminalgame/presentation/view_model.py#L228) advances the ghost and the count, then builds an entirely new picture rather than altering the old one |
+| [`GameClock`](../terminalgame/util/clock.py#L13) | A recorded moment in the future, and the rule for moving it forward. In this scenario it is the **timekeeper**: [`poll`](../terminalgame/util/clock.py#L62) is the only thing that decides whether the game advances, and it only ever decides when it is asked |
+| [`GameViewModel`](../terminalgame/presentation/view_model.py#L220) | Everything the game knows about where things are and what has happened. In this scenario it is the **mover**: [`tick`](../terminalgame/presentation/view_model.py#L272) advances the ghost and the count, then builds an entirely new picture rather than altering the old one |
 | [`StateFlow`](../terminalgame/util/flow.py#L13) | The carrier that holds the current picture. In this scenario it is the **gatekeeper**: [`emit`](../terminalgame/util/flow.py#L44) compares the new picture against the one it is holding and passes it on only if they genuinely differ |
-| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses]. In this scenario it is the **painter**: [`render`](../terminalgame/ui/screen.py#L179) is called because it subscribed once, long ago, and it has asked for nothing since |
+| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses]. In this scenario it is the **painter**: [`render`](../terminalgame/ui/screen.py#L234) is called because it subscribed once, long ago, and it has asked for nothing since |
 
 ## One tick becoming forty-six bytes
 
@@ -77,15 +77,15 @@ sequenceDiagram
 
 | Step | Message | What is going on |
 |---:|---|---|
-| 1 | [`read_key`](../terminalgame/ui/screen.py#L167)`()` | The loop always reads a key first and asks about the clock second. The reading is what makes the loop pause rather than spinning at full speed and heating the machine up for nothing |
+| 1 | [`read_key`](../terminalgame/ui/screen.py#L218)`()` | The loop always reads a key first and asks about the clock second. The reading is what makes the loop pause rather than spinning at full speed and heating the machine up for nothing |
 | 2 | nothing, the 33 millisecond wait ran out | No key was pressed. This is much the commonest outcome, since a player is not pressing a key most of the time. The waiting time was set once during startup and never changes |
-| 3 | [`poll`](../terminalgame/util/clock.py#L43)`()` | Asking the clock is deliberately cheap: it compares two numbers. The clock is asked on every single pass of the loop precisely because asking costs so little |
+| 3 | [`poll`](../terminalgame/util/clock.py#L62)`()` | Asking the clock is deliberately cheap: it compares two numbers. The clock is asked on every single pass of the loop precisely because asking costs so little |
 | 4 | not due yet, so nothing happened | The recorded moment is still in the future, so nothing at all is done and the answer is zero ticks. This is the ordinary result. With a tick due every fifteen hundredths of a second and the loop coming round about every thirty-three thousandths, roughly four out of every five passes end exactly here |
-| 5 | [`read_key`](../terminalgame/ui/screen.py#L167)`()` | Round again. The two wasted passes drawn here stand for however many there really are |
+| 5 | [`read_key`](../terminalgame/ui/screen.py#L218)`()` | Round again. The two wasted passes drawn here stand for however many there really are |
 | 6 | nothing again | Still no key |
-| 7 | [`poll`](../terminalgame/util/clock.py#L43)`()` | The same cheap question, asked again |
+| 7 | [`poll`](../terminalgame/util/clock.py#L62)`()` | The same cheap question, asked again |
 | 8 | moves the recorded moment forward by 0.15 seconds | This time the moment has passed. Notice **how** it moves: the interval is added to the old moment, rather than the moment being set to now plus the interval. Those sound the same and are not. Setting it to now would push the moment slightly later every single time, because a little time always passes between the moment arriving and the program noticing. Over a long game the ghost would visibly slow down. Adding the interval to the old moment keeps the average exactly right |
-| 9 | [`tick`](../terminalgame/presentation/view_model.py#L228)`()` | This is the function the clock was handed when it was built. The clock has no idea what it does, and no idea that a game exists. It holds a function and calls it. That is the whole of the arrangement |
+| 9 | [`tick`](../terminalgame/presentation/view_model.py#L272)`()` | This is the function the clock was handed when it was built. The clock has no idea what it does, and no idea that a game exists. It holds a function and calls it. That is the whole of the arrangement |
 | 10 | adds one to the count of ticks | The count is shown in the line of readings under the arena, so it is a visible part of the picture rather than private bookkeeping. It is also what guarantees that every tick produces a genuinely different picture, which matters at the comparing step below |
 | 11 | [moves the ghost one cell](../terminalgame/presentation/view_model.py#L248) | The ghost carries straight on if the cell ahead is open. If it is not, the ghost picks at random from the open ways out that are not the way it came. It can always find one, and that is a direct consequence of the maze having no dead ends: a cell a ghost has just arrived at has at least two ways out, so one of them is not backwards. Reversing is a last resort the ghost reaches for only if something has gone wrong. It is the only thing in the game that moves without the player doing anything |
 | 12 | [builds an entirely new picture](../terminalgame/presentation/view_model.py#L277) | The new picture is built from scratch rather than the old one being altered. It can be built cheaply because the arena rows are reused rather than copied: the same rows are handed to every picture, since they never change. What is new each time is the pair of moving characters, the line of readings, and the tick number |
@@ -103,7 +103,7 @@ thread, one after another. The clock does not run on its own, which is why it
 has to be asked. The carrier calls those who registered an interest immediately,
 in the same breath, rather than putting the picture in a queue for later. So the
 complete journey from "the moment has passed" to "the bytes have been written"
-happens inside a single call to [`poll`](../terminalgame/util/clock.py#L43),
+happens inside a single call to [`poll`](../terminalgame/util/clock.py#L62),
 with nothing else able to run in between.
 
 ## What happens when the game has been asleep
@@ -117,7 +117,7 @@ tick that was missed. An hour of sleep at fifteen hundredths of a second each
 would be twenty-four thousand ticks, all fired one after another, before the
 game responded to anything at all.
 
-So [`poll`](../terminalgame/util/clock.py#L43) fires at most
+So [`poll`](../terminalgame/util/clock.py#L62) fires at most
 [three](../terminalgame/util/clock.py#L18) ticks in one call. If the moment is
 still in the past after those three, the backlog is abandoned and the moment is
 reset to now plus one interval. The ghost is briefly in the wrong place, which
@@ -132,12 +132,9 @@ nobody can tell, and the game keeps responding, which everybody can.
   — the other way a new picture is produced. It joins this path at the point
   where the picture is offered to the carrier, and it is the only route by which
   a player changes anything.
-- **An unchanged frame is dropped before it reaches the terminal** — the other
+- [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) — the other
   outcome of the comparing step, where the pictures match and nothing is drawn
   at all.
-
-*(The entry above that is not a link is a document that has not been written
-yet.)*
 
 ### Footnotes
 
