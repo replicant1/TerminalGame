@@ -46,7 +46,8 @@ from .state import (
 # and one drawn with quadrant blocks sits on the floor of the row while the
 # horizontal walls run through the middle of theirs. A small square centred in
 # its own character is centred both ways at once.
-_PILL_CELL = ("▪" + " " * (CELL_COLS - 1),) * CELL_ROWS
+_PILL = "▪"
+_PILL_CELL = (_PILL + " " * (CELL_COLS - 1),) * CELL_ROWS
 
 # Walls are drawn as lines rather than solid blocks, so a wall cell needs to
 # know which of its neighbours are also wall before it can pick a glyph. The
@@ -216,6 +217,18 @@ class GameViewModel:
             self._player_row, self._player_col
         )
         self._ghost_step = (0, 1)
+        # The pill layer is no longer fixed for the game, so it is kept as a
+        # mutable list of rows and re-frozen into `self._pills` each time one
+        # is eaten -- once per pill, not once per frame.
+        self._pill_rows = list(self._pills)
+        self._pills_left = sum(row.count(_PILL) for row in self._pill_rows)
+        self._score = 0
+        self._game_over = False
+        # The player starts standing on a corridor cell, which has a pill on
+        # it. Taking it silently, without scoring, is what makes the opening
+        # score 0 rather than 1, and stops a pill nobody can see from being
+        # the one the game is waiting on.
+        self._take_pill(self._player_row, self._player_col)
         self._state: StateFlow[ViewState] = StateFlow(self._build_state())
 
     @property
@@ -226,7 +239,14 @@ class GameViewModel:
     # -- inputs ----------------------------------------------------------
 
     def tick(self) -> None:
-        """Called by GameClock. Advance the simulation by one step."""
+        """Called by GameClock. Advance the simulation by one step.
+
+        A finished game stops advancing: the ghost stands still, the tick
+        count stops, and the frame the player is looking at is the last one
+        that will be published until they quit.
+        """
+        if self._game_over:
+            return
         self._tick_count += 1
         self._advance_ghost()
         self._publish()
@@ -238,12 +258,36 @@ class GameViewModel:
         two of them. A press into a wall does nothing, which leaves the frame
         identical and costs the terminal nothing.
         """
+        if self._game_over:
+            return
         row, col = self._player_row + d_row, self._player_col + d_col
         if self._maze.is_open(row, col):
             self._player_row, self._player_col = row, col
+            if self._take_pill(row, col):
+                self._score += 1
+                self._game_over = self._pills_left == 0
             self._publish()
 
     # -- internals -------------------------------------------------------
+
+    def _take_pill(self, row: int, col: int) -> bool:
+        """Clear the pill in that cell, if it still has one. True if it did.
+
+        A pill sits in the *left* character of its cell, the same centre line
+        the walls and sprites share, so one cell is one character to blank.
+        The row is rebuilt rather than mutated because the published layer is
+        a tuple of strings and has to stay one.
+        """
+        char_row, char_col = row * CELL_ROWS, col * CELL_COLS
+        line = self._pill_rows[char_row]
+        if line[char_col] != _PILL:
+            return False
+        self._pill_rows[char_row] = (
+            line[:char_col] + " " + line[char_col + 1:]
+        )
+        self._pills = tuple(self._pill_rows)
+        self._pills_left -= 1
+        return True
 
     def _advance_ghost(self) -> None:
         """Carry straight on where possible, otherwise turn.
@@ -270,19 +314,28 @@ class GameViewModel:
         self._ghost_row += self._ghost_step[0]
         self._ghost_col += self._ghost_step[1]
 
+    def _status_line(self) -> str:
+        """The row of readings under the playfield.
+
+        The last row loses its final cell to curses, so the budget is
+        PLAYFIELD_COLS - 1, which is 39, and the playing line spends all of
+        it: six digits of tick, three of score -- a maze this size holds a few
+        hundred pills -- and the player's cell. Beyond 999,999 ticks, about
+        two days of play, or a four-digit score, _put clips the tail rather
+        than wrapping.
+        """
+        if self._game_over:
+            return " GAME OVER  score {:<3}  q quits".format(self._score)
+        return " tick {:<6} score {:<3} at {:>2},{:<2} q quits".format(
+            self._tick_count, self._score, self._player_row, self._player_col
+        )
+
     def _publish(self) -> None:
         # StateFlow drops this silently if nothing actually changed.
         self._state.emit(self._build_state())
 
     def _build_state(self) -> ViewState:
-        # The last row loses its final cell to curses, so the budget is
-        # PLAYFIELD_COLS - 1, which is 39. Row and column are two digits at
-        # most, so the tick count is the only part that can grow: six digits
-        # give 38 characters and seven give 39. Beyond 9,999,999 ticks, which
-        # is about seventeen days of play, _put clips the trailing space.
-        status = " tick {:<6} at {:>2},{:<2} arrows, q quits ".format(
-            self._tick_count, self._player_row, self._player_col
-        )
+        status = self._status_line()
         return ViewState(
             walls=self._walls,
             pills=self._pills,
