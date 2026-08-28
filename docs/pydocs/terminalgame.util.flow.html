@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module terminalgame.util.flow</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="terminalgame.html"><font color="#ffffff">terminalgame</font></a>.<a href="terminalgame.util.html"><font color="#ffffff">util</font></a>.flow</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="../../terminalgame/util/flow.py">terminalgame/util/flow.py</a></font></td></tr></table>
+    <p><tt>A&nbsp;minimal,&nbsp;synchronous&nbsp;<a href="#StateFlow">StateFlow</a>&nbsp;--&nbsp;the&nbsp;Python&nbsp;analogue&nbsp;of&nbsp;kotlinx.coroutines.<a href="#StateFlow">StateFlow</a>.<br>
+&nbsp;<br>
+Deliberately&nbsp;single-threaded:&nbsp;curses&nbsp;is&nbsp;not&nbsp;thread-safe,&nbsp;so&nbsp;every&nbsp;emission<br>
+happens&nbsp;on&nbsp;the&nbsp;main&nbsp;loop's&nbsp;thread&nbsp;and&nbsp;subscribers&nbsp;run&nbsp;inline.&nbsp;That&nbsp;makes&nbsp;the<br>
+whole&nbsp;pipeline&nbsp;(tick&nbsp;-&gt;&nbsp;state&nbsp;-&gt;&nbsp;render)&nbsp;deterministic&nbsp;and&nbsp;free&nbsp;of&nbsp;locks.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="typing.html#Generic">typing.Generic</a>(<a href="builtins.html#object">builtins.object</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="terminalgame.util.flow.html#StateFlow">StateFlow</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="StateFlow">class <strong>StateFlow</strong></a>(<a href="typing.html#Generic">typing.Generic</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#StateFlow">StateFlow</a>(initial:&nbsp;~T)&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+Holds&nbsp;a&nbsp;current&nbsp;value&nbsp;and&nbsp;notifies&nbsp;subscribers&nbsp;when&nbsp;it&nbsp;changes.<br>
+&nbsp;<br>
+Mirrors&nbsp;<a href="#StateFlow">StateFlow</a>&nbsp;semantics:<br>
+&nbsp;&nbsp;-&nbsp;always&nbsp;has&nbsp;a&nbsp;value&nbsp;(no&nbsp;"empty"&nbsp;state)<br>
+&nbsp;&nbsp;-&nbsp;new&nbsp;subscribers&nbsp;immediately&nbsp;receive&nbsp;the&nbsp;current&nbsp;value<br>
+&nbsp;&nbsp;-&nbsp;conflated&nbsp;/&nbsp;distinct-until-changed:&nbsp;emitting&nbsp;an&nbsp;equal&nbsp;value&nbsp;is&nbsp;a&nbsp;no-op<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="terminalgame.util.flow.html#StateFlow">StateFlow</a></dd>
+<dd><a href="typing.html#Generic">typing.Generic</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="StateFlow-__init__"><strong>__init__</strong></a>(self, initial: ~T) -&gt; None</dt><dd><tt>Creates&nbsp;a&nbsp;flow&nbsp;already&nbsp;holding&nbsp;a&nbsp;value.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;initial:&nbsp;The&nbsp;current&nbsp;value,&nbsp;handed&nbsp;to&nbsp;every&nbsp;subscriber&nbsp;the&nbsp;moment<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;subscribes.</tt></dd></dl>
+
+<dl><dt><a name="StateFlow-emit"><strong>emit</strong></a>(self, new_value: ~T) -&gt; bool</dt><dd><tt>Publishes&nbsp;a&nbsp;new&nbsp;value,&nbsp;unless&nbsp;it&nbsp;equals&nbsp;the&nbsp;one&nbsp;already&nbsp;held.<br>
+&nbsp;<br>
+Equality&nbsp;is&nbsp;what&nbsp;makes&nbsp;this&nbsp;cheap:&nbsp;ViewState&nbsp;is&nbsp;a&nbsp;frozen&nbsp;dataclass,&nbsp;so<br>
+an&nbsp;unchanged&nbsp;frame&nbsp;costs&nbsp;one&nbsp;comparison&nbsp;and&nbsp;does&nbsp;not&nbsp;touch&nbsp;the&nbsp;screen.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;new_value:&nbsp;The&nbsp;value&nbsp;to&nbsp;publish.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;if&nbsp;it&nbsp;differed&nbsp;from&nbsp;the&nbsp;last&nbsp;one&nbsp;and&nbsp;subscribers&nbsp;were&nbsp;called.</tt></dd></dl>
+
+<dl><dt><a name="StateFlow-subscribe"><strong>subscribe</strong></a>(self, on_each: Callable[[~T], NoneType]) -&gt; Callable[[], NoneType]</dt><dd><tt>Registers&nbsp;a&nbsp;collector&nbsp;and&nbsp;hands&nbsp;it&nbsp;the&nbsp;current&nbsp;value&nbsp;at&nbsp;once.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;on_each:&nbsp;Called&nbsp;with&nbsp;the&nbsp;current&nbsp;value&nbsp;now,&nbsp;and&nbsp;with&nbsp;every&nbsp;value<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;emitted&nbsp;afterwards,&nbsp;on&nbsp;the&nbsp;emitting&nbsp;thread.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;A&nbsp;function&nbsp;that&nbsp;unsubscribes,&nbsp;so&nbsp;callers&nbsp;can&nbsp;hold&nbsp;it&nbsp;like&nbsp;a&nbsp;Job.</tt></dd></dl>
+
+<dl><dt><a name="StateFlow-update"><strong>update</strong></a>(self, transform: Callable[[~T], ~T]) -&gt; bool</dt><dd><tt>Emits&nbsp;transform(current),&nbsp;the&nbsp;equivalent&nbsp;of&nbsp;MutableStateFlow.update.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;transform:&nbsp;Called&nbsp;with&nbsp;the&nbsp;current&nbsp;value;&nbsp;its&nbsp;result&nbsp;is&nbsp;emitted.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;True&nbsp;if&nbsp;the&nbsp;transformed&nbsp;value&nbsp;differed&nbsp;from&nbsp;the&nbsp;current&nbsp;one.</tt></dd></dl>
+
+<hr>
+Readonly properties defined here:<br>
+<dl><dt><strong>value</strong></dt>
+<dd><tt>The&nbsp;value&nbsp;held&nbsp;right&nbsp;now,&nbsp;without&nbsp;subscribing&nbsp;to&nbsp;later&nbsp;ones.</tt></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>__orig_bases__</strong> = (typing.Generic[~T],)</dl>
+
+<dl><dt><strong>__parameters__</strong> = (~T,)</dl>
+
+<hr>
+Class methods inherited from <a href="typing.html#Generic">typing.Generic</a>:<br>
+<dl><dt><a name="StateFlow-__class_getitem__"><strong>__class_getitem__</strong></a>(params)<font color="#909090"><font face="helvetica, arial"> from <a href="builtins.html#type">builtins.type</a></font></font></dt></dl>
+
+<dl><dt><a name="StateFlow-__init_subclass__"><strong>__init_subclass__</strong></a>(*args, **kwargs)<font color="#909090"><font face="helvetica, arial"> from <a href="builtins.html#type">builtins.type</a></font></font></dt><dd><tt>This&nbsp;method&nbsp;is&nbsp;called&nbsp;when&nbsp;a&nbsp;class&nbsp;is&nbsp;subclassed.<br>
+&nbsp;<br>
+The&nbsp;default&nbsp;implementation&nbsp;does&nbsp;nothing.&nbsp;It&nbsp;may&nbsp;be<br>
+overridden&nbsp;to&nbsp;extend&nbsp;subclasses.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>Callable</strong> = typing.Callable<br>
+<strong>List</strong> = typing.List<br>
+<strong>T</strong> = ~T</td></tr></table>
+</body></html>
