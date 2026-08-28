@@ -47,6 +47,12 @@ from .state import (
 # horizontal walls run through the middle of theirs. A small square centred in
 # its own character is centred both ways at once.
 _PILL = "▪"
+
+# How a game ended. Two ways out: the arena is cleared, or the ghost catches
+# the player. They are told apart because the line of readings says which
+# happened, and because a capture draws the ghost on top of the player.
+_CLEARED = "cleared"
+_CAUGHT = "caught"
 _PILL_CELL = (_PILL + " " * (CELL_COLS - 1),) * CELL_ROWS
 
 # Walls are drawn as lines rather than solid blocks, so a wall cell needs to
@@ -254,7 +260,7 @@ class GameViewModel:
         self._pill_rows = list(self._pills)
         self._pills_left = sum(row.count(_PILL) for row in self._pill_rows)
         self._score = 0
-        self._game_over = False
+        self._ending: Optional[str] = None
         # The player starts standing on a corridor cell, which has a pill on
         # it. Taking it silently, without scoring, is what makes the opening
         # score 0 rather than 1, and stops a pill nobody can see from being
@@ -275,11 +281,17 @@ class GameViewModel:
         A finished game stops advancing: the ghost stands still, the tick
         count stops, and the frame the player is looking at is the last one
         that will be published until they quit.
+
+        This is one of the two moments a capture can happen -- the ghost
+        walking onto the player. The other is the player walking onto the
+        ghost, in `on_direction`.
         """
-        if self._game_over:
+        if self._ending is not None:
             return
         self._tick_count += 1
         self._advance_ghost()
+        if self._sharing_a_cell():
+            self._ending = _CAUGHT
         self._publish()
 
     def on_direction(self, d_row: int, d_col: int) -> None:
@@ -294,14 +306,20 @@ class GameViewModel:
             d_row: -1, 0 or 1, the rows to move by.
             d_col: -1, 0 or 1, the columns to move by.
         """
-        if self._game_over:
+        if self._ending is not None:
             return
         row, col = self._player_row + d_row, self._player_col + d_col
         if self._maze.is_open(row, col):
             self._player_row, self._player_col = row, col
             if self._take_pill(row, col):
                 self._score += 1
-                self._game_over = self._pills_left == 0
+            # Walking onto the ghost is a capture, and it is checked before
+            # the pills are counted: a player who takes the last pill off the
+            # cell the ghost is standing on has still walked into the ghost.
+            if self._sharing_a_cell():
+                self._ending = _CAUGHT
+            elif self._pills_left == 0:
+                self._ending = _CLEARED
             self._publish()
 
     # -- internals -------------------------------------------------------
@@ -332,6 +350,27 @@ class GameViewModel:
         self._pills = tuple(self._pill_rows)
         self._pills_left -= 1
         return True
+
+    def _sharing_a_cell(self) -> bool:
+        """Reports whether the player and the ghost are standing on one cell.
+
+        A cell, not a character position: the two sprites overlap on screen
+        whenever they are within a character of each other, but only one cell
+        holds them both.
+
+        There is no need to look for the pair swapping places, which is the
+        usual way a collision check is fooled. Nothing here moves at the same
+        time as anything else -- the ghost moves on a tick and the player on a
+        key press, one after another on one thread -- so a pass-through would
+        need two moves, and the check runs after each of them.
+
+        Returns:
+            True if the ghost has the player, however the two came to be
+            there.
+        """
+        return (self._player_row, self._player_col) == (
+            self._ghost_row, self._ghost_col
+        )
 
     def _advance_ghost(self) -> None:
         """Moves the ghost one cell, carrying straight on where possible.
@@ -367,12 +406,20 @@ class GameViewModel:
         the bottom of the screen is a player being told what the maze already
         shows them.
 
+        A finished game says which of the two ways it finished, in the same
+        shape either way: the word, the score, the key that leaves. A line
+        reading GAME OVER after a ghost walked into somebody says what
+        happened but not why, and the two endings are worth telling apart at a
+        glance -- which the frame does as well, by drawing the ghost on top.
+
         The last row loses its final cell to curses, so the budget is
-        PLAYFIELD_COLS - 1, which is 39. Neither line comes near it now: three
-        digits hold a maze this size, which is a few hundred pills, and a
-        fourth would still fit.
+        PLAYFIELD_COLS - 1, which is 39. No line comes near it: three digits
+        hold a maze this size, which is a few hundred pills, and a fourth
+        would still fit.
         """
-        if self._game_over:
+        if self._ending == _CAUGHT:
+            return " CAUGHT  score {:<3}  q quits".format(self._score)
+        if self._ending == _CLEARED:
             return " GAME OVER  score {:<3}  q quits".format(self._score)
         return " score {:<3}  arrows, q quits".format(self._score)
 
@@ -388,24 +435,27 @@ class GameViewModel:
             A frame carrying both maze layers, the two sprites in character
             coordinates, and the status line.
         """
-        status = self._status_line()
+        # Cell coordinates become character coordinates here, and nowhere else.
+        ghost = Sprite(
+            self._ghost_row * CELL_ROWS,
+            self._ghost_col * CELL_COLS - len(_GHOST_ART[0]) // 2,
+            _GHOST_ART, COLOR_GHOST,
+        )
+        player = Sprite(
+            self._player_row * CELL_ROWS,
+            self._player_col * CELL_COLS - len(_PLAYER_ART[0]) // 2,
+            _PLAYER_ART, COLOR_PLAYER,
+        )
+        # Sprites are drawn in order, so the last one wins where they overlap.
+        # The player is normally on top, which is what keeps it visible as the
+        # ghost passes. On a capture that is exactly wrong: the player would
+        # hide the thing that caught them, and the final frame would look like
+        # any other. So the ghost goes last, and the last frame shows it.
+        sprites = (player, ghost) if self._ending == _CAUGHT else (ghost, player)
         return ViewState(
             walls=self._walls,
             pills=self._pills,
-            sprites=(
-                # Cell coordinates become character coordinates here, and
-                # nowhere else.
-                Sprite(
-                    self._ghost_row * CELL_ROWS,
-                    self._ghost_col * CELL_COLS - len(_GHOST_ART[0]) // 2,
-                    _GHOST_ART, COLOR_GHOST,
-                ),
-                Sprite(
-                    self._player_row * CELL_ROWS,
-                    self._player_col * CELL_COLS - len(_PLAYER_ART[0]) // 2,
-                    _PLAYER_ART, COLOR_PLAYER,
-                ),
-            ),
-            status_line=status,
+            sprites=sprites,
+            status_line=self._status_line(),
             tick=self._tick_count,
         )
