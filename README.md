@@ -236,10 +236,12 @@ by itself when asked to run the game.
 
 ## Next steps
 
-Pills are drawn but not collected: the pill layer is built once and never
-changes, so nothing is eaten, scored or counted. That is the obvious next
-feature, and it is not free — the layer would move from a value built once to
-state that changes as the game is played.
+The ghost cannot catch anyone. It walks the maze and passes straight through
+the player, so there is nothing to avoid and nowhere to lose. Capture is the
+obvious next feature, and unlike the pills it needs decisions this skeleton has
+so far been able to avoid: what a life is, what happens to the score and the
+maze when one is lost, and whether a finished game can be played again without
+quitting and starting another.
 
 The maze is random rather than authored. A real Pac-Man maze is 28x31 cells,
 which at one row by two columns per cell needs a 56 by 32 window rather than

@@ -51,24 +51,27 @@ what the player would be looking at:
 
 ```
 == after-moving ==
-|╔═══════════════════════════╦═══════╗   |
-|║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ║ ▪ ▪ ▪ ║   |
+|╔═══════════════════════════════════╗   |
+|║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ║   |
+|║ ▪ ║ ▪ ╔═══════╦═══════╗ ▪ ═════ ▪ ║   |
 ...
-|║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ║ ▪ ▪ ▪ ║▐█▌▪ ▪ ▪ ▪ ║   |
-|╚═══════════╩═══════════════════════╝   |
-| tick 16     at 15,13 arrows, q quits   |
+|║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪▗█▖║   |
+|╚═══════════════════════════════════╝   |
+| tick 16     score 1   at 13,11 q quits |
 ```
 
-`▐█▌` is the player, `▗█▖` the ghost, `▪` a pill, `■` a fat pill. The right-hand
-four columns are blank: the playfield is 36 columns wide inside a 40-column
-terminal.
+`▐█▌` is the player, `▗█▖` the ghost, `▪` a pill and `■` a one-cell island of
+wall — a pillar, not a pill, and drawn larger so the two do not read alike. A
+corridor the player has already walked is blank: the pill there has been eaten.
+The right-hand four columns are blank for a different reason: the playfield is
+36 columns wide inside a 40-column terminal.
 
 Commands:
 
 | Command | Effect |
 |---|---|
 | `show [label]` | print the current 30x40 screen, boxed |
-| `status` | print just the bottom row (`tick N  at row,col`) |
+| `status` | print just the bottom row (`tick N  score N  at row,col`) |
 | `up`/`down`/`left`/`right [n]` | arrow key, n times (default 1) |
 | `key <text>` | send literal characters, e.g. `key q` |
 | `esc` | send Esc — **quits the game** |
@@ -80,8 +83,9 @@ before the next `show`. Raise `SETTLE` in the driver if a frame looks stale.
 
 **Assert on the status line, not the maze.** The maze is carved randomly per
 game and the ghost moves on its own, so no two runs match. `status` is the
-stable readout: `at 15,13` is the player's cell, and it changes only in response
-to your keys.
+stable readout: `at 15,13` is the player's cell and `score 1` the pills eaten,
+and both change only in response to your keys. A move into a fresh corridor
+cell raises the score by one; a move back over a cell already cleared does not.
 
 ```bash
 # did the arrow keys reach the game? try every direction -- any single one
@@ -155,6 +159,10 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   <tab>` returns an object reference and `history of <tab>` returns the
   scrollback, which for a curses app is blank lines. Use the driver to inspect
   frames; the window query above is only good for size and title.
+* **Eating the last pill ends the game.** The status line switches to
+  `GAME OVER  score N  q quits`, the tick count stops, the ghost freezes and
+  arrows do nothing — only `q` or Esc still works. A long scripted walk can
+  reach it, and a `show` afterwards keeps returning the same final frame.
 * **A move into a wall is a silent no-op** — the status line reads the same cell
   twice and nothing on screen changes. That is the game working, not the keys
   being dropped. Before concluding input is broken, try all four directions:
