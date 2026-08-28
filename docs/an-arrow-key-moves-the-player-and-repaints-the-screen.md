@@ -39,8 +39,8 @@ the whole point of carving corridors would be lost.
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`main`](../terminalgame/app/main.py) | The way into the program, and a module of plain functions rather than a class. In this scenario it is the **translator**: the loop inside [`run`](../terminalgame/app/main.py#L43) is the only place a key is turned into a direction, and the only place that knows which keys mean quit and which mean move |
-| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses]. In this scenario it does two separate jobs at opposite ends of the story. First it is the **ear**: [`read_key`](../terminalgame/ui/screen.py#L167) hands back one plain number and attaches no meaning to it. Later it is the **painter**: [`render`](../terminalgame/ui/screen.py#L179) draws the finished picture, and it is called without having asked for anything |
-| [`GameViewModel`](../terminalgame/presentation/view_model.py#L199) | Everything the game knows about where things are. In this scenario it is the **mover**: [`on_direction`](../terminalgame/presentation/view_model.py#L234) applies the step, keeps the result inside the walls, and builds an entirely new picture. It is told a direction and never learns what caused it |
+| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The only part of the program that knows anything about curses[^curses]. In this scenario it does two separate jobs at opposite ends of the story. First it is the **ear**: [`read_key`](../terminalgame/ui/screen.py#L218) hands back one plain number and attaches no meaning to it. Later it is the **painter**: [`render`](../terminalgame/ui/screen.py#L234) draws the finished picture, and it is called without having asked for anything |
+| [`GameViewModel`](../terminalgame/presentation/view_model.py#L220) | Everything the game knows about where things are. In this scenario it is the **mover**: [`on_direction`](../terminalgame/presentation/view_model.py#L285) applies the step, keeps the result inside the walls, and builds an entirely new picture. It is told a direction and never learns what caused it |
 | [`StateFlow`](../terminalgame/util/flow.py#L13) | The carrier that holds the current picture. In this scenario it is the **gatekeeper**, and it matters more here than on any other path: [`emit`](../terminalgame/util/flow.py#L44) compares the new picture against the one it holds, and a player pressing into a wall produces a picture identical to the one already on screen |
 
 ## A key press becoming a moved character, without waiting for the clock
@@ -76,13 +76,13 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | presses the right arrow key | An arrow key does not arrive as a single character. It arrives as a short run of several characters in a row, called an escape sequence[^escape]. The terminal sends that run, and curses[^curses] is what gathers it up. This was arranged during startup, by asking curses to recognise these runs, and it is the reason no part of this program ever has to decode one |
-| 2 | [`read_key`](../terminalgame/ui/screen.py#L167)`()` | The loop asks for a key on every single pass. Most of the time there is nothing to collect, and the answer is nothing at all. This particular pass is one of the rare ones where a player has actually pressed something |
+| 2 | [`read_key`](../terminalgame/ui/screen.py#L218)`()` | The loop asks for a key on every single pass. Most of the time there is nothing to collect, and the answer is nothing at all. This particular pass is one of the rare ones where a player has actually pressed something |
 | 3 | `getch()` | The underlying request for a key. It has been told to give up after a set time rather than waiting forever, which is what allows the loop to go and check the clock when no key is pressed. Here the key is already waiting, so it comes back at once |
 | 4 | the one value standing for the right arrow | The several characters the terminal sent have been gathered into a single number. That number is not the code for any printable character. It is a value curses reserves for this particular key, so that an arrow can never be confused with something a player typed |
 | 5 | that same value, with no meaning attached | The screen passes the number straight through. It does not know that the game has a player character, or that anything moves. This is the whole extent of the screen's involvement in the story until the very last part |
 | 6 | finds the value is not one of the quit keys | The first thing checked, before anything else, is whether the game should stop. The [quit keys](../terminalgame/app/main.py#L40) are the letter q in either capital or small form, and the escape key. Testing for quit first means a player can always leave, even if every other check that follows were somehow broken |
 | 7 | looks the value up in the table of directions | The [table of directions](../terminalgame/app/main.py#L34) has exactly four entries, one for each arrow, and each holds a pair of numbers: how much to change the row by, and how much to change the column by. This table is the complete vocabulary of the game's controls. A key that is in neither this table nor the quit keys is quietly ignored, which is why typing an ordinary letter during the game does nothing and disturbs nothing |
-| 8 | [`on_direction`](../terminalgame/presentation/view_model.py#L234)`(0, 1)` | **This is the moment the key stops being a key.** What crosses over is the pair of numbers zero and one, meaning no change to the row and one more column. The view model[^viewmodel] is never told which key was pressed, or that a key was pressed at all. The same call could just as easily come from a test, or later from a game controller, and nothing on the far side would need changing |
+| 8 | [`on_direction`](../terminalgame/presentation/view_model.py#L285)`(0, 1)` | **This is the moment the key stops being a key.** What crosses over is the pair of numbers zero and one, meaning no change to the row and one more column. The view model[^viewmodel] is never told which key was pressed, or that a key was pressed at all. The same call could just as easily come from a test, or later from a game controller, and nothing on the far side would need changing |
 | 9 | looks up the cell the step lands in, and moves only if it is open | The maze is asked, and it answers about a **cell** rather than a character position. If the cell is wall, nothing happens: no move, no new picture, and not a single byte to the terminal. That is why a player holding an arrow key against a wall costs nothing at all. If it is open, the player is simply put there — there is no clamping to the playfield[^playfield]'s edges, because the border is itself wall and the same check stops the player at it |
 | 10 | builds an entirely new picture | Exactly the same kind of picture the clock's beat produces. Note what has **not** changed: the count of ticks stays where it was, and the ghost has not moved, because neither of those has anything to do with a key being pressed. What has changed is the player's position, and the line of readings underneath the arena, which shows that position in words |
 | 11 | [`emit`](../terminalgame/util/flow.py#L44)`(the newly built picture)` | The new picture is offered to the carrier. The view model has finished. It does not know whether anybody is listening, and it never finds out whether the picture was drawn |
@@ -123,19 +123,16 @@ against a wall costs the terminal nothing at all — not one byte.
 - [The first frame is painted when the screen subscribes to the view model](the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md)
   — where the registration used in this document was made, and where the game
   was told how long to wait for a key before giving up.
-- **An unchanged frame is dropped before it reaches the terminal** — the other
+- [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) — the other
   outcome of the comparing step, which this path reaches whenever a player
   presses into a wall.
-
-*(The entry above that is not a link is a document that has not been written
-yet.)*
 
 ### Footnotes
 
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It holds where
     the player is, where the ghost is, and how many ticks have passed. It is
-    [`GameViewModel`](../terminalgame/presentation/view_model.py#L199). It never
+    [`GameViewModel`](../terminalgame/presentation/view_model.py#L220). It never
     draws anything and contains no mention of curses[^curses] at all, which is
     what allows it to be read and tested without a terminal being involved.
 

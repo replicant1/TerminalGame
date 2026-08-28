@@ -29,13 +29,22 @@ happens on that path matters less.
 
 ## The scenarios in this folder
 
+They are listed in the order the program does them: the maze before the window,
+the window before the first picture, and the ending last.
+
 | Scenario | Priority |
 |---|---|
 | [A maze is carved and then braided until it has no dead ends](a-maze-is-carved-and-then-braided-until-it-has-no-dead-ends.md) | `MEDIUM` |
+| [A wall cell chooses its box-drawing glyph from its neighbours](a-wall-cell-chooses-its-box-drawing-glyph-from-its-neighbours.md) | `LOW` |
 | [The launcher opens the game in its own Terminal window](the-launcher-opens-the-game-in-its-own-terminal-window.md) | `MEDIUM` |
+| [A terminal too small to hold the playfield is refused](a-terminal-too-small-to-hold-the-playfield-is-refused.md) | `LOW` |
 | [The first frame is painted when the screen subscribes to the view model](the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md) | `HIGH` |
 | [A clock tick moves the ghost and repaints the screen](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `HIGH` |
 | [An arrow key moves the player and repaints the screen](an-arrow-key-moves-the-player-and-repaints-the-screen.md) | `HIGH` |
+| [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md) | `MEDIUM` |
+| [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `LOW` |
+| [The last pill is eaten and the game is over](the-last-pill-is-eaten-and-the-game-is-over.md) | `MEDIUM` |
+| [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md) | `MEDIUM` |
 
 ## Scenarios not yet written
 
@@ -43,15 +52,18 @@ Each of these is a real collaboration in the program that no document covers
 yet. They are listed in bold rather than linked, because a link to a document
 that does not exist would be a broken link.
 
-- **A quit key ends the game and closes the window** — `MEDIUM`. Covers how the
-  game tells the waiting launcher that it has finished, and how the window is
-  then closed without the terminal program asking the player to confirm.
-- **A terminal too small to hold the playfield is refused** — `LOW`. The
-  failure path out of opening the screen.
-- **An unchanged frame is dropped before it reaches the terminal** — `LOW`. The
-  comparison that stops identical pictures being drawn twice. A press into a
-  wall now stops earlier than this, without building a picture at all, so the
-  comparison matters less than it did.
-- **A wall cell chooses its box-drawing glyph from its neighbours** — `LOW`.
-  How corners close, tees form and a lone wall becomes a pillar, and why
-  everything in the picture shares one centre line.
+- **The game is played in the window the player is already using** — `LOW`.
+  What `--here` does instead of opening a window, and why the request to resize
+  the terminal is the only sizing there is on that path.
+- **The clock catches up, or gives up, after the program is suspended** —
+  `LOW`. What happens to the beat when a laptop is closed for an hour: the
+  deadline is advanced by whole intervals so the rate cannot drift, and at most
+  three missed beats are replayed before the clock realigns to the present.
+- **The window is resized while a game is in progress** — `LOW`. The one key
+  press that is neither a move nor a quit: the terminal reports its own resize
+  as a key, and the screen re-measures and repaints from scratch rather than
+  trusting what it believed was on the terminal.
+- **The player and the ghost are placed at opposite ends of the maze** — `LOW`.
+  Why neither can be given a fixed starting cell once the maze is random, and
+  how "nearest to the middle" and "furthest from that" keep them apart whatever
+  shape was carved.
