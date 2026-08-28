@@ -45,15 +45,17 @@ COLOR_PILL = 5
 class Sprite:
     """A block of glyphs drawn on top of the background.
 
-    `art` is one string per character row, and its width is odd rather than a
-    cell's width. A sprite is drawn centred on the corridor's centre line,
-    which is the left character of its cell, and only an odd width can sit
-    centred on a character -- so a sprite wider than one character overhangs
-    into the blank character either side of it.
-
-    `row` and `col` are the character position of the art's top-left corner,
-    not its cell. The conversion happens in the ViewModel, so GameScreen never
-    has to know that cells exist.
+    Attributes:
+        row: Character row of the art's top-left corner, not its cell. The
+            conversion from cells happens in the ViewModel, so GameScreen
+            never has to know that cells exist.
+        col: Character column of that same corner.
+        art: One string per character row. Its width is odd rather than a
+            cell's width: a sprite is drawn centred on the corridor's centre
+            line, which is the left character of its cell, and only an odd
+            width can sit centred on a character -- so a sprite wider than one
+            character overhangs into the blank character either side of it.
+        color: Which logical colour slot to draw the art in.
     """
 
     row: int
@@ -66,14 +68,21 @@ class Sprite:
 class ViewState:
     """One complete frame.
 
-    The maze arrives as two layers rather than one, because a layer is drawn
-    in a single colour: `walls` carries the blocks and `pills` the pellets,
-    each blank where the other has something. Splitting them is what lets the
-    pills be a different colour from the walls they sit between.
+    Every part of a frame is redrawn every time, and ncurses works out which
+    character positions actually changed.
 
-    `sprites` are the things that move, and `status_line` the row of readings
-    underneath. Every part of a frame is redrawn every time, and ncurses works
-    out which character positions actually changed.
+    Attributes:
+        walls: The wall layer, one string per character row, blank wherever
+            the pill layer has something. The maze arrives as two layers
+            rather than one because a layer is drawn in a single colour, and
+            splitting them is what lets the pills be a different colour from
+            the walls they sit between.
+        pills: The pellet layer, blank wherever the wall layer has something.
+        sprites: The things that move, drawn over both layers in the order
+            given.
+        status_line: The row of readings underneath the playfield.
+        tick: How many times the clock has fired, carried so a test can tell
+            two otherwise identical frames apart.
     """
 
     walls: Tuple[str, ...]
@@ -83,4 +92,14 @@ class ViewState:
     tick: int = 0
 
     def with_sprites(self, *sprites: Sprite) -> "ViewState":
+        """Returns a copy of this frame carrying different sprites.
+
+        Args:
+            *sprites: The sprites the new frame should have, replacing rather
+                than adding to the ones this frame holds.
+
+        Returns:
+            A new frame, since a ViewState is frozen and never edited in
+            place.
+        """
         return replace(self, sprites=tuple(sprites))

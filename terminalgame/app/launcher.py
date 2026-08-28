@@ -151,7 +151,12 @@ class LaunchError(RuntimeError):
 
 
 def is_supported() -> bool:
-    """True when we can drive Terminal.app on this machine."""
+    """Reports whether Terminal.app can be driven on this machine.
+
+    Returns:
+        True on macOS with osascript available, which is what spawning a
+        window needs.
+    """
     return sys.platform == "darwin" and os.path.exists("/usr/bin/osascript")
 
 
@@ -159,16 +164,40 @@ def is_supported() -> bool:
 
 
 def announce_started(sentinel_path: Optional[str]) -> None:
-    """Called by the child once it is running, so the launcher can watch it."""
+    """Records the child's pid, so the launcher knows it started.
+
+    Called by the child once it is running.
+
+    Args:
+        sentinel_path: File the launcher is watching, or None when the game
+            was started by hand rather than by the launcher.
+    """
     _write_sentinel(sentinel_path, "pid {}".format(os.getpid()))
 
 
 def announce_finished(sentinel_path: Optional[str], exit_code: int) -> None:
-    """Called by the child on the way out, cleanly or otherwise."""
+    """Records the exit code, so the launcher knows the game is finished.
+
+    Called by the child on the way out, cleanly or otherwise.
+
+    Args:
+        sentinel_path: File the launcher is watching, or None.
+        exit_code: The code the game is about to exit with.
+    """
     _write_sentinel(sentinel_path, "exit {}".format(exit_code))
 
 
 def _write_sentinel(sentinel_path: Optional[str], text: str) -> None:
+    """Replaces the sentinel file with one line of text.
+
+    Written to a temporary file and renamed, so the launcher never reads a
+    half-written one. Failures are swallowed: the launcher's liveness check
+    covers a sentinel that never arrives.
+
+    Args:
+        sentinel_path: File to write, or None to do nothing.
+        text: The line to write.
+    """
     if not sentinel_path:
         return
     try:
@@ -187,9 +216,19 @@ def _write_sentinel(sentinel_path: Optional[str], text: str) -> None:
 
 
 def launch(rows: int, cols: int, child_arguments: List[str]) -> int:
-    """Open the game in a new window and block until it exits.
+    """Opens the game in a new window and blocks until it exits.
 
-    Returns the game's exit code.
+    Args:
+        rows: How many character rows the window needs.
+        cols: How many character columns it needs.
+        child_arguments: Extra arguments for the game inside the window.
+
+    Returns:
+        The game's exit code, so this behaves like an ordinary command.
+
+    Raises:
+        LaunchError: If this process is itself the spawned child, if the
+            platform cannot drive Terminal.app, or if the window did not open.
     """
     if os.environ.get(ENV_CHILD) == "1":
         # We are already inside a window this launcher opened. Spawning again
@@ -223,10 +262,17 @@ def launch(rows: int, cols: int, child_arguments: List[str]) -> int:
 
 
 def _build_command(sentinel: str, child_arguments: List[str]) -> str:
-    """The shell line Terminal will run in the new window.
+    """Builds the shell line Terminal will run in the new window.
 
     `exec` replaces the shell with Python, so when the game exits the tab has
     no running process and closes without Terminal asking for confirmation.
+
+    Args:
+        sentinel: Path the child should report its progress to.
+        child_arguments: Extra arguments for the game.
+
+    Returns:
+        One shell command, with every part quoted for the shell that runs it.
     """
     parts = [
         "cd",
@@ -245,7 +291,7 @@ def _build_command(sentinel: str, child_arguments: List[str]) -> str:
 
 
 def _project_root() -> str:
-    """The directory holding the `terminalgame` package.
+    """Returns the directory holding the `terminalgame` package.
 
     Derived from this file rather than sys.argv[0], which under `-m` points at
     the module inside the package and would put the child in the wrong cwd.
@@ -258,6 +304,20 @@ def _project_root() -> str:
 
 
 def _spawn_window(command: str, rows: int, cols: int) -> int:
+    """Opens a Terminal.app window of exactly this size and runs the command.
+
+    Args:
+        command: The shell line for the new window to run.
+        rows: How many character rows the window needs.
+        cols: How many character columns it needs.
+
+    Returns:
+        The window's id, or 0 if the window opened but could not be
+        identified -- in which case it is simply never closed from here.
+
+    Raises:
+        LaunchError: If Terminal.app refused to open the window.
+    """
     # The command is embedded in an AppleScript string literal, so backslashes
     # and double quotes have to survive one more level of escaping.
     escaped = command.replace("\\", "\\\\").replace('"', '\\"')
@@ -284,10 +344,18 @@ def _spawn_window(command: str, rows: int, cols: int) -> int:
 
 
 def _wait_for_child(sentinel: str) -> Tuple[int, Optional[int]]:
-    """Block until the game reports an exit code, or its process disappears.
+    """Blocks until the game reports an exit code, or its process disappears.
 
-    Returns (exit code, child pid) -- the pid so the caller can wait for the
-    process to actually leave before touching its window.
+    Args:
+        sentinel: File the child writes its pid and exit code to.
+
+    Returns:
+        The exit code and the child's pid -- the pid so the caller can wait
+        for the process to actually leave before touching its window. The pid
+        is None when the window was closed from under the game.
+
+    Raises:
+        LaunchError: If the game never announced itself at all.
     """
     deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
     child_pid = None
@@ -314,13 +382,26 @@ def _wait_for_child(sentinel: str) -> Tuple[int, Optional[int]]:
 
 
 def _wait_for_process_exit(pid: int) -> None:
-    """Wait, briefly and bounded, for the game process to disappear."""
+    """Waits, briefly and bounded, for the game process to disappear.
+
+    Args:
+        pid: The game's process id.
+    """
     deadline = time.monotonic() + CHILD_EXIT_TIMEOUT_SECONDS
     while _process_alive(pid) and time.monotonic() < deadline:
         time.sleep(POLL_INTERVAL_SECONDS / 2)
 
 
 def _read_sentinel(sentinel: str) -> Tuple[Optional[str], int]:
+    """Reads the sentinel file, tolerating one that is absent or mid-write.
+
+    Args:
+        sentinel: File to read.
+
+    Returns:
+        The state word and its number, so ("pid", 1234) or ("exit", 0), and
+        (None, 0) when there is nothing readable there yet.
+    """
     try:
         with open(sentinel) as handle:
             state, _, raw = handle.read().strip().partition(" ")
@@ -330,6 +411,15 @@ def _read_sentinel(sentinel: str) -> Tuple[Optional[str], int]:
 
 
 def _process_alive(pid: int) -> bool:
+    """Reports whether a process still exists.
+
+    Args:
+        pid: The process id to check.
+
+    Returns:
+        True if the process is there. A process owned by somebody else counts
+        as alive, since the signal being refused proves it exists.
+    """
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -340,6 +430,11 @@ def _process_alive(pid: int) -> bool:
 
 
 def _close_window(window_id: int) -> None:
+    """Closes the game's window, if it is not still running something.
+
+    Args:
+        window_id: The window to close.
+    """
     subprocess.run(
         ["/usr/bin/osascript", "-e", _CLOSE_SCRIPT.format(window_id=window_id)],
         capture_output=True,
@@ -348,6 +443,12 @@ def _close_window(window_id: int) -> None:
 
 
 def _cleanup(directory: str, sentinel: str) -> None:
+    """Removes the sentinel file and the directory holding it.
+
+    Args:
+        directory: The temporary directory made for this game.
+        sentinel: The sentinel file inside it.
+    """
     for path in (sentinel, sentinel + ".tmp"):
         try:
             os.unlink(path)

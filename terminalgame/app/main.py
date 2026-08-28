@@ -41,6 +41,14 @@ _QUIT_KEYS = {ord("q"), ord("Q"), 27}  # 27 = Esc
 
 
 def run(screen: GameScreen) -> None:
+    """Runs the game loop until the player quits.
+
+    Keys are handled the moment they arrive and the clock is polled between
+    them, so ticks and rendering stay on this one thread.
+
+    Args:
+        screen: An open screen to draw on and read keys from.
+    """
     view_model = GameViewModel()
     clock = GameClock(TICK_INTERVAL_SECONDS, view_model.tick)
 
@@ -67,7 +75,18 @@ def run(screen: GameScreen) -> None:
 
 
 def play(sentinel: str, spawned: bool) -> int:
-    """Run the game in whatever terminal this process already owns."""
+    """Plays the game in whatever terminal this process already owns.
+
+    Args:
+        sentinel: File to report progress to, or None when nothing is
+            watching.
+        spawned: Whether this process is running inside a window the launcher
+            opened, which is what decides if an error has to be held on screen
+            before the window closes.
+
+    Returns:
+        0 for a normal exit, 1 if the terminal was too small to play in.
+    """
     launcher.announce_started(sentinel)
     exit_code = 0
     try:
@@ -88,6 +107,11 @@ def play(sentinel: str, spawned: bool) -> int:
 
 
 def _pause(message: str) -> None:
+    """Holds the window open until Return is pressed.
+
+    Args:
+        message: What to tell the player before waiting.
+    """
     try:
         input("\n" + message)
     except (EOFError, KeyboardInterrupt):
@@ -95,6 +119,15 @@ def _pause(message: str) -> None:
 
 
 def parse_arguments(argv):
+    """Reads the command line, falling back to the launcher's environment.
+
+    Args:
+        argv: Arguments to parse, or None to take them from sys.argv.
+
+    Returns:
+        The parsed arguments, with `child` and `sentinel` filled in from the
+        environment when the launcher set them there rather than in argv.
+    """
     parser = argparse.ArgumentParser(description="A retro terminal game skeleton.")
     parser.add_argument(
         "--here",
@@ -113,6 +146,14 @@ def parse_arguments(argv):
 
 
 def main(argv=None) -> int:
+    """Plays the game here, or opens a window and plays it there.
+
+    Args:
+        argv: Arguments to parse, or None to take them from sys.argv.
+
+    Returns:
+        The game's exit code, or 1 if the window could not be opened.
+    """
     arguments = parse_arguments(argv)
 
     if arguments.child or arguments.here:
