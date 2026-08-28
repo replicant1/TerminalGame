@@ -18,6 +18,11 @@ out of a false terminal, and every character was drawn in the colour the game
 gave it. The cleared corridors are where the player has already been — the
 score is the count of them.
 
+There is [half a minute of it being played](docs/images/the-game-being-played.gif)
+as well — the player working through the pills, keeping out of the ghost's way,
+and then turning round and walking straight into it. Same method: a real game,
+recorded a frame at a time through the same false terminal.
+
 ## Structure
 
     terminalgame/
