@@ -135,10 +135,14 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   writes `ESC [ 8 ; 30 ; 40 t` asking the terminal to resize, which a pty
   ignores; it then measures and raises if the size is short:
   `Need at least 30x40 (rows x cols); terminal is 24x80.`, exit code 1. The
-  driver sets the size with `TIOCSWINSZ` before the child can measure.
-* **Don't set `LINES`/`COLUMNS` in the child's environment.** ncurses prefers
-  them over the pty's real size, so they mask a genuine size mismatch and go
-  stale on resize. The driver deliberately sets neither.
+  driver sets the size with `TIOCSWINSZ` before the child can measure — the
+  child blocks on a pipe until the parent says the size is in place, so the
+  fork cannot race the measurement.
+* **`LINES`/`COLUMNS` in your shell would break the driver, so it drops them.**
+  ncurses prefers them over the pty's real size, so an exported `LINES=24`
+  makes the game measure 24 rows in a 30-row pty and exit 1. The driver `pop`s
+  both from the child's environment; before it did, running the driver from a
+  shell that exported them failed every time.
 * **`-m` only.** `python3 terminalgame/app/main.py` fails with
   `ImportError: attempted relative import with no known parent package`.
 * **On macOS the pty master read returns EOF/`EIO` when the game exits**, before
@@ -152,6 +156,12 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   twice and nothing on screen changes. That is the game working, not the keys
   being dropped. Before concluding input is broken, try all four directions:
   in an unlucky spawn three of them are walls.
+* **The game ignores SIGTERM.** ncurses installs its own handler at
+  `initscr()` so it can restore the terminal, and the game sits straight
+  through it — `ps` still reports `Ss+` seconds later. To stop it from a
+  script, close the pty master (it notices the hangup within 0.1s) or send
+  `q`, with SIGKILL as the backstop. `driver.py` cleans up that way on every
+  exit path, including a malformed command, so nothing is left holding a pty.
 * **`q`, `Q` and Esc all quit**, so `key q` in the middle of a script ends the
   run. Anything after it prints `driver: game already exited`.
 
@@ -159,9 +169,10 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
 
 | Symptom | Cause / fix |
 |---|---|
+| `driver: expected a repeat count, got 'foo'`, exit 1 | A malformed command (`right foo`, `wait x`, `right 0`). The script stops there and the game is shut down. |
 | `driver: game already exited (0)` partway through a script | An Esc or a `q` reached the game — check for a CSI-form arrow key, or a stray `key q`. |
 | Frames identical across two `show`s, tick not advancing | The game has exited; the emulator keeps the last frame. Add `status` after each key to catch it early. |
-| `Need at least 30x40 ...`, exit 1 | The pty was sized after the game measured it, or `LINES`/`COLUMNS` were set in the environment. |
+| `Need at least 30x40 ...`, exit 1 | Something other than the driver launched the game in a terminal shorter than 30x40. The driver sizes the pty before the child can measure it and strips `LINES`/`COLUMNS`, so it should not come from there. |
 | `ImportError: attempted relative import` | Launched by path instead of `python3 -m terminalgame.app.main`. |
 | First run stalls ~10s printing `installing pyte` | Expected once: it is building `.venv` and pip-installing `pyte`. Needs network. |
 | `Terminal.app refused to open the window` | Automation permission for controlling Terminal was denied, or you are not on macOS. Use `--here`, or the driver. |
