@@ -10,6 +10,14 @@ No dependencies — the system Python 3.9 already ships everything needed.
 Arrows move, `q` or Esc quits. The maze is different every game. To drive it from a
 script instead of by hand, see [Driving it headlessly](#driving-it-headlessly).
 
+<img src="docs/images/the-game-in-progress.png" alt="The game in play: a 30 by 40 terminal window on black, a maze drawn in blue double lines, gold pills in every corridor cell, a yellow player mid-maze with the corridor behind it eaten clean, a pink ghost near the bottom edge, and a cyan readings line underneath saying score 41, arrows, q quits." width="420">
+
+A real frame, not a mock-up: the game was played through the
+[run skill](.claude/skills/run-terminalgame/SKILL.md), the frame was read back
+out of a false terminal, and every character was drawn in the colour the game
+gave it. The cleared corridors are where the player has already been — the
+score is the count of them.
+
 ## Structure
 
     terminalgame/
