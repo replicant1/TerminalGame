@@ -6,9 +6,9 @@ Pictures are offered to a carrier before they are drawn, and the carrier
 compares each one against the picture it already holds. If they are equal it
 keeps the old one, tells the offerer nothing changed, and no drawing happens at
 all. That is the whole mechanism, and it is
-[eight lines long](../terminalgame/util/flow.py#L56).
+[eight lines long](../../terminalgame/util/flow.py#L56).
 
-It works because a picture is [frozen](../terminalgame/presentation/state.py#L68):
+It works because a picture is [frozen](../../terminalgame/presentation/state.py#L68):
 comparing two of them compares their contents rather than asking whether they
 are the same object. Two separately built pictures of an identical game are
 equal, and the carrier can tell.
@@ -33,9 +33,9 @@ before it builds one:
 |---|---|
 | A clock beat | The count of beats is part of the picture and has just gone up, so the picture always differs |
 | An arrow key into open corridor | The player has moved, so the picture always differs |
-| An arrow key into a wall | [Returns before publishing](../terminalgame/presentation/view_model.py#L285). No picture is built at all, so nothing is offered |
+| An arrow key into a wall | [Returns before publishing](../../terminalgame/presentation/view_model.py#L285). No picture is built at all, so nothing is offered |
 | A key that is neither an arrow nor a quit key | The loop ignores it. The view model is never called |
-| Anything at all after the last pill | [Returns immediately](../terminalgame/presentation/view_model.py#L272), beats included. Nothing is built and nothing is offered |
+| Anything at all after the last pill | [Returns immediately](../../terminalgame/presentation/view_model.py#L272), beats included. Nothing is built and nothing is offered |
 
 The wall press is the one worth noticing, because it is the case the comparison
 was for. It used to be the path that produced identical pictures, and it does
@@ -70,7 +70,7 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | builds a complete picture | Both maze layers, both moving characters, the line of readings. The building is the expensive half of a frame, and it has already happened by the time anything is compared — which is why dropping a picture here saves the *drawing*, never the *building* |
-| 2 | [`emit`](../terminalgame/util/flow.py#L56)`(that picture)` | The view model offers and moves on. It never learns which of the two branches below was taken, and nothing in the game reads the answer |
+| 2 | [`emit`](../../terminalgame/util/flow.py#L56)`(that picture)` | The view model offers and moves on. It never learns which of the two branches below was taken, and nothing in the game reads the answer |
 | 3 | compares it against the one it holds | A comparison of contents, not of identity. It stops at the first part that differs, and the parts are compared in the order they are written down: the walls first, then the pills, then the moving characters, then the readings, then the count of beats. The walls are the same unaltered object in every picture of a game, so that part costs nothing to compare |
 | 4 | keeps the new one as the current picture | From this moment the carrier's idea of "what is on the screen" is the new picture, whether or not the drawing that follows succeeds |
 | 5 | `render(it)` | The subscriber list is copied before it is walked, so a subscriber may unsubscribe while being called without disturbing the walk. There is exactly one subscriber in this program |
@@ -102,7 +102,7 @@ is physically on the screen and sends instructions only for the positions that
 differ. An identical frame differs nowhere. So the saving here is the work of
 building the drawing, not the bytes on the wire — a distinction the README
 makes at
-[Full state or deltas?](../README.md#full-state-or-deltas), and the reason this
+[Full state or deltas?](../../README.md#full-state-or-deltas), and the reason this
 scenario is `LOW` rather than `HIGH`.
 
 ## Related scenarios

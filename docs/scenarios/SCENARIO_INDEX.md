@@ -58,7 +58,7 @@ The times are the reading times, at the pace of somebody reading carefully
 rather than skimming.
 
 **Before the first lap, or at any point during it:**
-[Class overview](CLASS_OVERVIEW.md) — 9 minutes. Not a scenario. It is the map:
+[Class overview](../CLASS_OVERVIEW.md) — 9 minutes. Not a scenario. It is the map:
 every class, every public member, and each class's own description of itself.
 Read it whenever you want the shape of the thing rather than the story of a
 moment, and come back to it between laps.

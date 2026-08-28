@@ -13,14 +13,14 @@ the sixteen answers, drawn as the lines that result: runs, corners, a tee, a
 crossing, a single arm drawn as a run, and no arms at all drawn as a pillar.
 Third, the two characters of a wall cell: the right-hand one carries a dash
 when the wall continues east, and stays blank when it does not, which is the
-gap a pill in the next cell needs.](images/a-wall-cell-picks-its-glyph.svg)
+gap a pill in the next cell needs.](../images/a-wall-cell-picks-its-glyph.svg)
 
 ## The four questions
 
 A wall cell asks whether the cell to its north, south, west and east is also
 wall. Each answer that is yes contributes a number — 1, 2, 4 and 8 — and the
 four add up to one value between 0 and 15. That value chooses the glyph from
-[a table of sixteen](../terminalgame/presentation/view_model.py#L64).
+[a table of sixteen](../../terminalgame/presentation/view_model.py#L64).
 
 Two decisions in those questions are worth stating, because both are what makes
 the border of the maze come out as a rectangle rather than a fringe.
@@ -77,9 +77,9 @@ picture where the walls and the pills are jammed together.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`Maze`](../terminalgame/presentation/maze.py#L31) | The shape, and the only source of truth. In this scenario it is the **oracle**: [`is_open`](../terminalgame/presentation/maze.py#L128) answers the four questions and treats anything off the grid as not-wall |
-| [`_wall_cell`](../terminalgame/presentation/view_model.py#L143) | The chooser. It is a plain function rather than a method because it is a lookup and nothing more: four questions in, two characters out, no state |
-| [`_to_layers`](../terminalgame/presentation/view_model.py#L185) | The pass that walks every cell of the maze once, calling the chooser for the wall cells and putting a pill in the open ones, and hands back the two layers a picture is made of |
+| [`Maze`](../../terminalgame/presentation/maze.py#L31) | The shape, and the only source of truth. In this scenario it is the **oracle**: [`is_open`](../../terminalgame/presentation/maze.py#L128) answers the four questions and treats anything off the grid as not-wall |
+| [`_wall_cell`](../../terminalgame/presentation/view_model.py#L143) | The chooser. It is a plain function rather than a method because it is a lookup and nothing more: four questions in, two characters out, no state |
+| [`_to_layers`](../../terminalgame/presentation/view_model.py#L185) | The pass that walks every cell of the maze once, calling the chooser for the wall cells and putting a pill in the open ones, and hands back the two layers a picture is made of |
 
 ## Turning a maze into a wall layer
 
@@ -105,7 +105,7 @@ sequenceDiagram
 |---:|---|---|
 | 1 | `is_open(this cell)?` | Every cell of the maze is visited once, in reading order. This question decides which of the two layers gets something and which gets blanks |
 | 2 | no, it is wall | An open cell takes the other branch: it gets a pill in the pill layer and blanks in the wall layer. A wall cell gets the opposite, which is why the solid islands come out blank inside without anything having to go looking for them |
-| 3 | [`_wall_cell`](../terminalgame/presentation/view_model.py#L143)`(maze, row, col)` | The maze is passed in rather than remembered. The function holds nothing between calls, which is what lets a single cell's glyph be worked out and checked on its own |
+| 3 | [`_wall_cell`](../../terminalgame/presentation/view_model.py#L143)`(maze, row, col)` | The maze is passed in rather than remembered. The function holds nothing between calls, which is what lets a single cell's glyph be worked out and checked on its own |
 | 4 | is the cell to the north wall? | The first of four separate questions to the maze, each of which may fall outside the grid |
 | 5 | to the south? to the west? to the east? | The other three, asked the same way. Nothing is cached and nothing is shared between cells: a cell's glyph depends on nothing but the four answers it gets |
 | 6 | four answers, with out of bounds counting as not-wall | The rule that closes the border. It is expressed once, inside the asking, so no caller has to remember it |
