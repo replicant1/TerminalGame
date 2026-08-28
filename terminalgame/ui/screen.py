@@ -60,6 +60,12 @@ class GameScreen:
     """Owns the curses lifetime and paints ViewStates onto the terminal."""
 
     def __init__(self, rows: int = PLAYFIELD_ROWS, cols: int = PLAYFIELD_COLS) -> None:
+        """Prepares a screen. Nothing touches curses until `open`.
+
+        Args:
+            rows: How many character rows the playfield needs.
+            cols: How many character columns it needs.
+        """
         self._rows = rows
         self._cols = cols
         self._stdscr = None
@@ -69,14 +75,35 @@ class GameScreen:
     # -- lifecycle -------------------------------------------------------
 
     def __enter__(self) -> "GameScreen":
+        """Opens curses and returns the screen, for use as a context manager."""
         self.open()
         return self
 
     def __exit__(self, exc_type, exc, tb) -> bool:
+        """Restores the terminal, whether the block ended well or badly.
+
+        Args:
+            exc_type: Type of the exception leaving the block, if any.
+            exc: The exception itself, if any.
+            tb: Its traceback, if any.
+
+        Returns:
+            False, so an exception carries on rather than being swallowed by
+            the terminal being tidied up.
+        """
         self.close()
         return False
 
     def open(self) -> None:
+        """Takes over the terminal: raw keys, no echo, no caret, colours.
+
+        The terminal is asked to resize itself to the playfield first, since a
+        window smaller than the playfield cannot be drawn into.
+
+        Raises:
+            TerminalTooSmall: If the terminal ignored the resize request and
+                is still shorter or narrower than the playfield.
+        """
         locale.setlocale(locale.LC_ALL, "")  # required before any wide glyphs
         self._request_window_size()
 
@@ -98,6 +125,11 @@ class GameScreen:
             )
 
     def close(self) -> None:
+        """Gives the terminal back, and stops collecting the state flow.
+
+        Safe to call twice: a screen that was never opened, or has been closed
+        already, does nothing.
+        """
         if self._unsubscribe is not None:
             self._unsubscribe()
             self._unsubscribe = None
@@ -110,11 +142,17 @@ class GameScreen:
             self._stdscr = None
 
     def _request_window_size(self) -> None:
+        """Asks the terminal to resize itself, then waits for it to land."""
         sys.stdout.write(_RESIZE_SEQUENCE.format(rows=self._rows, cols=self._cols))
         sys.stdout.flush()
         time.sleep(_RESIZE_SETTLE_SECONDS)
 
     def _init_colors(self) -> None:
+        """Maps the logical colour slots onto curses colour pairs.
+
+        Does nothing on a terminal without colour, where every slot then draws
+        in the default attribute.
+        """
         if not curses.has_colors():
             return
         curses.start_color()
@@ -153,7 +191,15 @@ class GameScreen:
     # -- wiring ----------------------------------------------------------
 
     def attach(self, view_model) -> None:
-        """Collect the ViewModel's state flow. Renders the current frame at once."""
+        """Collects the ViewModel's state flow, painting the current frame at once.
+
+        Args:
+            view_model: The ViewModel whose `state` flow to subscribe to. The
+                screen only ever receives frames; it never asks for one.
+
+        Raises:
+            RuntimeError: If the screen has not been opened yet.
+        """
         if self._stdscr is None:
             raise RuntimeError("GameScreen.open() must be called before attach()")
         self._unsubscribe = view_model.state.subscribe(self.render)
@@ -161,23 +207,37 @@ class GameScreen:
     # -- input -----------------------------------------------------------
 
     def set_input_timeout(self, milliseconds: int) -> None:
-        """Bound how long getch() blocks, so the main loop can also poll the clock."""
+        """Bounds how long `read_key` blocks, so the loop can poll the clock.
+
+        Args:
+            milliseconds: How long to wait for a key before giving up. This is
+                input latency, not the frame rate.
+        """
         self._stdscr.timeout(milliseconds)
 
     def read_key(self):
-        """Return a key code, or None if the timeout elapsed with no input."""
+        """Reads one key press, waiting no longer than the input timeout.
+
+        Returns:
+            A curses key code, or None if the timeout elapsed with no input.
+        """
         key = self._stdscr.getch()
         return None if key == -1 else key
 
     def handle_resize(self) -> None:
-        """Re-measure after KEY_RESIZE and repaint from scratch."""
+        """Re-measures the terminal after KEY_RESIZE and repaints from scratch."""
         curses.update_lines_cols()
         self._stdscr.clearok(True)
 
     # -- rendering -------------------------------------------------------
 
     def render(self, state: ViewState) -> None:
-        """Draw one complete frame. This is the StateFlow collector."""
+        """Draws one complete frame. This is the StateFlow collector.
+
+        Args:
+            state: The frame to draw. Every layer is drawn in full and ncurses
+                works out which character positions actually changed.
+        """
         if self._stdscr is None:
             return
         window = self._stdscr
@@ -218,7 +278,19 @@ class GameScreen:
         curses.doupdate()  # single atomic write of only the changed cells
 
     def _put_runs(self, window, row, text, color_slot, height, width):
-        """Draw each run of non-space characters, skipping the gaps."""
+        """Draws each run of non-space characters in a layer, skipping the gaps.
+
+        A space is a character like any other, so writing a layer whole would
+        paint its gaps over the layer beneath.
+
+        Args:
+            window: The curses window to draw into.
+            row: Character row to draw on.
+            text: The layer's text for that row.
+            color_slot: Logical colour to draw the runs in.
+            height: Height of the window, for bounds checking.
+            width: Width of the window, for bounds checking.
+        """
         col, end_of_text = 0, len(text)
         while col < end_of_text:
             if text[col] == " ":
@@ -233,7 +305,21 @@ class GameScreen:
             col = run_end
 
     def _put(self, window, row, col, text, color_slot, height, width):
-        """Bounds-safe addnstr. Writing the bottom-right cell raises in curses."""
+        """Writes text at one position, clipping rather than raising.
+
+        Writing the bottom-right cell of a window raises in curses, and a
+        sprite hanging off an edge would too, so both are clipped here instead
+        of being guarded at every call site.
+
+        Args:
+            window: The curses window to draw into.
+            row: Character row to write at.
+            col: Character column to start at.
+            text: The characters to write.
+            color_slot: Logical colour to write them in.
+            height: Height of the window, for bounds checking.
+            width: Width of the window, for bounds checking.
+        """
         if not (0 <= row < height) or col >= width:
             return
         limit = width - col

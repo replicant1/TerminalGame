@@ -123,19 +123,25 @@ for _name, _art in (("player", _PLAYER_ART), ("ghost", _GHOST_ART)):
         )
 
 def _odd(size: int) -> int:
-    """The largest odd number of cells that fits.
+    """Returns the largest odd number of cells that fits.
 
     A maze needs a wall cell on both sides of every junction, so its border
     only comes out one cell thick if it is an odd number of cells across.
     Given an even number, the last column has no junction to serve and is
     drawn as a second border running alongside the first -- invisible while
     walls were solid blocks, and an obvious ladder once they became lines.
+
+    Args:
+        size: How many cells are available.
+
+    Returns:
+        `size`, or one less when `size` is even.
     """
     return size if size % 2 else size - 1
 
 
 def _wall_cell(maze, row: int, col: int) -> str:
-    """The CELL_COLS characters that draw one wall cell.
+    """Draws one wall cell as CELL_COLS characters.
 
     A cell's line meets its neighbours' lines in the *left* of its two
     characters, which is therefore the wall's centre line. That is the only
@@ -146,8 +152,18 @@ def _wall_cell(maze, row: int, col: int) -> str:
 
     Out of bounds counts as not-wall, which is what closes the border into a
     rectangle instead of leaving it with arms pointing off the playfield.
+
+    Args:
+        maze: The maze being drawn, asked which of the neighbours are wall.
+        row: Cell row.
+        col: Cell column.
+
+    Returns:
+        The characters for that cell: the glyph for the sides it joins, then a
+        dash where the wall continues eastwards and a blank where it does not.
     """
     def wall(r: int, c: int) -> bool:
+        """Reports whether that cell is wall, counting out of bounds as not."""
         return 0 <= r < maze.rows and 0 <= c < maze.cols and not maze.is_open(r, c)
 
     sides = 0
@@ -167,15 +183,19 @@ def _wall_cell(maze, row: int, col: int) -> str:
 
 
 def _to_layers(maze) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
-    """Turn a Maze into the two character layers GameScreen draws.
-
-    Returns the walls and the pills separately, each blank where the other has
-    something, because a layer is drawn in a single colour.
+    """Turns a Maze into the two character layers GameScreen draws.
 
     Every open cell gets its one pill. Wall cells get none, so the solid
     islands braiding leaves behind come out blank inside without anything
     having to go looking for them: a cell that was never carved is simply
     never given a pill.
+
+    Args:
+        maze: The maze to draw.
+
+    Returns:
+        The walls and the pills, in that order, each blank where the other has
+        something -- because a layer is drawn in a single colour.
     """
     walls, pills = [], []
     for cell_row in range(maze.rows):
@@ -198,9 +218,20 @@ def _to_layers(maze) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
 
 
 class GameViewModel:
-    """Turns ticks and key presses into ViewStates."""
+    """Turns ticks and key presses into ViewStates.
+
+    Owns the maze, the score and where everything stands. Knows nothing about
+    curses: it publishes frames and never learns who is collecting them.
+    """
 
     def __init__(self, seed: Optional[int] = None) -> None:
+        """Carves a maze, places the player and the ghost, and paints frame one.
+
+        Args:
+            seed: Seed for the maze and the ghost's choices. A seed makes a
+                game reproducible, which is what lets a test assert anything
+                about one. None gives a different maze every run.
+        """
         # A seed makes a maze reproducible, which is what lets a test assert
         # anything about one. Left out, every run gets a different maze.
         self._maze = Maze.generate(_odd(GRID_ROWS), _odd(GRID_COLS), seed=seed)
@@ -233,13 +264,13 @@ class GameViewModel:
 
     @property
     def state(self) -> StateFlow[ViewState]:
-        """The flow GameScreen collects from."""
+        """The flow GameScreen collects frames from."""
         return self._state
 
     # -- inputs ----------------------------------------------------------
 
     def tick(self) -> None:
-        """Called by GameClock. Advance the simulation by one step.
+        """Advances the simulation by one step. Called by GameClock.
 
         A finished game stops advancing: the ghost stands still, the tick
         count stops, and the frame the player is looking at is the last one
@@ -252,11 +283,16 @@ class GameViewModel:
         self._publish()
 
     def on_direction(self, d_row: int, d_col: int) -> None:
-        """Called by GameScreen when the player presses an arrow key.
+        """Moves the player one cell, eating the pill it lands on.
 
-        One press moves one whole cell, so the player never lands straddling
-        two of them. A press into a wall does nothing, which leaves the frame
-        identical and costs the terminal nothing.
+        Called by GameScreen when an arrow key arrives. One press moves one
+        whole cell, so the player never lands straddling two of them. A press
+        into a wall does nothing, which leaves the frame identical and costs
+        the terminal nothing, and a finished game ignores the press entirely.
+
+        Args:
+            d_row: -1, 0 or 1, the rows to move by.
+            d_col: -1, 0 or 1, the columns to move by.
         """
         if self._game_over:
             return
@@ -271,12 +307,20 @@ class GameViewModel:
     # -- internals -------------------------------------------------------
 
     def _take_pill(self, row: int, col: int) -> bool:
-        """Clear the pill in that cell, if it still has one. True if it did.
+        """Clears the pill in one cell, if it still has one.
 
         A pill sits in the *left* character of its cell, the same centre line
         the walls and sprites share, so one cell is one character to blank.
         The row is rebuilt rather than mutated because the published layer is
         a tuple of strings and has to stay one.
+
+        Args:
+            row: Cell row.
+            col: Cell column.
+
+        Returns:
+            True if there was a pill there to take, so the caller knows
+            whether to score it.
         """
         char_row, char_col = row * CELL_ROWS, col * CELL_COLS
         line = self._pill_rows[char_row]
@@ -290,7 +334,7 @@ class GameViewModel:
         return True
 
     def _advance_ghost(self) -> None:
-        """Carry straight on where possible, otherwise turn.
+        """Moves the ghost one cell, carrying straight on where possible.
 
         Because the maze has no dead ends, a ghost that has just arrived
         somewhere always has a way on that is not the way it came. Reversing
@@ -315,7 +359,7 @@ class GameViewModel:
         self._ghost_col += self._ghost_step[1]
 
     def _status_line(self) -> str:
-        """The row of readings under the playfield.
+        """Builds the row of readings under the playfield.
 
         The score and the keys, and nothing else. The tick count and the
         player's cell were readings for whoever was building the thing rather
@@ -333,10 +377,17 @@ class GameViewModel:
         return " score {:<3}  arrows, q quits".format(self._score)
 
     def _publish(self) -> None:
+        """Builds the current frame and offers it to the flow."""
         # StateFlow drops this silently if nothing actually changed.
         self._state.emit(self._build_state())
 
     def _build_state(self) -> ViewState:
+        """Assembles one frame from where everything currently stands.
+
+        Returns:
+            A frame carrying both maze layers, the two sprites in character
+            coordinates, and the status line.
+        """
         status = self._status_line()
         return ViewState(
             walls=self._walls,

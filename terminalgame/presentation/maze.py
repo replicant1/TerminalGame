@@ -29,9 +29,24 @@ _JUNCTION_STEPS = ((-2, 0), (2, 0), (0, -2), (0, 2))
 
 
 class Maze:
-    """A grid of cells. Open cells are corridor, the rest are wall."""
+    """A rectangular grid of cells, each either open corridor or wall.
+
+    Nothing here knows about characters, colours or sprites, which is what
+    lets a maze be built, queried and asserted about without a terminal.
+    """
 
     def __init__(self, open_cells: Grid) -> None:
+        """Wraps a grid of booleans, one per cell, as a maze.
+
+        Args:
+            open_cells: Rows of booleans, True where the cell is corridor.
+                The grid is copied, so later edits to it do not reach the
+                maze.
+
+        Raises:
+            ValueError: If the grid is empty, or its rows are not all the
+                same length.
+        """
         if not open_cells or not open_cells[0]:
             raise ValueError("a maze needs at least one cell")
         width = len(open_cells[0])
@@ -45,11 +60,23 @@ class Maze:
     def generate(
         cls, rows: int, cols: int, seed: Optional[int] = None
     ) -> "Maze":
-        """Carve a random maze of this size and braid its dead ends away.
+        """Carves a random maze of this size and braids its dead ends away.
 
-        The outermost cells are always wall, so the result has a border. A
-        seed makes the maze reproducible, which is the only way a test can
-        assert anything about a particular one.
+        The outermost cells are always wall, so the result has a border.
+
+        Args:
+            rows: Height of the maze in cells.
+            cols: Width of the maze in cells.
+            seed: Seed for the carving. A seed makes the maze reproducible,
+                which is the only way a test can assert anything about a
+                particular one. None gives a different maze every time.
+
+        Returns:
+            A braided maze of that size, with a wall border and no dead ends.
+
+        Raises:
+            ValueError: If the size leaves no room for junctions, which needs
+                at least three rows and three columns.
         """
         junction_rows = tuple(range(1, rows - 1, 2))
         junction_cols = tuple(range(1, cols - 1, 2))
@@ -68,7 +95,7 @@ class Maze:
 
     @classmethod
     def from_rows(cls, rows: Sequence[str], open_char: str = ".") -> "Maze":
-        """Build a maze from lines of text, for tests that need a known shape.
+        """Builds a maze from lines of text, for tests that need a known shape.
 
             Maze.from_rows(["#####",
                             "#...#",
@@ -76,7 +103,13 @@ class Maze:
                             "#...#",
                             "#####"])
 
-        Any character other than `open_char` is wall.
+        Args:
+            rows: One string per cell row, all of the same length.
+            open_char: The character that marks corridor. Any other character
+                is wall.
+
+        Returns:
+            A maze of exactly the shape those rows describe.
         """
         return cls([[ch == open_char for ch in row] for row in rows])
 
@@ -84,17 +117,28 @@ class Maze:
 
     @property
     def rows(self) -> int:
+        """The height of the maze in cells."""
         return len(self._open)
 
     @property
     def cols(self) -> int:
+        """The width of the maze in cells."""
         return len(self._open[0])
 
     def is_open(self, row: int, col: int) -> bool:
-        """True if this cell is corridor. Out of bounds counts as wall."""
+        """Reports whether a cell is corridor.
+
+        Args:
+            row: Cell row.
+            col: Cell column.
+
+        Returns:
+            True if the cell is corridor. Out of bounds counts as wall.
+        """
         return 0 <= row < self.rows and 0 <= col < self.cols and self._open[row][col]
 
     def open_cells(self) -> Tuple[Cell, ...]:
+        """Returns every corridor cell, in row-major order."""
         return tuple(
             (row, col)
             for row in range(self.rows)
@@ -103,6 +147,7 @@ class Maze:
         )
 
     def wall_cells(self) -> Tuple[Cell, ...]:
+        """Returns every wall cell, in row-major order."""
         return tuple(
             (row, col)
             for row in range(self.rows)
@@ -111,7 +156,16 @@ class Maze:
         )
 
     def neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
-        """The cells adjacent to this one, wall or not, inside the grid."""
+        """Returns the cells adjacent to one cell, wall or not.
+
+        Args:
+            row: Cell row.
+            col: Cell column.
+
+        Returns:
+            The neighbours that fall inside the grid, north, south, west and
+            east in that order.
+        """
         return tuple(
             (row + d_row, col + d_col)
             for d_row, d_col in _NEIGHBOUR_STEPS
@@ -119,15 +173,25 @@ class Maze:
         )
 
     def open_neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
+        """Returns the corridor cells adjacent to one cell.
+
+        Args:
+            row: Cell row.
+            col: Cell column.
+
+        Returns:
+            The neighbours from `neighbours` that are corridor, so the ways
+            out of this cell.
+        """
         return tuple(c for c in self.neighbours(row, col) if self._open[c[0]][c[1]])
 
     # -- the properties this maze promises -------------------------------
 
     def dead_ends(self) -> Tuple[Cell, ...]:
-        """Open cells with fewer than two ways out.
+        """Returns the open cells with fewer than two ways out.
 
-        A braided maze has none. This returns them rather than a yes-or-no so
-        that a failure says *where*.
+        A braided maze has none. This returns the cells rather than a
+        yes-or-no so that a failure says *where*.
         """
         return tuple(
             cell
@@ -136,7 +200,16 @@ class Maze:
         )
 
     def reachable_from(self, row: int, col: int) -> FrozenSet[Cell]:
-        """Every open cell that can be walked to from here."""
+        """Returns every open cell that can be walked to from one cell.
+
+        Args:
+            row: Cell row to start from.
+            col: Cell column to start from.
+
+        Returns:
+            The cells reachable from there, including the starting cell, or an
+            empty set if the starting cell is wall.
+        """
         if not self.is_open(row, col):
             return frozenset()
         seen = {(row, col)}
@@ -150,18 +223,26 @@ class Maze:
         return frozenset(seen)
 
     def is_fully_connected(self) -> bool:
-        """True if every open cell can be reached from every other."""
+        """Reports whether every open cell can be reached from every other.
+
+        Returns:
+            True if the corridors form one connected region. An empty maze
+            counts as connected.
+        """
         cells = self.open_cells()
         if not cells:
             return True
         return len(self.reachable_from(*cells[0])) == len(cells)
 
     def islands(self) -> Tuple[FrozenSet[Cell], ...]:
-        """Wall regions that do not touch the border.
+        """Returns the wall regions that do not touch the border.
 
         These are the solid blocks the corridors run around. They hold no dots
         because they hold no open cells, which is true by construction rather
         than by anything having to go looking for them.
+
+        Returns:
+            One frozen set of cells per island, in no particular order.
         """
         found: List[FrozenSet[Cell]] = []
         seen = set()
@@ -186,13 +267,31 @@ class Maze:
     # -- picking somewhere to stand --------------------------------------
 
     def nearest_open(self, row: int, col: int) -> Cell:
-        """The open cell closest to a wanted spot, which may itself be wall."""
+        """Returns the open cell closest to a wanted spot.
+
+        Args:
+            row: Row of the wanted spot, which may itself be wall.
+            col: Column of the wanted spot.
+
+        Returns:
+            The corridor cell at the smallest distance from that spot.
+        """
         return min(self.open_cells(), key=lambda c: _distance(c, (row, col)))
 
     def farthest_open(self, row: int, col: int) -> Cell:
-        """The open cell furthest from a spot, so two things placed with these
-        two calls do not start on top of each other whatever shape the maze
-        took."""
+        """Returns the open cell furthest from a spot.
+
+        Paired with `nearest_open`, this is what keeps two things placed by
+        these two calls from starting on top of each other, whatever shape the
+        maze took.
+
+        Args:
+            row: Row of the spot to get away from.
+            col: Column of the spot to get away from.
+
+        Returns:
+            The corridor cell at the greatest distance from that spot.
+        """
         return max(self.open_cells(), key=lambda c: _distance(c, (row, col)))
 
     # -- generation ------------------------------------------------------
@@ -201,8 +300,16 @@ class Maze:
         self, rng: random.Random, junction_rows: Tuple[int, ...],
         junction_cols: Tuple[int, ...],
     ) -> None:
-        """Depth-first walk between junctions, opening the wall between each
-        pair as it goes. Produces a perfect maze, dead ends and all."""
+        """Carves a perfect maze, dead ends and all.
+
+        A depth-first walk between junctions, opening the wall between each
+        pair as it goes.
+
+        Args:
+            rng: Source of randomness for the walk.
+            junction_rows: The rows junctions sit on, every other row.
+            junction_cols: The columns junctions sit on, every other column.
+        """
         def is_junction(row: int, col: int) -> bool:
             return row in junction_rows and col in junction_cols
 
@@ -229,13 +336,18 @@ class Maze:
         self, rng: random.Random, junction_rows: Tuple[int, ...],
         junction_cols: Tuple[int, ...],
     ) -> None:
-        """Open a second way out of every junction that has only one.
+        """Opens a second way out of every junction that has only one.
 
         Opening a wall raises the count for two junctions at once and never
         lowers one, so this only has to sweep until a pass changes nothing.
         Every junction has at least two neighbours, even in a corner, so a
         second exit can always be found -- which is what makes "no dead ends"
         a guarantee rather than an attempt.
+
+        Args:
+            rng: Source of randomness for choosing which wall to open.
+            junction_rows: The rows junctions sit on, every other row.
+            junction_cols: The columns junctions sit on, every other column.
         """
         def is_junction(row: int, col: int) -> bool:
             return row in junction_rows and col in junction_cols
@@ -267,17 +379,31 @@ class Maze:
     # -- for looking at --------------------------------------------------
 
     def to_rows(self, wall: str = "#", corridor: str = ".") -> Tuple[str, ...]:
-        """One string per cell row, for a test failure message or a print."""
+        """Draws the maze as text, for a test failure message or a print.
+
+        Args:
+            wall: The character to draw wall cells with.
+            corridor: The character to draw open cells with.
+
+        Returns:
+            One string per cell row.
+        """
         return tuple(
             "".join(corridor if cell else wall for cell in row)
             for row in self._open
         )
 
     def __repr__(self) -> str:
+        """Returns the maze's size and how much of it is corridor."""
         return "Maze({}x{}, {} open cells)".format(
             self.rows, self.cols, len(self.open_cells())
         )
 
 
 def _distance(a: Cell, b: Cell) -> int:
+    """Returns the distance between two cells, counted in moves.
+
+    Manhattan rather than straight-line, because a sprite moves one cell at a
+    time along the grid and never diagonally.
+    """
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
