@@ -57,7 +57,7 @@ what the player would be looking at:
 ...
 |║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪▗█▖║   |
 |╚═══════════════════════════════════╝   |
-| tick 16     score 1   at 13,11 q quits |
+| score 3    arrows, q quits             |
 ```
 
 `▐█▌` is the player, `▗█▖` the ghost, `▪` a pill and `■` a one-cell island of
@@ -71,7 +71,7 @@ Commands:
 | Command | Effect |
 |---|---|
 | `show [label]` | print the current 30x40 screen, boxed |
-| `status` | print just the bottom row (`tick N  score N  at row,col`) |
+| `status` | print just the bottom row (`score N  arrows, q quits`) |
 | `up`/`down`/`left`/`right [n]` | arrow key, n times (default 1) |
 | `key <text>` | send literal characters, e.g. `key q` |
 | `esc` | send Esc — **quits the game** |
@@ -81,15 +81,23 @@ Commands:
 Every command settles for 0.6s afterwards so the ticks it caused have landed
 before the next `show`. Raise `SETTLE` in the driver if a frame looks stale.
 
-**Assert on the status line, not the maze.** The maze is carved randomly per
-game and the ghost moves on its own, so no two runs match. `status` is the
-stable readout: `at 15,13` is the player's cell and `score 1` the pills eaten,
-and both change only in response to your keys. A move into a fresh corridor
-cell raises the score by one; a move back over a cell already cleared does not.
+**Assert on the score, not the maze.** The maze is carved randomly per game and
+the ghost moves on its own, so no two runs match. What the status line still
+carries is the score, and it moves only for the player: one point per corridor
+cell entered for the first time. It does not tick, and it does not carry the
+player's position — those readings were dropped, so `status` alone can no longer
+tell you *where* the player is.
+
+That leaves two questions with two different tools. **Did the keys arrive?**
+Walk into fresh corridor and watch the score rise. **Where is the player?**
+`show` and find `▐█▌` in the frame; a cleared corridor also shows the path
+walked. A move back over a cell already eaten changes neither the score nor
+anything visible except the sprite.
 
 ```bash
 # did the arrow keys reach the game? try every direction -- any single one
-# can be a no-op because the player is up against a wall
+# can be a no-op, either because the player is up against a wall or because
+# that cell's pill has already been eaten
 printf 'status\nright 2\nstatus\ndown 2\nstatus\nleft 2\nstatus\nup 2\nstatus\nquit\n' \
   | ./.claude/skills/run-terminalgame/driver.py
 ```
@@ -160,11 +168,11 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   scrollback, which for a curses app is blank lines. Use the driver to inspect
   frames; the window query above is only good for size and title.
 * **Eating the last pill ends the game.** The status line switches to
-  `GAME OVER  score N  q quits`, the tick count stops, the ghost freezes and
-  arrows do nothing — only `q` or Esc still works. A long scripted walk can
+  `GAME OVER  score N  q quits`, the ghost freezes and arrows do nothing — only `q` or Esc still works. A long scripted walk can
   reach it, and a `show` afterwards keeps returning the same final frame.
-* **A move into a wall is a silent no-op** — the status line reads the same cell
-  twice and nothing on screen changes. That is the game working, not the keys
+* **A move into a wall is a silent no-op** — the score reads the same twice and
+  nothing on screen changes. So does a move onto a cell already cleared, which
+  is why the score alone cannot tell the two apart. That is the game working, not the keys
   being dropped. Before concluding input is broken, try all four directions:
   in an unlucky spawn three of them are walls.
 * **The game ignores SIGTERM.** ncurses installs its own handler at

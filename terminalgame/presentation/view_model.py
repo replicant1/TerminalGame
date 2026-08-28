@@ -317,18 +317,20 @@ class GameViewModel:
     def _status_line(self) -> str:
         """The row of readings under the playfield.
 
+        The score and the keys, and nothing else. The tick count and the
+        player's cell were readings for whoever was building the thing rather
+        than anyone playing it, and a player reading their own coordinates off
+        the bottom of the screen is a player being told what the maze already
+        shows them.
+
         The last row loses its final cell to curses, so the budget is
-        PLAYFIELD_COLS - 1, which is 39, and the playing line spends all of
-        it: six digits of tick, three of score -- a maze this size holds a few
-        hundred pills -- and the player's cell. Beyond 999,999 ticks, about
-        two days of play, or a four-digit score, _put clips the tail rather
-        than wrapping.
+        PLAYFIELD_COLS - 1, which is 39. Neither line comes near it now: three
+        digits hold a maze this size, which is a few hundred pills, and a
+        fourth would still fit.
         """
         if self._game_over:
             return " GAME OVER  score {:<3}  q quits".format(self._score)
-        return " tick {:<6} score {:<3} at {:>2},{:<2} q quits".format(
-            self._tick_count, self._score, self._player_row, self._player_col
-        )
+        return " score {:<3}  arrows, q quits".format(self._score)
 
     def _publish(self) -> None:
         # StateFlow drops this silently if nothing actually changed.
