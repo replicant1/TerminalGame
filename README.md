@@ -64,10 +64,54 @@ in the ViewModel would add bookkeeping and could not beat that. The ranges are
 colour: a frame that switches between the player's yellow, the pills' gold and
 the ghost's pink costs a few bytes more than one that does not.
 
+### What ncurses is doing to earn that
+
+The claim above is the premise the rest of the design rests on, so it is worth
+saying how it works rather than taking it on faith.
+
+ncurses keeps two pictures of the screen. `newscr` is the virtual screen, which
+is what the program says it wants; `curscr` is what ncurses believes is
+physically on the terminal. `addnstr` touches neither — it writes into the
+window's own cells. `noutrefresh()` copies the window's *touched* lines into
+`newscr` and sends nothing at all. `doupdate()` then walks `newscr` against
+`curscr` and emits output only for the cells where the two differ.
+
+That last comparison is the whole reason a full repaint is cheap. Drawing every
+row marks every line touched, so the per-line bookkeeping saves nothing here —
+but the comparison underneath it is on content, and content that did not change
+produces no output however many times it was rewritten. A steady frame costs
+1,200 cell comparisons and 65 bytes down the wire.
+
+Two further layers sit below that, and both show up in the numbers above:
+
+* **Cursor optimization.** Having found a run of changed cells, ncurses does not
+  simply address them absolutely. It costs the alternatives — relative moves,
+  tab, carriage return, home-and-move, absolute addressing — against what
+  terminfo says this terminal can do, and picks the cheapest. Two columns right
+  is usually two `cuf1`s rather than a six-byte `CUP`.
+* **Attribute batching.** Colour is emitted on transition only. That is exactly
+  the 65-to-94 spread: the extra bytes in a busy frame are `SGR` sequences, not
+  cells.
+
+There is a third, unused here: ncurses hashes lines to recognise content that
+merely moved, and can scroll or insert/delete lines instead of repainting them.
+`idcok` (characters) is on by default, `idlok` (lines) off, because hardware
+line insertion is visually annoying where it is not needed. A maze that never
+scrolls gives it nothing to find.
+
+Only some of this is documented. `curs_refresh(3x)` covers the virtual and
+physical screens and the touched-lines rule; `curs_outopts(3x)` covers
+`clearok`, `idlok` and `idcok` and is candid about why the defaults are what
+they are. The cursor cost model and the line hashing are explained only in the
+ncurses source, in `tty_update.c` and `hashmap.c`. Python's own documentation
+for `doupdate` is a single sentence.
+
 Three things keep it artifact-free, all in `screen.py`:
 
-* `erase()`, never `clear()` — `clear()` sets a flag forcing a full repaint of
-  the terminal on the next refresh, which is exactly the flicker to avoid.
+* `erase()`, never `clear()` — `clear()` sets `clearok`, which makes the next
+  `doupdate()` throw away what it knows about the terminal and repaint from
+  scratch. That is the 10,657-byte first paint, on every frame, and exactly the
+  flicker to avoid.
 * `noutrefresh()` + `doupdate()` — one atomic write per frame rather than one
   syscall burst per window.
 * `curs_set(0)` plus parking the caret bottom-left — nothing tracks the draw
@@ -75,7 +119,9 @@ Three things keep it artifact-free, all in `screen.py`:
 
 The fourth guard is in `flow.py`: `ViewState` is a frozen dataclass, so
 `StateFlow.emit` compares by value and drops an unchanged frame before curses
-is touched at all (the 0-byte row above).
+is touched at all (the 0-byte row above). Had one got through, `doupdate()`
+would have found no differing cells and written nothing anyway — so that guard
+saves the redraw and the comparison, not the bytes.
 
 ## Threading
 
