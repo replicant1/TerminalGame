@@ -43,6 +43,7 @@ the window before the first picture, and the ending last.
 | [An arrow key moves the player and repaints the screen](an-arrow-key-moves-the-player-and-repaints-the-screen.md) | `HIGH` |
 | [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md) | `MEDIUM` |
 | [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `LOW` |
+| [The ghost catches the player and the game ends](the-ghost-catches-the-player-and-the-game-ends.md) | `MEDIUM` |
 | [The last pill is eaten and the game is over](the-last-pill-is-eaten-and-the-game-is-over.md) | `MEDIUM` |
 | [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md) | `MEDIUM` |
 
@@ -87,21 +88,25 @@ registration is made that the second and third both travel along.
 
 ### Lap 2 — what is in the picture, and what a player does to it
 
-**37 minutes.** Where the arena comes from, how it is drawn, and the only thing
-in the game a player can change about it.
+**45 minutes.** Where the arena comes from, how it is drawn, the only thing in
+the game a player can change about it, and the two ways a game ends by itself.
 
 | | Document | Priority | Time |
 |---:|---|---|---:|
 | 4 | [A maze is carved and then braided until it has no dead ends](a-maze-is-carved-and-then-braided-until-it-has-no-dead-ends.md) | `MEDIUM` | 11 min |
 | 5 | [A wall cell chooses its box-drawing glyph from its neighbours](a-wall-cell-chooses-its-box-drawing-glyph-from-its-neighbours.md) | `LOW` | 8 min |
 | 6 | [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md) | `MEDIUM` | 9 min |
-| 7 | [The last pill is eaten and the game is over](the-last-pill-is-eaten-and-the-game-is-over.md) | `MEDIUM` | 9 min |
+| 7 | [The ghost catches the player and the game ends](the-ghost-catches-the-player-and-the-game-ends.md) | `MEDIUM` | 8 min |
+| 8 | [The last pill is eaten and the game is over](the-last-pill-is-eaten-and-the-game-is-over.md) | `MEDIUM` | 9 min |
 
 The first two are a pair, and the pairing is the point: one makes a shape out
 of open and closed cells knowing nothing about how it will look, and the other
-turns that shape into lines knowing nothing about how it was made. The second
-two are the other pair — the same collaboration on an ordinary move and on the
-one move that ends the game.
+turns that shape into lines knowing nothing about how it was made. The last
+three are the arc of a game: the move a player makes a few hundred times, and
+then the two ways that stop being possible — the ghost reaching them, or the
+arena running out of pills. Read the endings together; they are the same
+machinery reached from opposite ends, and the second describes the stopped
+state both arrive at.
 
 This lap assumes lap 1. The pill documents deliberately do not repeat the story
 of a key press; they describe the step that was added to it.
@@ -113,10 +118,10 @@ it, how it is given back, and what happens when it cannot be had at all.
 
 | | Document | Priority | Time |
 |---:|---|---|---:|
-| 8 | [The launcher opens the game in its own Terminal window](the-launcher-opens-the-game-in-its-own-terminal-window.md) | `MEDIUM` | 13 min |
-| 9 | [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md) | `MEDIUM` | 9 min |
-| 10 | [A terminal too small to hold the playfield is refused](a-terminal-too-small-to-hold-the-playfield-is-refused.md) | `LOW` | 7 min |
-| 11 | [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `LOW` | 7 min |
+| 9 | [The launcher opens the game in its own Terminal window](the-launcher-opens-the-game-in-its-own-terminal-window.md) | `MEDIUM` | 13 min |
+| 10 | [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md) | `MEDIUM` | 9 min |
+| 11 | [A terminal too small to hold the playfield is refused](a-terminal-too-small-to-hold-the-playfield-is-refused.md) | `LOW` | 7 min |
+| 12 | [An unchanged frame is dropped before it reaches the terminal](an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `LOW` | 7 min |
 
 The first three are one story told at three moments: the window is opened, the
 window is closed, and the window is refused. Read them together or not at all —
@@ -136,6 +141,7 @@ interesting rather than pointless takes the other ten documents to appreciate.
 | Where does the maze come from? | [A maze is carved and then braided](a-maze-is-carved-and-then-braided-until-it-has-no-dead-ends.md) |
 | Why are the corners drawn correctly? | [A wall cell chooses its glyph](a-wall-cell-chooses-its-box-drawing-glyph-from-its-neighbours.md) |
 | What is the score, and when does it change? | [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md) |
+| What happens if the ghost reaches me? | [The ghost catches the player](the-ghost-catches-the-player-and-the-game-ends.md) |
 | What happens when the arena is empty? | [The last pill is eaten](the-last-pill-is-eaten-and-the-game-is-over.md) |
 | Why does a window open, and why does it close by itself? | [The launcher opens the game](the-launcher-opens-the-game-in-its-own-terminal-window.md) and [A quit key ends the game](a-quit-key-ends-the-game-and-closes-the-window.md) |
 | Why does it refuse to start in my terminal? | [A terminal too small](a-terminal-too-small-to-hold-the-playfield-is-refused.md) |

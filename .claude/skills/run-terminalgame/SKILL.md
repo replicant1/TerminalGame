@@ -167,9 +167,15 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   <tab>` returns an object reference and `history of <tab>` returns the
   scrollback, which for a curses app is blank lines. Use the driver to inspect
   frames; the window query above is only good for size and title.
-* **Eating the last pill ends the game.** The status line switches to
-  `GAME OVER  score N  q quits`, the ghost freezes and arrows do nothing — only `q` or Esc still works. A long scripted walk can
-  reach it, and a `show` afterwards keeps returning the same final frame.
+* **A game can end under a script, in two ways.** Eating the last pill ends it
+  with `GAME OVER  score N  q quits`; the ghost walking onto the player — or
+  the player walking onto the ghost — ends it with `CAUGHT  score N  q quits`.
+  Either way the ghost freezes, arrows do nothing, only `q` or Esc still works,
+  and every later `show` returns the same final frame.
+  The capture is the one to watch for: it is **not** under the script's
+  control. The ghost wanders while your script thinks, so a long walk can be
+  ended by something the script did not do. If a script stops behaving, read
+  the status line before suspecting the keys.
 * **A move into a wall is a silent no-op** — the score reads the same twice and
   nothing on screen changes. So does a move onto a cell already cleared, which
   is why the score alone cannot tell the two apart. That is the game working, not the keys

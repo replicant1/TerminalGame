@@ -1,6 +1,6 @@
 # The last pill is eaten and the game is over
 
-**Priority: `MEDIUM`** — it happens at most once in a run, and only in a run somebody plays to the end. But it is the game's only ending other than giving up, and a fault here means there is nothing to play *towards*: the arena empties and the game carries on as though nothing had happened. [What the priorities mean](SCENARIO_INDEX.md#what-the-priorities-mean).
+**Priority: `MEDIUM`** — it happens at most once in a run, and only in a run somebody plays to the end. But it is the only ending a player can aim at -- the other two are giving up and [being caught](the-ghost-catches-the-player-and-the-game-ends.md) -- and a fault here means there is nothing to play *towards*: the arena empties and the game carries on as though nothing had happened. [What the priorities mean](SCENARIO_INDEX.md#what-the-priorities-mean).
 
 The player takes the last pill on the arena. The line of readings stops naming
 a score and reads `GAME OVER` instead, and from that moment the picture never
@@ -29,7 +29,7 @@ places, each of which simply declines to do anything:
 
 | What still happens | What it does now |
 |---|---|
-| The clock reaches its next deadline and calls [`tick`](../../terminalgame/presentation/view_model.py#L272) | Returns at once. The ghost does not move, the count of ticks does not go up, and no picture is built |
+| The clock reaches its next deadline and calls [`tick`](../../terminalgame/presentation/view_model.py#L278) | Returns at once. The ghost does not move, the count of ticks does not go up, and no picture is built |
 | A player presses an arrow and the loop calls [`on_direction`](../../terminalgame/presentation/view_model.py#L285) | Returns at once. No move, no pill, no score |
 | A player presses a quit key | Unaffected — the loop tests for quit before it consults the view model at all, so quitting cannot be broken by anything the game does |
 
@@ -41,7 +41,7 @@ because nothing has overwritten it.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220) | In this scenario it is the **referee**: [`_take_pill`](../../terminalgame/presentation/view_model.py#L309) counts the pills down, [`on_direction`](../../terminalgame/presentation/view_model.py#L285) notices the count has reached nothing, and [`_status_line`](../../terminalgame/presentation/view_model.py#L361) writes a different line from then on |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | In this scenario it is the **referee**: [`_take_pill`](../../terminalgame/presentation/view_model.py#L327) counts the pills down, [`on_direction`](../../terminalgame/presentation/view_model.py#L285) notices the count has reached nothing, and [`_status_line`](../../terminalgame/presentation/view_model.py#L400) writes a different line from then on |
 | [`GameClock`](../../terminalgame/util/clock.py#L13) | The keeper of time. In this scenario it is the part that **does not know**: [`poll`](../../terminalgame/util/clock.py#L62) goes on firing ticks at the usual rate for as long as the program runs, and is never told the game has finished. It is the view model that ignores them |
 | [`main`](../../terminalgame/app/main.py) | The loop. Also never told. It keeps reading keys, keeps polling the clock, and keeps offering directions that are now declined |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier, which is simply never given anything again |
@@ -135,6 +135,10 @@ so that the two cannot be confused, and covered in
 
 - [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md)
   — the same collaboration on every pass but the last.
+- [The ghost catches the player and the game ends](the-ghost-catches-the-player-and-the-game-ends.md)
+  — the other way a game ends by itself. It reaches this same stopped state by a
+  different route, and says so on the readings line: `CAUGHT` rather than
+  `GAME OVER`.
 - [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md)
   — the only thing a player can still do here, and the only way the window closes.
 - [A clock tick moves the ghost and repaints the screen](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md)
@@ -144,7 +148,7 @@ so that the two cannot be confused, and covered in
 
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It is
-    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L220). It holds
+    [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226). It holds
     whether the game has finished, and it is the only part of the program that
     does — which is why ending the game required no change to the loop, the
     clock, the carrier or the screen.
