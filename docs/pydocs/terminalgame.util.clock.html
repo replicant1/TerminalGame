@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module terminalgame.util.clock</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="terminalgame.html"><font color="#ffffff">terminalgame</font></a>.<a href="terminalgame.util.html"><font color="#ffffff">util</font></a>.clock</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="../../terminalgame/util/clock.py">terminalgame/util/clock.py</a></font></td></tr></table>
+    <p><tt>Fixed-timestep&nbsp;game&nbsp;clock.<br>
+&nbsp;<br>
+Implemented&nbsp;as&nbsp;a&nbsp;monotonic&nbsp;deadline&nbsp;polled&nbsp;from&nbsp;the&nbsp;main&nbsp;loop&nbsp;rather&nbsp;than&nbsp;a<br>
+threading.Timer,&nbsp;because&nbsp;curses&nbsp;is&nbsp;not&nbsp;thread-safe&nbsp;--&nbsp;a&nbsp;tick&nbsp;arriving&nbsp;on&nbsp;a<br>
+background&nbsp;thread&nbsp;while&nbsp;the&nbsp;main&nbsp;thread&nbsp;is&nbsp;mid-refresh&nbsp;corrupts&nbsp;the&nbsp;screen.<br>
+Polling&nbsp;keeps&nbsp;the&nbsp;entire&nbsp;game&nbsp;single-threaded.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="time.html">time</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="terminalgame.util.clock.html#GameClock">GameClock</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="GameClock">class <strong>GameClock</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#GameClock">GameClock</a>(interval_seconds:&nbsp;float,&nbsp;on_tick:&nbsp;Callable[[],&nbsp;NoneType])&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+Calls&nbsp;a&nbsp;callback&nbsp;once&nbsp;every&nbsp;interval,&nbsp;driven&nbsp;by&nbsp;<a href="#GameClock-poll">poll</a>().<br>
+&nbsp;<br>
+Nothing&nbsp;here&nbsp;runs&nbsp;on&nbsp;its&nbsp;own:&nbsp;the&nbsp;clock&nbsp;only&nbsp;advances&nbsp;when&nbsp;the&nbsp;main&nbsp;loop<br>
+polls&nbsp;it,&nbsp;which&nbsp;is&nbsp;what&nbsp;keeps&nbsp;ticks&nbsp;on&nbsp;the&nbsp;same&nbsp;thread&nbsp;as&nbsp;the&nbsp;rendering.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="GameClock-__init__"><strong>__init__</strong></a>(self, interval_seconds: float, on_tick: Callable[[], NoneType]) -&gt; None</dt><dd><tt>Prepares&nbsp;a&nbsp;clock.&nbsp;It&nbsp;does&nbsp;not&nbsp;start&nbsp;ticking&nbsp;until&nbsp;`start`.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;interval_seconds:&nbsp;How&nbsp;long&nbsp;one&nbsp;tick&nbsp;lasts.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;on_tick:&nbsp;Called&nbsp;once&nbsp;per&nbsp;tick,&nbsp;from&nbsp;whatever&nbsp;thread&nbsp;calls&nbsp;`poll`.</tt></dd></dl>
+
+<dl><dt><a name="GameClock-poll"><strong>poll</strong></a>(self) -&gt; int</dt><dd><tt>Fires&nbsp;any&nbsp;ticks&nbsp;that&nbsp;are&nbsp;due.<br>
+&nbsp;<br>
+Advancing&nbsp;the&nbsp;deadline&nbsp;by&nbsp;whole&nbsp;intervals&nbsp;(rather&nbsp;than&nbsp;resetting&nbsp;it&nbsp;to<br>
+`now`)&nbsp;stops&nbsp;the&nbsp;tick&nbsp;rate&nbsp;drifting&nbsp;slower&nbsp;over&nbsp;a&nbsp;long&nbsp;session.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;How&nbsp;many&nbsp;ticks&nbsp;fired,&nbsp;at&nbsp;most&nbsp;MAX_CATCH_UP_TICKS.&nbsp;Zero&nbsp;while&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;clock&nbsp;is&nbsp;stopped.</tt></dd></dl>
+
+<dl><dt><a name="GameClock-seconds_until_next_tick"><strong>seconds_until_next_tick</strong></a>(self) -&gt; float</dt><dd><tt>Returns&nbsp;how&nbsp;long&nbsp;until&nbsp;the&nbsp;next&nbsp;tick&nbsp;is&nbsp;due.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Seconds&nbsp;until&nbsp;the&nbsp;deadline,&nbsp;never&nbsp;negative,&nbsp;and&nbsp;one&nbsp;whole&nbsp;interval<br>
+&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;the&nbsp;clock&nbsp;is&nbsp;stopped&nbsp;--&nbsp;a&nbsp;caller&nbsp;waiting&nbsp;on&nbsp;input&nbsp;can&nbsp;use&nbsp;it<br>
+&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;a&nbsp;timeout&nbsp;either&nbsp;way.</tt></dd></dl>
+
+<dl><dt><a name="GameClock-start"><strong>start</strong></a>(self) -&gt; None</dt><dd><tt>Begins&nbsp;ticking,&nbsp;with&nbsp;the&nbsp;first&nbsp;tick&nbsp;one&nbsp;full&nbsp;interval&nbsp;from&nbsp;now.</tt></dd></dl>
+
+<dl><dt><a name="GameClock-stop"><strong>stop</strong></a>(self) -&gt; None</dt><dd><tt>Stops&nbsp;ticking.&nbsp;`poll`&nbsp;fires&nbsp;nothing&nbsp;until&nbsp;`start`&nbsp;is&nbsp;called&nbsp;again.</tt></dd></dl>
+
+<hr>
+Readonly properties defined here:<br>
+<dl><dt><strong>running</strong></dt>
+<dd><tt>Whether&nbsp;the&nbsp;clock&nbsp;is&nbsp;ticking,&nbsp;so&nbsp;between&nbsp;`start`&nbsp;and&nbsp;`stop`.</tt></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>MAX_CATCH_UP_TICKS</strong> = 3</dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>Callable</strong> = typing.Callable</td></tr></table>
+</body></html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module terminalgame.presentation.view_model</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="terminalgame.html"><font color="#ffffff">terminalgame</font></a>.<a href="terminalgame.presentation.html"><font color="#ffffff">presentation</font></a>.view_model</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="../../terminalgame/presentation/view_model.py">terminalgame/presentation/view_model.py</a></font></td></tr></table>
+    <p><tt>Game&nbsp;logic.&nbsp;Owns&nbsp;the&nbsp;state,&nbsp;knows&nbsp;nothing&nbsp;about&nbsp;curses.<br>
+&nbsp;<br>
+The&nbsp;screen&nbsp;never&nbsp;asks&nbsp;the&nbsp;ViewModel&nbsp;for&nbsp;anything&nbsp;--&nbsp;it&nbsp;subscribes&nbsp;once&nbsp;and&nbsp;is<br>
+pushed&nbsp;a&nbsp;complete&nbsp;ViewState&nbsp;whenever&nbsp;something&nbsp;changes.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="random.html">random</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="terminalgame.presentation.view_model.html#GameViewModel">GameViewModel</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="GameViewModel">class <strong>GameViewModel</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#GameViewModel">GameViewModel</a>(seed:&nbsp;Optional[int]&nbsp;=&nbsp;None)&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+Turns&nbsp;ticks&nbsp;and&nbsp;key&nbsp;presses&nbsp;into&nbsp;ViewStates.<br>
+&nbsp;<br>
+Owns&nbsp;the&nbsp;maze,&nbsp;the&nbsp;score&nbsp;and&nbsp;where&nbsp;everything&nbsp;stands.&nbsp;Knows&nbsp;nothing&nbsp;about<br>
+curses:&nbsp;it&nbsp;publishes&nbsp;frames&nbsp;and&nbsp;never&nbsp;learns&nbsp;who&nbsp;is&nbsp;collecting&nbsp;them.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="GameViewModel-__init__"><strong>__init__</strong></a>(self, seed: Optional[int] = None) -&gt; None</dt><dd><tt>Carves&nbsp;a&nbsp;maze,&nbsp;places&nbsp;the&nbsp;player&nbsp;and&nbsp;the&nbsp;ghost,&nbsp;and&nbsp;paints&nbsp;frame&nbsp;one.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seed:&nbsp;Seed&nbsp;for&nbsp;the&nbsp;maze&nbsp;and&nbsp;the&nbsp;ghost's&nbsp;choices.&nbsp;A&nbsp;seed&nbsp;makes&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;game&nbsp;reproducible,&nbsp;which&nbsp;is&nbsp;what&nbsp;lets&nbsp;a&nbsp;test&nbsp;assert&nbsp;anything<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;about&nbsp;one.&nbsp;None&nbsp;gives&nbsp;a&nbsp;different&nbsp;maze&nbsp;every&nbsp;run.</tt></dd></dl>
+
+<dl><dt><a name="GameViewModel-on_direction"><strong>on_direction</strong></a>(self, d_row: int, d_col: int) -&gt; None</dt><dd><tt>Moves&nbsp;the&nbsp;player&nbsp;one&nbsp;cell,&nbsp;eating&nbsp;the&nbsp;pill&nbsp;it&nbsp;lands&nbsp;on.<br>
+&nbsp;<br>
+Called&nbsp;by&nbsp;GameScreen&nbsp;when&nbsp;an&nbsp;arrow&nbsp;key&nbsp;arrives.&nbsp;One&nbsp;press&nbsp;moves&nbsp;one<br>
+whole&nbsp;cell,&nbsp;so&nbsp;the&nbsp;player&nbsp;never&nbsp;lands&nbsp;straddling&nbsp;two&nbsp;of&nbsp;them.&nbsp;A&nbsp;press<br>
+into&nbsp;a&nbsp;wall&nbsp;does&nbsp;nothing,&nbsp;which&nbsp;leaves&nbsp;the&nbsp;frame&nbsp;identical&nbsp;and&nbsp;costs<br>
+the&nbsp;terminal&nbsp;nothing,&nbsp;and&nbsp;a&nbsp;finished&nbsp;game&nbsp;ignores&nbsp;the&nbsp;press&nbsp;entirely.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;d_row:&nbsp;-1,&nbsp;0&nbsp;or&nbsp;1,&nbsp;the&nbsp;rows&nbsp;to&nbsp;move&nbsp;by.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;d_col:&nbsp;-1,&nbsp;0&nbsp;or&nbsp;1,&nbsp;the&nbsp;columns&nbsp;to&nbsp;move&nbsp;by.</tt></dd></dl>
+
+<dl><dt><a name="GameViewModel-tick"><strong>tick</strong></a>(self) -&gt; None</dt><dd><tt>Advances&nbsp;the&nbsp;simulation&nbsp;by&nbsp;one&nbsp;step.&nbsp;Called&nbsp;by&nbsp;GameClock.<br>
+&nbsp;<br>
+A&nbsp;finished&nbsp;game&nbsp;stops&nbsp;advancing:&nbsp;the&nbsp;ghost&nbsp;stands&nbsp;still,&nbsp;the&nbsp;tick<br>
+count&nbsp;stops,&nbsp;and&nbsp;the&nbsp;frame&nbsp;the&nbsp;player&nbsp;is&nbsp;looking&nbsp;at&nbsp;is&nbsp;the&nbsp;last&nbsp;one<br>
+that&nbsp;will&nbsp;be&nbsp;published&nbsp;until&nbsp;they&nbsp;quit.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;one&nbsp;of&nbsp;the&nbsp;two&nbsp;moments&nbsp;a&nbsp;capture&nbsp;can&nbsp;happen&nbsp;--&nbsp;the&nbsp;ghost<br>
+walking&nbsp;onto&nbsp;the&nbsp;player.&nbsp;The&nbsp;other&nbsp;is&nbsp;the&nbsp;player&nbsp;walking&nbsp;onto&nbsp;the<br>
+ghost,&nbsp;in&nbsp;`on_direction`.</tt></dd></dl>
+
+<hr>
+Readonly properties defined here:<br>
+<dl><dt><strong>state</strong></dt>
+<dd><tt>The&nbsp;flow&nbsp;GameScreen&nbsp;collects&nbsp;frames&nbsp;from.</tt></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>CELL_COLS</strong> = 2<br>
+<strong>CELL_ROWS</strong> = 1<br>
+<strong>COLOR_GHOST</strong> = 3<br>
+<strong>COLOR_PLAYER</strong> = 2<br>
+<strong>GRID_COLS</strong> = 20<br>
+<strong>GRID_ROWS</strong> = 29<br>
+<strong>Optional</strong> = typing.Optional<br>
+<strong>Tuple</strong> = typing.Tuple</td></tr></table>
+</body></html>
