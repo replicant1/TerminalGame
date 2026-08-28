@@ -249,6 +249,9 @@ this one's 40 by 30.
 
 ## Documentation
 
-[`docs/`](docs/) holds a [class overview](docs/CLASS_OVERVIEW.md) and a set of
-[scenarios](docs/SCENARIO_INDEX.md): one document per collaboration, each with a
-sequence diagram and a step-by-step account of what passes between the parts.
+[`docs/`](docs/) holds a [class overview](docs/CLASS_OVERVIEW.md) and, in
+[`docs/scenarios/`](docs/scenarios/), one document per collaboration in the
+program, each with a sequence diagram and a step-by-step account of what passes
+between the parts. Start from the
+[scenario index](docs/scenarios/SCENARIO_INDEX.md), which carries a reading
+order in three laps.

@@ -24,9 +24,9 @@ happen, and they are described at steps 9 and 12.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`main`](../terminalgame/app/main.py) | The loop, and the game's own way out. In this scenario it is the **first to know**: [`run`](../terminalgame/app/main.py#L43) tests every key against the [quit keys](../terminalgame/app/main.py#L40) before anything else and simply returns, and [`play`](../terminalgame/app/main.py#L77) makes sure the finish is reported however the game ended |
-| [`GameScreen`](../terminalgame/ui/screen.py#L59) | The part that borrowed the terminal. In this scenario it is the **restorer**: [`close`](../terminalgame/ui/screen.py#L127) stops collecting pictures, puts the cursor back, turns echoing back on, and hands the terminal over |
-| [`launcher`](../terminalgame/app/launcher.py) | The part waiting in the original window. In this scenario it is the **undertaker**: [`_wait_for_child`](../terminalgame/app/launcher.py#L346) has been watching a file for the whole game, [`_wait_for_process_exit`](../terminalgame/app/launcher.py#L384) waits for the game to be properly gone, and [`_close_window`](../terminalgame/app/launcher.py#L432) asks for the window to be closed |
+| [`main`](../../terminalgame/app/main.py) | The loop, and the game's own way out. In this scenario it is the **first to know**: [`run`](../../terminalgame/app/main.py#L43) tests every key against the [quit keys](../../terminalgame/app/main.py#L40) before anything else and simply returns, and [`play`](../../terminalgame/app/main.py#L77) makes sure the finish is reported however the game ended |
+| [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The part that borrowed the terminal. In this scenario it is the **restorer**: [`close`](../../terminalgame/ui/screen.py#L127) stops collecting pictures, puts the cursor back, turns echoing back on, and hands the terminal over |
+| [`launcher`](../../terminalgame/app/launcher.py) | The part waiting in the original window. In this scenario it is the **undertaker**: [`_wait_for_child`](../../terminalgame/app/launcher.py#L346) has been watching a file for the whole game, [`_wait_for_process_exit`](../../terminalgame/app/launcher.py#L384) waits for the game to be properly gone, and [`_close_window`](../../terminalgame/app/launcher.py#L432) asks for the window to be closed |
 | Terminal.app | The program that owns the window. It is not part of this codebase and is spoken to in its own scripting language, one instruction at a time |
 
 ## Pressing q, and everything that follows
@@ -59,14 +59,14 @@ sequenceDiagram
 
 | Step | Message | What is going on |
 |---:|---|---|
-| 1 | presses `q` | The [quit keys](../terminalgame/app/main.py#L40) are `q`, `Q` and the escape key. Any of the three does exactly what is described here |
+| 1 | presses `q` | The [quit keys](../../terminalgame/app/main.py#L40) are `q`, `Q` and the escape key. Any of the three does exactly what is described here |
 | 2 | finds the key among the quit keys, and returns | The test comes **first**, before the key is looked up in the table of directions and before the view model is consulted. That ordering is deliberate: a player can always leave, even if everything downstream of this point were broken. Returning from the loop is the entire mechanism — there is no flag, and nothing is asked to stop |
-| 3 | [`close`](../terminalgame/ui/screen.py#L127)`()` | Not called by the loop. The screen was opened inside a block that guarantees it is closed on the way out, however the way out is reached — a return, an error, or an interruption from the keyboard |
+| 3 | [`close`](../../terminalgame/ui/screen.py#L127)`()` | Not called by the loop. The screen was opened inside a block that guarantees it is closed on the way out, however the way out is reached — a return, an error, or an interruption from the keyboard |
 | 4 | stops collecting pictures | The registration made at startup is undone first, before the terminal is touched. The order matters: were a picture to arrive after the terminal had been handed back, it would be drawn into a terminal the game no longer owns |
 | 5 | gives the terminal back: cursor on, echo on, endwin | Everything borrowed is returned in the opposite order to the borrowing. The cursor is made visible, keys are echoed again, the keypad translation is switched off, and curses[^curses] is shut down. Without this the player's shell would come back with an invisible cursor and no echo of what they type — a terminal that looks broken |
-| 6 | the block the screen was opened in ends | Control is back in [`play`](../terminalgame/app/main.py#L77), which is the outermost part of the game itself |
+| 6 | the block the screen was opened in ends | Control is back in [`play`](../../terminalgame/app/main.py#L77), which is the outermost part of the game itself |
 | 7 | writes `exit 0` | Written to a small file whose name was handed to the game in its environment when it was started. It is written from a clause that runs whether the game ended well or badly, so a game that crashed still reports a finish rather than leaving the launcher waiting. The file is written under a temporary name and then renamed, so the launcher can never read half of it |
-| 8 | reads it, having been checking ten times a second | The launcher has been asleep in the original window for the whole game, waking [ten times a second](../terminalgame/app/launcher.py#L138) to look at one small file. It watches a file rather than asking Terminal.app anything, which is why a game in progress costs two instructions to Terminal in total: one to open the window and one to close it |
+| 8 | reads it, having been checking ten times a second | The launcher has been asleep in the original window for the whole game, waking [ten times a second](../../terminalgame/app/launcher.py#L138) to look at one small file. It watches a file rather than asking Terminal.app anything, which is why a game in progress costs two instructions to Terminal in total: one to open the window and one to close it |
 | 9 | waits for the game's process to actually disappear | **The first guard.** The exit code is written before the game's process has finished unwinding, so at this moment the game has announced its finish but is still running. Asking for the window to be closed now is exactly what produces the confirmation dialogue. So the launcher waits — bounded, up to five seconds — for the process to be gone |
 | 10 | close the window with this id, if it is not busy | The window is identified by an id captured when it was opened, not by its title. Titles are unreliable here: Terminal puts the running command in the window's name, and the window running the launcher itself can match a search for the game |
 | 11 | finds nothing running in it, and closes it | The command run in the window was arranged so that Python **replaces** the shell rather than running underneath it. When the game exits there is no shell left either, so the window has nothing running in it at all, and Terminal closes it without asking anybody anything |
@@ -77,7 +77,7 @@ sequenceDiagram
 
 A player can close the game's window with the mouse rather than pressing `q`,
 and the launcher survives it. Along with its exit code, the game
-[records its process id](../terminalgame/app/launcher.py#L166) in the same file
+[records its process id](../../terminalgame/app/launcher.py#L166) in the same file
 at startup — which is why the file is written twice rather than once. So on
 every pass of its waiting loop the launcher can ask a second question: is that
 process still there? A window closed by hand takes the game with it, the answer
