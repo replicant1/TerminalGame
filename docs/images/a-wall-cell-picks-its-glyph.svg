@@ -2,117 +2,120 @@
 <!-- Hand-maintained SVG. Nothing in this repository regenerates it. -->
 <!-- The lines are drawn as geometry rather than set as box-drawing characters, -->
 <!-- so the picture does not depend on the reader having a font that has them. -->
+<!-- Colours are the running game's: a black cell background, and blue for the -->
+<!-- wall lines and for nothing else. The grey lines dividing cells and -->
+<!-- characters belong to this diagram alone and are never drawn on screen. -->
 <rect width="1180" height="760" fill="#ffffff"/>
 <text x="32" y="48" font-size="26" font-weight="600" fill="#1b1b1b">A wall cell picks its glyph from the four cells around it</text>
-<text x="32" y="78" font-size="16" fill="#5b6472">Four questions, sixteen answers. Eight of them are shown.</text>
+<text x="32" y="78" font-size="16" fill="#5b6472">Four questions, sixteen answers. Eight of them are shown. Drawn in the game's own colours: blue lines on black cells.</text>
 <text x="32" y="132" font-size="18" font-weight="600" fill="#1b1b1b">1. The four questions</text>
 <text x="32" y="152" font-size="14" fill="#5b6472">is the cell on that side also wall? out of bounds counts as no</text>
-<rect x="60" y="178" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<rect x="112" y="178" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<text x="138" y="208" font-size="12" fill="#c0392b" text-anchor="middle">north 1</text>
-<rect x="164" y="178" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<rect x="60" y="230" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<text x="86" y="260" font-size="12" fill="#c0392b" text-anchor="middle">west 4</text>
-<rect x="112" y="230" width="52" height="52" fill="#dde3ec" stroke="#dfe4ec"/>
-<text x="138" y="260" font-size="13" fill="#1b1b1b" text-anchor="middle">this cell</text>
-<rect x="164" y="230" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<text x="190" y="260" font-size="12" fill="#c0392b" text-anchor="middle">east 8</text>
-<rect x="60" y="282" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<rect x="112" y="282" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
-<text x="138" y="312" font-size="12" fill="#c0392b" text-anchor="middle">south 2</text>
-<rect x="164" y="282" width="52" height="52" fill="#eef1f6" stroke="#dfe4ec"/>
+<rect x="60" y="178" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<rect x="112" y="178" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<text x="138" y="208" font-size="12" fill="#ff6b5e" text-anchor="middle">north 1</text>
+<rect x="164" y="178" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<rect x="60" y="230" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<text x="86" y="260" font-size="12" fill="#ff6b5e" text-anchor="middle">west 4</text>
+<rect x="112" y="230" width="52" height="52" fill="#000000" stroke="#c9d0da" stroke-width="2"/>
+<text x="138" y="260" font-size="13" fill="#ffffff" text-anchor="middle">this cell</text>
+<rect x="164" y="230" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<text x="190" y="260" font-size="12" fill="#ff6b5e" text-anchor="middle">east 8</text>
+<rect x="60" y="282" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<rect x="112" y="282" width="52" height="52" fill="#000000" stroke="#565e6b"/>
+<text x="138" y="312" font-size="12" fill="#ff6b5e" text-anchor="middle">south 2</text>
+<rect x="164" y="282" width="52" height="52" fill="#000000" stroke="#565e6b"/>
 <text x="60" y="360" font-size="13" fill="#5b6472">the four answers add up to one number,</text>
 <text x="60" y="380" font-size="13" fill="#5b6472">and that number chooses the glyph</text>
 <text x="480" y="132" font-size="18" font-weight="600" fill="#1b1b1b">2. Eight of the sixteen answers</text>
 <text x="480" y="152" font-size="14" fill="#5b6472">the neighbours that are wall, and the lines that result</text>
-<rect x="460" y="177" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="517" y1="220" x2="517" y2="203" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="523" y1="220" x2="523" y2="203" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="517" y1="220" x2="517" y2="237" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="523" y1="220" x2="523" y2="237" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="460" y="177" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="517" y1="220" x2="517" y2="203" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="523" y1="220" x2="523" y2="203" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="517" y1="220" x2="517" y2="237" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="523" y1="220" x2="523" y2="237" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="520" y="282" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">north + south</text>
 <text x="520" y="300" font-size="12" fill="#5b6472" text-anchor="middle">a run going down</text>
-<rect x="625" y="177" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="685" y1="217" x2="668" y2="217" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="223" x2="668" y2="223" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="217" x2="702" y2="217" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="223" x2="702" y2="223" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="625" y="177" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="685" y1="217" x2="668" y2="217" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="223" x2="668" y2="223" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="217" x2="702" y2="217" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="223" x2="702" y2="223" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="685" y="282" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">west + east</text>
 <text x="685" y="300" font-size="12" fill="#5b6472" text-anchor="middle">a run going across</text>
-<rect x="790" y="177" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="847" y1="220" x2="847" y2="237" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="853" y1="220" x2="853" y2="237" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="850" y1="217" x2="867" y2="217" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="850" y1="223" x2="867" y2="223" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="790" y="177" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="847" y1="220" x2="847" y2="237" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="853" y1="220" x2="853" y2="237" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="850" y1="217" x2="867" y2="217" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="850" y1="223" x2="867" y2="223" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="850" y="282" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">south + east</text>
 <text x="850" y="300" font-size="12" fill="#5b6472" text-anchor="middle">a corner</text>
-<rect x="955" y="177" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="1012" y1="220" x2="1012" y2="203" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="1018" y1="220" x2="1018" y2="203" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="1015" y1="217" x2="998" y2="217" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="1015" y1="223" x2="998" y2="223" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="955" y="177" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="1012" y1="220" x2="1012" y2="203" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="1018" y1="220" x2="1018" y2="203" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="1015" y1="217" x2="998" y2="217" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="1015" y1="223" x2="998" y2="223" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="1015" y="282" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">north + west</text>
 <text x="1015" y="300" font-size="12" fill="#5b6472" text-anchor="middle">the opposite corner</text>
-<rect x="460" y="342" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="517" y1="385" x2="517" y2="368" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="523" y1="385" x2="523" y2="368" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="517" y1="385" x2="517" y2="402" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="523" y1="385" x2="523" y2="402" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="520" y1="382" x2="537" y2="382" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="520" y1="388" x2="537" y2="388" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="460" y="342" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="517" y1="385" x2="517" y2="368" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="523" y1="385" x2="523" y2="368" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="517" y1="385" x2="517" y2="402" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="523" y1="385" x2="523" y2="402" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="520" y1="382" x2="537" y2="382" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="520" y1="388" x2="537" y2="388" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="520" y="447" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">three sides</text>
 <text x="520" y="465" font-size="12" fill="#5b6472" text-anchor="middle">a tee</text>
-<rect x="625" y="342" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="682" y1="385" x2="682" y2="368" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="688" y1="385" x2="688" y2="368" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="682" y1="385" x2="682" y2="402" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="688" y1="385" x2="688" y2="402" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="382" x2="668" y2="382" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="388" x2="668" y2="388" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="382" x2="702" y2="382" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="685" y1="388" x2="702" y2="388" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="625" y="342" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="682" y1="385" x2="682" y2="368" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="688" y1="385" x2="688" y2="368" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="682" y1="385" x2="682" y2="402" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="688" y1="385" x2="688" y2="402" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="382" x2="668" y2="382" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="388" x2="668" y2="388" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="382" x2="702" y2="382" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="685" y1="388" x2="702" y2="388" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="685" y="447" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">all four</text>
 <text x="685" y="465" font-size="12" fill="#5b6472" text-anchor="middle">a crossing</text>
-<rect x="790" y="342" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="850" y1="382" x2="867" y2="382" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
-<line x1="850" y1="388" x2="867" y2="388" stroke="#2f3b52" stroke-width="4" stroke-linecap="square"/>
+<rect x="790" y="342" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<line x1="850" y1="382" x2="867" y2="382" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
+<line x1="850" y1="388" x2="867" y2="388" stroke="#3700ea" stroke-width="4" stroke-linecap="square"/>
 <text x="850" y="447" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">east alone</text>
 <text x="850" y="465" font-size="12" fill="#5b6472" text-anchor="middle">drawn as the run, not a stub</text>
-<rect x="955" y="342" width="120" height="86" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="1008" y="378" width="14" height="14" fill="#2f3b52"/>
+<rect x="955" y="342" width="120" height="86" fill="#000000" stroke="#565e6b"/>
+<rect x="1008" y="378" width="14" height="14" fill="#3700ea"/>
 <text x="1015" y="447" font-size="13" font-weight="600" fill="#1b1b1b" text-anchor="middle">none at all</text>
 <text x="1015" y="465" font-size="12" fill="#5b6472" text-anchor="middle">a pillar, larger than a pill</text>
 <text x="32" y="512" font-size="18" font-weight="600" fill="#1b1b1b">3. The other half of the cell</text>
 <text x="32" y="532" font-size="14" fill="#5b6472">a wall cell is two characters too. the right-hand one carries the line onward only when the wall really continues east</text>
 <text x="60" y="556" font-size="13" font-weight="600" fill="#1b1b1b">the wall continues east</text>
-<rect x="60" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="94" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="128" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="162" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="60" y1="568" x2="60" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="128" y1="568" x2="128" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="196" y1="568" x2="196" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="60" y1="595" x2="162" y2="595" stroke="#2f3b52" stroke-width="4"/>
-<line x1="60" y1="601" x2="162" y2="601" stroke="#2f3b52" stroke-width="4"/>
+<rect x="60" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="94" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="128" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="162" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<line x1="60" y1="568" x2="60" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="128" y1="568" x2="128" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="196" y1="568" x2="196" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="60" y1="595" x2="162" y2="595" stroke="#3700ea" stroke-width="4"/>
+<line x1="60" y1="601" x2="162" y2="601" stroke="#3700ea" stroke-width="4"/>
 <text x="77" y="644" font-size="12" fill="#5b6472" text-anchor="middle">glyph</text>
 <text x="111" y="644" font-size="12" fill="#c0392b" text-anchor="middle">dash</text>
 <path d="M 61 656 v 6 h 66 v -6" fill="none" stroke="#1b1b1b" stroke-width="2"/>
 <text x="94" y="678" font-size="12" fill="#1b1b1b" text-anchor="middle">one cell</text>
 <text x="32" y="706" font-size="13" fill="#5b6472">the right-hand character carries a dash, so the run is unbroken</text>
 <text x="480" y="556" font-size="13" font-weight="600" fill="#1b1b1b">the wall stops here</text>
-<rect x="480" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="514" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="548" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<rect x="582" y="568" width="34" height="60" fill="#f4f6f9" stroke="#dfe4ec"/>
-<line x1="480" y1="568" x2="480" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="548" y1="568" x2="548" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="616" y1="568" x2="616" y2="628" stroke="#8493ad" stroke-width="2"/>
-<line x1="480" y1="595" x2="514" y2="595" stroke="#2f3b52" stroke-width="4"/>
-<line x1="480" y1="601" x2="514" y2="601" stroke="#2f3b52" stroke-width="4"/>
+<rect x="480" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="514" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="548" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<rect x="582" y="568" width="34" height="60" fill="#000000" stroke="#565e6b"/>
+<line x1="480" y1="568" x2="480" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="548" y1="568" x2="548" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="616" y1="568" x2="616" y2="628" stroke="#9aa3b0" stroke-width="2"/>
+<line x1="480" y1="595" x2="514" y2="595" stroke="#3700ea" stroke-width="4"/>
+<line x1="480" y1="601" x2="514" y2="601" stroke="#3700ea" stroke-width="4"/>
 <text x="497" y="644" font-size="12" fill="#5b6472" text-anchor="middle">glyph</text>
 <text x="531" y="644" font-size="12" fill="#c0392b" text-anchor="middle">blank</text>
-<rect x="559" y="593" width="11" height="11" fill="#e0a640"/>
-<text x="565" y="644" font-size="12" fill="#e0a640" text-anchor="middle">a pill</text>
+<rect x="559" y="593" width="11" height="11" fill="#d2b126"/>
+<text x="565" y="644" font-size="12" fill="#8a6f16" text-anchor="middle">a pill</text>
 <path d="M 481 656 v 6 h 66 v -6" fill="none" stroke="#1b1b1b" stroke-width="2"/>
 <text x="514" y="678" font-size="12" fill="#1b1b1b" text-anchor="middle">one cell</text>
 <text x="452" y="706" font-size="13" fill="#5b6472">the right-hand character stays blank, which is the gap a pill needs</text>

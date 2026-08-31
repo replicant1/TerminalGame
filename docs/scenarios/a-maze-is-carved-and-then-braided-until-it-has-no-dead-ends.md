@@ -67,12 +67,17 @@ red.
 
 **On opening it.** GitHub renders Markdown with scripts and iframes stripped
 out, so an interactive example cannot live inside this document; it has to be
-its own HTML file alongside it. [`docs/maze-step-by-step.html`](../maze-step-by-step.html)
-is a single file with no build step, no dependencies and no network access —
-open it in any browser from a clone of this repository. Following the link on
-github.com shows you its source instead of running it, which is a limitation of
-the viewer rather than of the file: it would run as it stands if GitHub Pages
-were switched on for this repository.
+its own HTML file alongside it. It is live at
+[replicant1.github.io/TerminalGame/docs/maze-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html),
+and [`docs/maze-step-by-step.html`](../maze-step-by-step.html) opens straight
+from a clone as well — one file, no build step, no dependencies, no network
+access. Following the relative link on github.com shows you its source rather
+than running it, which is a limitation of that viewer rather than of the file.
+
+There is a companion page for the pass that comes next:
+[every wall cell picks its glyph](../wall-glyphs-step-by-step.html) turns the
+finished maze into the two layers a picture is drawn from, cell by cell. Seed 7
+is the same maze in both.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|

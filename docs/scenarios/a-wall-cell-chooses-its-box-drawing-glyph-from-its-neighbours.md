@@ -15,6 +15,39 @@ Third, the two characters of a wall cell: the right-hand one carries a dash
 when the wall continues east, and stays blank when it does not, which is the
 gap a pill in the next cell needs.](../images/a-wall-cell-picks-its-glyph.svg)
 
+### Step through it yourself
+
+[**Every wall cell picks its glyph, one at a time**](../wall-glyphs-step-by-step.html)
+sets the panels above in motion. It opens on an eleven by eleven maze in the only
+state the maze itself understands — every wall cell a solid block, because open
+or not open is the whole of what it knows — and then walks the arena cell by
+cell, in the order
+[`_to_layers`](../../terminalgame/presentation/view_model.py#L191) walks it.
+
+Each wall cell asks its four questions in front of you. The four cells around it
+are badged with the numbers they would contribute, the ones that are wall light
+up and the ones that are not stay dim, the total is added, and the solid block
+turns into the line that total chose. Corridor cells take a pill instead, so both
+layers fill in together and you can see that each is blank wherever the other has
+something.
+
+Watch the corners of row 0 in particular. They close into a rectangle only
+because the cells off the edge count as not-wall — the rule that is hardest to
+see the point of until you watch it apply.
+
+The glyph table is [`_WALL_GLYPH`](../../terminalgame/presentation/view_model.py#L70)
+and the walk is the one the code makes. The maze comes from the same seeded
+Mersenne Twister the [maze walkthrough](../maze-step-by-step.html) uses, so **seed
+7 is the same maze in both pages**, and both layers were checked against
+`_to_layers` for seeds 7, 0 and 42, character for character.
+
+**On opening it.** GitHub renders Markdown with scripts stripped out, so an
+interactive example cannot live inside this document; it has to be its own HTML
+file alongside it. It is live at
+[replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html),
+and opens straight from a clone as well — one file, no build step, no
+dependencies, no network access.
+
 ## The four questions
 
 A wall cell asks whether the cell to its north, south, west and east is also
