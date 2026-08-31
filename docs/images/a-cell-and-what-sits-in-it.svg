@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 690" width="1240" height="690" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 840" width="1240" height="840" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
 <!-- Hand-maintained SVG. Nothing in this repository regenerates it. -->
 <!-- Character positions are drawn to scale: 26 by 52, twice as tall as wide. -->
 <!-- Colours are taken from the running game: a black background, blue for -->
 <!-- the walls and for nothing else, gold pills, a bright yellow player. -->
 <!-- The grey lines belong to this diagram alone: the grid a cell sits on -->
 <!-- is never drawn on screen. -->
-<rect width="1240" height="690" fill="#ffffff"/>
+<rect width="1240" height="840" fill="#ffffff"/>
 <text x="32" y="48" font-size="26" font-weight="600" fill="#1b1b1b">A cell is two characters wide, and everything sits on the left one</text>
-<text x="32" y="76" font-size="16" fill="#5b6472">Character positions drawn to scale. Three cells of corridor and the walls that box them in, seen four ways.</text>
+<text x="32" y="76" font-size="16" fill="#5b6472">Character positions drawn to scale. Three cells of corridor and the walls that box them in, first running across, then the same three running down.</text>
 <rect x="32" y="90" width="36" height="20" fill="#000000"/>
 <line x1="32" y1="97" x2="68" y2="97" stroke="#3700ea" stroke-width="4"/>
 <line x1="32" y1="103" x2="68" y2="103" stroke="#3700ea" stroke-width="4"/>
@@ -22,7 +22,10 @@
 <line x1="395" y1="90" x2="395" y2="110" stroke="#7a828e" stroke-width="1.5"/>
 <line x1="413" y1="90" x2="413" y2="110" stroke="#565e6b" stroke-width="1"/>
 <line x1="431" y1="90" x2="431" y2="110" stroke="#7a828e" stroke-width="1.5"/>
-<text x="439" y="105" font-size="14" fill="#5b6472">cell and character divisions -- the diagram's own, not drawn on screen</text>
+<text x="439" y="105" font-size="14" fill="#5b6472">cell and character divisions, never drawn on screen</text>
+<rect x="820" y="90" width="36" height="20" fill="#000000"/>
+<rect x="825" y="93" width="26" height="14" fill="none" stroke="#faff35" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="864" y="105" font-size="14" fill="#5b6472">where the player was</text>
 <text x="32" y="140" font-size="18" font-weight="600" fill="#1b1b1b">1. The grid</text>
 <text x="32" y="162" font-size="14" fill="#5b6472">two characters make one cell</text>
 <rect x="32" y="192" width="260" height="156" fill="#000000"/>
@@ -84,7 +87,7 @@
 <rect x="650" y="215" width="214" height="110" fill="none" stroke="#3700ea" stroke-width="4"/>
 <rect x="656" y="221" width="202" height="98" fill="none" stroke="#3700ea" stroke-width="4"/>
 <text x="944" y="140" font-size="18" font-weight="600" fill="#1b1b1b">4. After moving on</text>
-<text x="944" y="162" font-size="14" fill="#5b6472">the pill is gone for good</text>
+<text x="944" y="162" font-size="14" fill="#5b6472">the cell behind is blank now</text>
 <rect x="944" y="192" width="260" height="156" fill="#000000"/>
 <line x1="970" y1="192" x2="970" y2="348" stroke="#565e6b" stroke-width="1"/>
 <line x1="1022" y1="192" x2="1022" y2="348" stroke="#565e6b" stroke-width="1"/>
@@ -125,18 +128,81 @@
 <line x1="757" y1="186" x2="757" y2="348" stroke="#e8574a" stroke-width="2" stroke-dasharray="4 4"/>
 <text x="770" y="404" font-size="12" fill="#5b6472" text-anchor="middle">the pill underneath is covered, eaten or not</text>
 <rect x="1000" y="261" width="18" height="18" fill="#d2b126"/>
-<rect x="1104" y="261" width="18" height="18" fill="#d2b126"/>
+<rect x="1039" y="248" width="44" height="44" fill="none" stroke="#faff35" stroke-width="2" stroke-dasharray="5 4"/>
+<rect x="1087" y="244" width="52" height="52" fill="#faff35"/>
 <text x="1061" y="182" font-size="12" fill="#c0392b" text-anchor="middle">centre line</text>
 <line x1="1061" y1="186" x2="1061" y2="348" stroke="#e8574a" stroke-width="2" stroke-dasharray="4 4"/>
-<text x="1074" y="404" font-size="12" fill="#5b6472" text-anchor="middle">one character became a blank</text>
-<text x="32" y="456" font-size="18" font-weight="600" fill="#1b1b1b">Why the left character</text>
-<text x="32" y="482" font-size="15" fill="#5b6472">A cell is one row tall and two characters wide, which comes out very nearly square, because a terminal's</text>
-<text x="32" y="504" font-size="15" fill="#5b6472">character is about twice as tall as it is wide. There is no column between the two halves for a wall's</text>
-<text x="32" y="526" font-size="15" fill="#5b6472">vertical line to sit in, so the left character is the centre line every part of the picture has to share:</text>
-<text x="32" y="548" font-size="15" fill="#5b6472">the walls draw their lines there, the pill sits there, and a sprite is centred on it.</text>
-<text x="32" y="570" font-size="15" fill="#5b6472"></text>
-<text x="32" y="592" font-size="15" fill="#5b6472">That is also why sprite art is an odd number of characters wide. Ink centred on a character can be one</text>
-<text x="32" y="614" font-size="15" fill="#5b6472">character wide, or three, but never two -- two are centred on the join between them, half a character off</text>
-<text x="32" y="636" font-size="15" fill="#5b6472">the line. Three characters give a full corridor's width of ink and still sit centred, at the cost of</text>
-<text x="32" y="658" font-size="15" fill="#5b6472">overhanging into the blank right-hand character of the cell alongside.</text>
+<line x1="1061" y1="355" x2="1061" y2="365" stroke="#1b1b1b" stroke-width="2"/>
+<line x1="1061" y1="360" x2="1106" y2="360" stroke="#1b1b1b" stroke-width="2"/>
+<path d="M 1113 360 l -8 -5 l 0 10 z" fill="#1b1b1b"/>
+<text x="1087" y="380" font-size="12" fill="#1b1b1b" text-anchor="middle">one cell on</text>
+<text x="1074" y="404" font-size="12" fill="#5b6472" text-anchor="middle">eating is only ever seen from behind</text>
+<text x="32" y="452" font-size="18" font-weight="600" fill="#1b1b1b">5. Turned on its end</text>
+<text x="32" y="474" font-size="14" fill="#5b6472">three pills, one column</text>
+<rect x="32" y="504" width="156" height="260" fill="#000000"/>
+<line x1="58" y1="504" x2="58" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="110" y1="504" x2="110" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="162" y1="504" x2="162" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="32" y1="504" x2="32" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="84" y1="504" x2="84" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="136" y1="504" x2="136" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="188" y1="504" x2="188" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="504" x2="188" y2="504" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="556" x2="188" y2="556" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="608" x2="188" y2="608" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="660" x2="188" y2="660" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="712" x2="188" y2="712" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="32" y1="764" x2="188" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<rect x="42" y="527" width="110" height="214" fill="none" stroke="#3700ea" stroke-width="4"/>
+<rect x="48" y="533" width="98" height="202" fill="none" stroke="#3700ea" stroke-width="4"/>
+<text x="232" y="452" font-size="18" font-weight="600" fill="#1b1b1b">6. The trail behind</text>
+<text x="232" y="474" font-size="14" fill="#5b6472">eaten, hidden, untouched</text>
+<rect x="232" y="504" width="156" height="260" fill="#000000"/>
+<line x1="258" y1="504" x2="258" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="310" y1="504" x2="310" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="362" y1="504" x2="362" y2="764" stroke="#565e6b" stroke-width="1"/>
+<line x1="232" y1="504" x2="232" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="284" y1="504" x2="284" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="336" y1="504" x2="336" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="388" y1="504" x2="388" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="504" x2="388" y2="504" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="556" x2="388" y2="556" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="608" x2="388" y2="608" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="660" x2="388" y2="660" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="712" x2="388" y2="712" stroke="#7a828e" stroke-width="1.5"/>
+<line x1="232" y1="764" x2="388" y2="764" stroke="#7a828e" stroke-width="1.5"/>
+<rect x="242" y="527" width="110" height="214" fill="none" stroke="#3700ea" stroke-width="4"/>
+<rect x="248" y="533" width="98" height="202" fill="none" stroke="#3700ea" stroke-width="4"/>
+<rect x="88" y="573" width="18" height="18" fill="#d2b126"/>
+<rect x="88" y="625" width="18" height="18" fill="#d2b126"/>
+<rect x="88" y="677" width="18" height="18" fill="#d2b126"/>
+<text x="97" y="494" font-size="12" fill="#c0392b" text-anchor="middle">centre line</text>
+<line x1="97" y1="498" x2="97" y2="764" stroke="#e8574a" stroke-width="2" stroke-dasharray="4 4"/>
+<text x="110" y="788" font-size="12" fill="#5b6472" text-anchor="middle">one character of ink,</text>
+<text x="110" y="804" font-size="12" fill="#5b6472" text-anchor="middle">one blank, all the way down</text>
+<rect x="288" y="677" width="18" height="18" fill="#d2b126"/>
+<rect x="275" y="560" width="44" height="44" fill="none" stroke="#faff35" stroke-width="2" stroke-dasharray="5 4"/>
+<rect x="271" y="608" width="52" height="52" fill="#faff35"/>
+<text x="297" y="494" font-size="12" fill="#c0392b" text-anchor="middle">centre line</text>
+<line x1="297" y1="498" x2="297" y2="764" stroke="#e8574a" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="395" y1="582" x2="405" y2="582" stroke="#1b1b1b" stroke-width="2"/>
+<line x1="400" y1="582" x2="400" y2="627" stroke="#1b1b1b" stroke-width="2"/>
+<path d="M 400 634 l -5 -8 l 10 0 z" fill="#1b1b1b"/>
+<text x="310" y="788" font-size="12" fill="#5b6472" text-anchor="middle">one cell down, and the same:</text>
+<text x="310" y="804" font-size="12" fill="#5b6472" text-anchor="middle">eating is only seen from behind</text>
+<text x="440" y="452" font-size="18" font-weight="600" fill="#1b1b1b">Why the left character</text>
+<text x="440" y="486" font-size="15" fill="#5b6472">A cell is one row tall and two characters wide, which comes out very nearly</text>
+<text x="440" y="508" font-size="15" fill="#5b6472">square, because a terminal's character is about twice as tall as it is wide.</text>
+<text x="440" y="530" font-size="15" fill="#5b6472">There is no column between the two halves for a wall's vertical line to sit in,</text>
+<text x="440" y="552" font-size="15" fill="#5b6472">so the left character is the centre line every part of the picture has to</text>
+<text x="440" y="574" font-size="15" fill="#5b6472">share: the walls draw their lines there, the pill sits there, and a sprite is</text>
+<text x="440" y="596" font-size="15" fill="#5b6472">centred on it. Turning the corridor on its end changes none of that. The pills</text>
+<text x="440" y="618" font-size="15" fill="#5b6472">stack up on one column, and the right-hand character of every cell in the run</text>
+<text x="440" y="640" font-size="15" fill="#5b6472">stays blank.</text>
+<text x="440" y="662" font-size="15" fill="#5b6472"></text>
+<text x="440" y="684" font-size="15" fill="#5b6472">That is also why sprite art is an odd number of characters wide. Ink centred on</text>
+<text x="440" y="706" font-size="15" fill="#5b6472">a character can be one character wide, or three, but never two -- two are</text>
+<text x="440" y="728" font-size="15" fill="#5b6472">centred on the join between them, half a character off the line. Three</text>
+<text x="440" y="750" font-size="15" fill="#5b6472">characters give a full corridor's width of ink and still sit centred, at the</text>
+<text x="440" y="772" font-size="15" fill="#5b6472">cost of overhanging into the blank right-hand character of the cell alongside.</text>
 </svg>

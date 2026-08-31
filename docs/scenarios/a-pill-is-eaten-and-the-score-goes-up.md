@@ -71,12 +71,18 @@ the pill sits in the left one — the same column the walls draw their lines in,
 and the column a sprite is centred on. So taking a pill is a single character
 becoming a blank.
 
-![Four panels showing three cells of corridor boxed in by the maze walls,
-drawn to scale in the game's own colours -- black cells, blue walls, gold
-pills, a bright yellow player: the two characters that make a cell, the pill in
-the left character, the player's three characters of ink centred on that same
-column and overhanging into the character alongside, and the cell left blank
-after the pill has been eaten.](../images/a-cell-and-what-sits-in-it.svg)
+![Six panels showing three cells of corridor boxed in by the maze walls, drawn
+to scale in the game's own colours -- black cells, blue walls, gold pills, a
+bright yellow player. Four of them run across: the two characters that make a
+cell, the pill in the left character, the player's three characters of ink
+centred on that same column and overhanging into the character alongside, and
+then the step itself -- a dashed outline on the cell the player has just left,
+now blank where its pill was, an arrow to the cell it moved into, and the
+player drawn there. Two panels run down, where the pills stack on a single
+column with the right-hand character of every cell left blank: three pills
+untouched, then the same step taken downwards, the trail behind the player
+reading eaten, hidden underfoot, still there
+below.](../images/a-cell-and-what-sits-in-it.svg)
 
 **The pill the player is standing on cannot be seen.** The character the
 player controls is drawn over the whole cell, so the pill underneath it is
