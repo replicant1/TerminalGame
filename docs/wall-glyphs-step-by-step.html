@@ -81,6 +81,29 @@
   .legend li { display: flex; align-items: center; gap: 9px; margin: 0 0 7px; }
   .swatch { width: 20px; height: 20px; border: 1px solid var(--line); flex: 0 0 auto; }
   .note { margin: 28px 0 0; font-size: 13.5px; color: var(--muted); max-width: 78ch; }
+  h2 { font-size: 19px; margin: 40px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; max-width: 78ch; font-size: 14px; }
+  h3 { font-size: 15px; margin: 0 0 10px; }
+  .two-step { display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap; }
+  .two-step > div { flex: 0 1 auto; }
+  #sum-line {
+    margin: 16px 0 0; font-size: 22px; font-family: ui-monospace, Menlo, Consolas, monospace;
+    color: var(--muted);
+  }
+  #sum-line b { color: var(--ink); font-size: 28px; }
+  #sum-line .term { color: var(--hot); }
+  .caption { margin: 8px 0 0; font-size: 13px; color: var(--muted); max-width: 30ch; }
+  #coalesced { max-width: 560px; margin: 0; }
+  #coalesced td.glyph { width: 44px; padding: 3px 10px 3px 0; }
+  #coalesced td.glyph svg { display: block; }
+  #coalesced td.ch { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; width: 2em; }
+  #coalesced td.totals { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  #coalesced .t { color: var(--muted); }
+  #coalesced .t.hit {
+    color: #fff; background: var(--mark); border-radius: 3px; padding: 1px 5px; font-weight: 600;
+  }
+  #coalesced tr.on td { background: #fdf1dc; }
+  #coalesced tr.on td.glyph { box-shadow: inset 3px 0 0 var(--mark); }
   .note code { background: var(--panel); padding: 1px 5px; border-radius: 3px; }
 </style>
 
@@ -143,6 +166,41 @@
     </div>
   </div>
 
+  <h2>From four answers to one glyph, in two steps</h2>
+  <p class="sub">
+    Both steps follow whichever cell is being asked about, so stepping the arena
+    above drives them.
+  </p>
+  <div class="two-step">
+    <div>
+      <h3>1. Add up the weights</h3>
+      <svg id="weights" width="212" height="212" viewBox="0 0 212 212" role="img"
+           aria-label="The four sides around a cell, each carrying a weight"></svg>
+      <div id="sum-line">—</div>
+      <p class="caption">
+        Each side carries a weight. A side that is wall contributes its weight; a
+        side that is corridor, or off the edge, contributes nothing. Four yes-or-no
+        answers become one number between 0 and 15.
+      </p>
+    </div>
+    <div>
+      <h3>2. Look the total up</h3>
+      <table id="coalesced">
+        <thead>
+          <tr><th>Glyph</th><th></th><th>Chosen by</th><th>What it is</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="caption" style="max-width:52ch">
+        Twelve glyphs, sixteen totals. Rows that would repeat a glyph are gathered
+        into one, which is what makes the two runs stand out: a cell with a single
+        arm is drawn as the whole through-line rather than a stub, so 1, 2 and 3 all
+        give the same vertical and 4, 8 and 12 all give the same horizontal. The
+        double-line set has no half-lines to reach for, so there is nothing else a
+        lone arm could be.
+      </p>
+    </div>
+  </div>
   <p class="note">
     <b>The two layers.</b> One walk fills both. A wall cell puts a glyph in the wall
     layer and leaves the pill layer blank there; a corridor cell does the opposite.
@@ -468,6 +526,144 @@ function draw() {
   }
 }
 
+// Step one: the four sides and what each is worth, drawn as the cell's own
+// neighbourhood so the weights sit where the cells they belong to sit.
+var WEIGHT_SIDES = [
+  { bit: NORTH, label: "north", gx: 1, gy: 0 },
+  { bit: WEST,  label: "west",  gx: 0, gy: 1 },
+  { bit: EAST,  label: "east",  gx: 2, gy: 1 },
+  { bit: SOUTH, label: "south", gx: 1, gy: 2 },
+];
+
+function drawWeights(s) {
+  var box = document.getElementById("weights");
+  while (box.firstChild) box.removeChild(box.firstChild);
+  var SZ = 68, PADW = 2;
+  for (var gy = 0; gy < 3; gy++) {
+    for (var gx = 0; gx < 3; gx++) {
+      box.appendChild(el("rect", {
+        x: PADW + gx * SZ, y: PADW + gy * SZ, width: SZ, height: SZ,
+        fill: "#000000", stroke: "#565e6b",
+      }));
+    }
+  }
+  box.appendChild(el("rect", {
+    x: PADW + SZ, y: PADW + SZ, width: SZ, height: SZ,
+    fill: "#000000", stroke: "#c9d0da", "stroke-width": 2,
+  }));
+  var middle = el("text", {
+    x: PADW + SZ * 1.5, y: PADW + SZ * 1.5 + 5, "text-anchor": "middle",
+    "font-size": 13, fill: "#ffffff",
+  });
+  middle.textContent = "this cell";
+  box.appendChild(middle);
+
+  WEIGHT_SIDES.forEach(function (side) {
+    var q = s && s.wall
+      ? s.asked.filter(function (a) { return a.bit === side.bit; })[0]
+      : null;
+    var lit = q ? q.yes : false;
+    var colour = s && s.wall ? (lit ? "#ff6b5e" : "#6b7280") : "#8a93a1";
+    var cx = PADW + side.gx * SZ + SZ / 2, cy = PADW + side.gy * SZ + SZ / 2;
+    var weight = el("text", {
+      x: cx, y: cy + 3, "text-anchor": "middle", "font-size": 24,
+      "font-weight": 600, fill: colour,
+    });
+    weight.textContent = side.bit;
+    box.appendChild(weight);
+    var name = el("text", {
+      x: cx, y: cy + 22, "text-anchor": "middle", "font-size": 11, fill: colour,
+    });
+    name.textContent = side.label;
+    box.appendChild(name);
+  });
+}
+
+function showSum(s) {
+  var out = document.getElementById("sum-line");
+  while (out.firstChild) out.removeChild(out.firstChild);
+  if (!s || !s.wall) { out.textContent = "—"; return; }
+  var terms = s.asked.filter(function (q) { return q.yes; })
+                     .map(function (q) { return q.bit; });
+  if (!terms.length) terms = [0];
+  terms.forEach(function (bit, i) {
+    if (i) out.appendChild(document.createTextNode(" + "));
+    var span = document.createElement("span");
+    span.className = "term";
+    span.textContent = bit;
+    out.appendChild(span);
+  });
+  out.appendChild(document.createTextNode(" = "));
+  var total = document.createElement("b");
+  total.textContent = s.sides;
+  out.appendChild(total);
+}
+
+// Step two: the same table the code holds, with the rows that would repeat a
+// glyph gathered into one. Derived from GLYPH rather than transcribed.
+var GROUPS = (function () {
+  var byChar = {}, order = [];
+  for (var total = 0; total <= 15; total++) {
+    var g = GLYPH[total];
+    if (!byChar[g.ch]) {
+      byChar[g.ch] = { ch: g.ch, arms: g.arms, name: g.name, totals: [] };
+      order.push(byChar[g.ch]);
+    }
+    byChar[g.ch].totals.push(total);
+  }
+  return order;
+})();
+
+function buildLookup() {
+  var body = document.querySelector("#coalesced tbody");
+  GROUPS.forEach(function (group, index) {
+    var tr = document.createElement("tr");
+    tr.id = "group-" + index;
+
+    var drawn = document.createElement("td");
+    drawn.className = "glyph";
+    var tile = el("svg", { width: 34, height: 34, viewBox: "0 0 34 34" });
+    tile.appendChild(el("rect", { x: 0, y: 0, width: 34, height: 34, fill: "#000000" }));
+    drawGlyph(tile, 5, 5, group.arms, 24, 24, "#3700ea", 3, 3);
+    drawn.appendChild(tile);
+    tr.appendChild(drawn);
+
+    var ch = document.createElement("td");
+    ch.className = "ch";
+    ch.textContent = group.ch;
+    tr.appendChild(ch);
+
+    var totals = document.createElement("td");
+    totals.className = "totals";
+    group.totals.forEach(function (total, i) {
+      if (i) totals.appendChild(document.createTextNode(", "));
+      var span = document.createElement("span");
+      span.className = "t";
+      span.id = "t-" + total;
+      span.textContent = total;
+      totals.appendChild(span);
+    });
+    tr.appendChild(totals);
+
+    var name = document.createElement("td");
+    name.textContent = group.name;
+    tr.appendChild(name);
+    body.appendChild(tr);
+  });
+}
+
+function highlightLookup(s) {
+  var hit = s && s.wall ? s.sides : -1;
+  GROUPS.forEach(function (group, index) {
+    document.getElementById("group-" + index).className =
+      group.totals.indexOf(hit) >= 0 ? "on" : "";
+    group.totals.forEach(function (total) {
+      document.getElementById("t-" + total).className =
+        total === hit ? "t hit" : "t";
+    });
+  });
+}
+
 function narrate(s) {
   if (!s) {
     return "Nothing has been asked yet. Every wall cell is a solid block, because " +
@@ -508,6 +704,9 @@ function show() {
   document.getElementById("counter").textContent =
     "cell " + (at + 1) + " of " + steps.length;
   document.getElementById("narration").textContent = narrate(s);
+  drawWeights(s);
+  showSum(s);
+  highlightLookup(s);
 
   var body = document.querySelector("#questions tbody");
   while (body.firstChild) body.removeChild(body.firstChild);
@@ -602,5 +801,6 @@ document.addEventListener("keydown", function (e) {
   if (e.key === "ArrowLeft") document.getElementById("back").click();
 });
 
+buildLookup();
 load(7);
 </script>
