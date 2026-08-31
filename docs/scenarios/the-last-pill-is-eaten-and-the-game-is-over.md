@@ -30,7 +30,7 @@ places, each of which simply declines to do anything:
 | What still happens | What it does now |
 |---|---|
 | The clock reaches its next deadline and calls [`tick`](../../terminalgame/presentation/view_model.py#L278) | Returns at once. The ghost does not move, the count of ticks does not go up, and no picture is built |
-| A player presses an arrow and the loop calls [`on_direction`](../../terminalgame/presentation/view_model.py#L285) | Returns at once. No move, no pill, no score |
+| A player presses an arrow and the loop calls [`on_direction`](../../terminalgame/presentation/view_model.py#L297) | Returns at once. No move, no pill, no score |
 | A player presses a quit key | Unaffected — the loop tests for quit before it consults the view model at all, so quitting cannot be broken by anything the game does |
 
 Because neither of those two builds a picture, nothing is offered to the
@@ -41,7 +41,7 @@ because nothing has overwritten it.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | In this scenario it is the **referee**: [`_take_pill`](../../terminalgame/presentation/view_model.py#L327) counts the pills down, [`on_direction`](../../terminalgame/presentation/view_model.py#L285) notices the count has reached nothing, and [`_status_line`](../../terminalgame/presentation/view_model.py#L400) writes a different line from then on |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | In this scenario it is the **referee**: [`_take_pill`](../../terminalgame/presentation/view_model.py#L327) counts the pills down, [`on_direction`](../../terminalgame/presentation/view_model.py#L297) notices the count has reached nothing, and [`_status_line`](../../terminalgame/presentation/view_model.py#L400) writes a different line from then on |
 | [`GameClock`](../../terminalgame/util/clock.py#L13) | The keeper of time. In this scenario it is the part that **does not know**: [`poll`](../../terminalgame/util/clock.py#L62) goes on firing ticks at the usual rate for as long as the program runs, and is never told the game has finished. It is the view model that ignores them |
 | [`main`](../../terminalgame/app/main.py) | The loop. Also never told. It keeps reading keys, keeps polling the clock, and keeps offering directions that are now declined |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier, which is simply never given anything again |
@@ -79,11 +79,11 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | presses an arrow into the last uneaten cell | An ordinary press. Nothing about it is special, and the player has no way of knowing in advance that this is the one — the score tells them how many they have taken, never how many are left |
-| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L285)`(1, 0)` | The same call as every other move |
+| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L297)`(1, 0)` | The same call as every other move |
 | 3 | moves, takes the pill, adds the point | Exactly the story told in [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md), up to and including the score |
 | 4 | counts the pills left, and finds none | The count has been going down one at a time since the game began. It started at the number of corridor cells **less one**, because the pill the player was standing on at the start was taken silently and never counted as collected |
 | 5 | marks the game finished | One value changes. That is the whole of the mechanism, and everything below follows from it |
-| 6 | [`emit`](../../terminalgame/util/flow.py#L56)`(a picture whose readings line says GAME OVER)` | The line of readings is built fresh for every picture, and from now on [it takes the other branch](../../terminalgame/presentation/view_model.py#L361): the score, the words `GAME OVER`, and a reminder of the key that quits |
+| 6 | [`emit`](../../terminalgame/util/flow.py#L56)`(a picture whose readings line says GAME OVER)` | The line of readings is built fresh for every picture, and from now on [it takes the other branch](../../terminalgame/presentation/view_model.py#L423): the score, the words `GAME OVER`, and a reminder of the key that quits |
 | 7 | `render(that picture)` | Nothing asked for it. The screen has been registered since startup and is handed the finished picture |
 | 9 | draws it -- the last drawing of the run | Everything after this point in the diagram produces nothing at all. The picture on the terminal from here on is this one, left where it was drawn |
 | 9 | `poll()` | The loop goes on polling the clock on every pass, exactly as it always has. The clock has not been stopped, and nothing has told it to stop |

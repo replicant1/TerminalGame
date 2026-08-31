@@ -32,9 +32,9 @@ several minutes of play, which is nothing at all.
 
 The obvious question is why one editable list would not do on its own. The
 answer is that a picture is a **value**, not a window onto the view model.
-[`StateFlow`](../../terminalgame/util/flow.py#L56) holds the last picture it
-published and compares the next one against it, and that comparison is the
-whole of how a repaint gets decided. What follows is a rule that reaches
+[`StateFlow`](../../terminalgame/util/flow.py#L13) holds the last picture it
+published and [compares](../../terminalgame/util/flow.py#L56) the next one
+against it, and that comparison is the whole of how a repaint gets decided. What follows is a rule that reaches
 further than pills: every value a
 [`StateFlow`](../../terminalgame/util/flow.py#L13) emits has to be immutable,
 and immutable all the way down — a frozen picture holding an editable list is
@@ -92,14 +92,14 @@ left behind rather than as something happening underfoot.
 
 **The pill under the player at the start is taken silently.** The game places
 the player on a corridor cell, and every corridor cell has a pill. That one is
-[removed without scoring](../../terminalgame/presentation/view_model.py#L227),
+[removed without scoring](../../terminalgame/presentation/view_model.py#L268),
 which is why the opening score reads zero rather than one, and why a pill
 nobody can see is never the last one the game is waiting for.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`main`](../../terminalgame/app/main.py) | The way into the program. In this scenario it does nothing new: it turns a key into a direction, exactly as it does for any other move, and never learns that anything was eaten |
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are and what has been taken. In this scenario it is the **bookkeeper**: [`on_direction`](../../terminalgame/presentation/view_model.py#L285) moves the player, [`_take_pill`](../../terminalgame/presentation/view_model.py#L327) clears the cell if it still has a pill, and only then does the score go up |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are and what has been taken. In this scenario it is the **bookkeeper**: [`on_direction`](../../terminalgame/presentation/view_model.py#L297) moves the player, [`_take_pill`](../../terminalgame/presentation/view_model.py#L327) clears the cell if it still has a pill, and only then does the score go up |
 | [`Maze`](../../terminalgame/presentation/maze.py#L31) | The shape of the arena. In this scenario it is the **gate**: [`is_open`](../../terminalgame/presentation/maze.py#L128) decides whether the move happens at all. It knows nothing about pills, and is never told one has gone |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier that holds the current picture, unchanged in its behaviour by any of this |
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The painter. It is handed a picture whose pill layer differs from the last one by a single character, and it never has to be told that is what changed |
@@ -134,7 +134,7 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | presses an arrow key | Nothing here is specific to eating. The key is gathered, checked against the quit keys, and looked up in the table of directions, exactly as described in the [arrow key scenario](an-arrow-key-moves-the-player-and-repaints-the-screen.md) |
-| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L285)`(0, 1)` | A pair of numbers meaning "no change to the row, one more column". The view model[^viewmodel] still never learns that a key exists |
+| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L297)`(0, 1)` | A pair of numbers meaning "no change to the row, one more column". The view model[^viewmodel] still never learns that a key exists |
 | 3 | `is_open(the cell the step lands in)` | The wall check comes **first**, before any question about pills. A step into wall is refused outright and nothing else in this document happens: no pill is taken, no score changes, nothing is published |
 | 4 | yes, that cell is corridor | The maze answers about a cell, not a character position, and it has no idea whether that cell still has its pill. The two questions are kept apart on purpose: where the player may walk is a property of the maze, and what is left to collect is not |
 | 5 | puts the player there | One whole cell, never a fraction of one |
@@ -189,7 +189,7 @@ layer would fold those two together and make the opening score read one.
 
 [^frozen]: A **frozen** value is one that cannot be altered after it is made.
     If something different is wanted, an entirely new one is built. Both
-    [`ViewState`](../../terminalgame/presentation/state.py#L66) and
+    [`ViewState`](../../terminalgame/presentation/state.py#L68) and
     [`Sprite`](../../terminalgame/presentation/state.py#L45) are frozen. Two
     benefits follow, and this program relies on both. Two of them can be
     compared by their contents, which is what allows an unchanged picture to be

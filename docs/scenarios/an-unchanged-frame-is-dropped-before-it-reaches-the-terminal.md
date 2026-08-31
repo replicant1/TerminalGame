@@ -33,9 +33,9 @@ before it builds one:
 |---|---|
 | A clock beat | The count of beats is part of the picture and has just gone up, so the picture always differs |
 | An arrow key into open corridor | The player has moved, so the picture always differs |
-| An arrow key into a wall | [Returns before publishing](../../terminalgame/presentation/view_model.py#L285). No picture is built at all, so nothing is offered |
+| An arrow key into a wall | [Returns before publishing](../../terminalgame/presentation/view_model.py#L312). No picture is built at all, so nothing is offered |
 | A key that is neither an arrow nor a quit key | The loop ignores it. The view model is never called |
-| Anything at all after the last pill | [Returns immediately](../../terminalgame/presentation/view_model.py#L272), beats included. Nothing is built and nothing is offered |
+| Anything at all after the last pill | [Returns immediately](../../terminalgame/presentation/view_model.py#L289), beats included. Nothing is built and nothing is offered |
 
 The wall press is the one worth noticing, because it is the case the comparison
 was for. It used to be the path that produced identical pictures, and it does

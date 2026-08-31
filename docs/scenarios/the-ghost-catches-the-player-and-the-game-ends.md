@@ -88,7 +88,7 @@ frame includes the pill they died on.
 **A capture beats a cleared arena.** If that pill was the last one on the
 board, both endings are true at once: the player has cleared it, and the player
 has walked into the ghost. The capture is
-[checked first](../../terminalgame/presentation/view_model.py#L297) and wins.
+[checked first](../../terminalgame/presentation/view_model.py#L319) and wins.
 The reasoning is that the ghost was already standing there, and a player who
 walks onto it has been caught whatever else was true of that cell.
 
