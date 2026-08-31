@@ -59,6 +59,13 @@ The times are the reading times, at the pace of somebody reading carefully
 rather than skimming.
 
 **Before the first lap, or at any point during it:**
+[A tour from a Python prompt](../REPL_TOUR.md) — 15 minutes, most of it spent
+typing rather than reading. Carve a maze and print it, drive a whole game with
+no terminal anywhere, draw a frame yourself in ten lines, and reach the one
+branch of the carrier that the game itself never reaches. Nothing in it needs
+the game to be running. If you learn by poking at things, start here and read
+the scenarios afterwards.
+
 [Class overview](../CLASS_OVERVIEW.md) — 20 minutes, and the one document here
 meant to be dipped into rather than read through. Not a scenario. It is the map:
 a diagram of every class and every public member, then, module by module, the
