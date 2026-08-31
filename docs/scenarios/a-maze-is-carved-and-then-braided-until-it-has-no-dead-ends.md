@@ -45,6 +45,35 @@ panel has so many. Braiding opens exactly one wall beside each. The islands in
 the third panel were not sought out and are not chosen: they are simply the wall
 that those openings happened to cut off from the border.*
 
+### Step through it yourself
+
+[**Carving and braiding, one step at a time**](../maze-step-by-step.html) is the
+picture above with the pauses put back in: the same eleven by eleven maze, built
+one decision at a time. Press a button and the algorithm does exactly one thing
+and says what it did — which junction it is standing on, how many unvisited
+junctions it could reach from there, which one the random number picked, and
+which wall that opened. The route back to the start is shaded as it grows and shrinks, and
+the dead ends are ringed as they appear, so the count climbing through the carve
+and falling to zero through the braid happens in front of you rather than being
+asserted here.
+
+It is not an approximation of the algorithm. The page carries a Mersenne Twister
+seeded and drawn from exactly the way CPython's `random` module seeds and draws
+from its own, so a seed typed into the page gives the maze
+[`Maze.generate(11, 11, seed=n)`](../../terminalgame/presentation/maze.py#L60)
+gives in Python, cell for cell. **Seed 7 is the maze in the illustration above**,
+and the page ends its carve on the same seven dead ends the first panel rings in
+red.
+
+**On opening it.** GitHub renders Markdown with scripts and iframes stripped
+out, so an interactive example cannot live inside this document; it has to be
+its own HTML file alongside it. [`docs/maze-step-by-step.html`](../maze-step-by-step.html)
+is a single file with no build step, no dependencies and no network access —
+open it in any browser from a clone of this repository. Following the link on
+github.com shows you its source instead of running it, which is a limitation of
+the viewer rather than of the file: it would run as it stands if GitHub Pages
+were switched on for this repository.
+
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`GameViewModel`](../../terminalgame/presentation/view_model.py#L226) | Everything the game knows about where things are. In this scenario it is only the **customer**: it asks for a maze of a particular size during its own construction, and everything it does afterwards — placing the player and the ghost, deciding whether a move is allowed — is a question put to the maze it was given |
@@ -62,7 +91,7 @@ sequenceDiagram
     ViewModel->>Maze: generate(29, 19)
     Maze->>Maze: works out where the junctions are
     Maze->>Rng: pick a junction to start from
-    Maze->>Maze: walks to an unvisited neighbour and opens the wall between
+    Maze->>Maze: walks to an unvisited junction and opens the wall between
     Maze->>Maze: backs up when there is nowhere new to go
     Maze->>Maze: braids, opening a second exit for every dead end
     Maze->>Rng: pick which wall to open
@@ -77,11 +106,11 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | [`generate`](../../terminalgame/presentation/maze.py#L60)`(29, 19)` | The playfield is 29 cells tall and 20 wide, but the maze asked for is 29 by **19**. A maze needs a wall cell on either side of every junction, so its border only comes out one cell thick when it is an odd number of cells across. Given an even number, the spare column has no junction to serve and ends up drawn as a second border running alongside the first. The size is passed in rather than read from the playfield, which is what lets a test build a small maze — an 11 by 11, say — instead of the game's |
-| 2 | works out where the junctions are | A **junction** is a cell the maze can carve between: every second cell, starting one in from the edge. The cells in between are the walls that get opened. Thinking of the maze as junctions with walls between them, rather than as a picture, is what makes both passes simple |
+| 2 | works out where the junctions are | A **junction** is a cell the maze can carve between: every second cell, starting one in from the edge, so both its row and its column are odd. The cells in between are the walls that get opened. Thinking of the maze as junctions with walls between them, rather than as a picture, is what makes both passes simple. Note that a junction's own neighbours in the ordinary sense — what [`neighbours`](../../terminalgame/presentation/maze.py#L158) returns, the four cells actually touching it — are precisely those walls, and are never anywhere the carve can go. Everything below says *two cells away* rather than *neighbour* for that reason |
 | 3 | pick a junction to start from | Where the carve begins does not matter to the result, because the walk visits every junction before it finishes. It matters only in that it is random, so two games seeded differently start in different places |
-| 4 | walks to an unvisited neighbour and opens the wall between | The carve proper. From where it stands, it looks at the junctions two cells away, picks one at random that it has not been to, opens the single wall cell separating the two, and moves there. This is a depth-first walk, so it drives on as far as it can before it ever turns back |
-| 5 | backs up when there is nowhere new to go | When every neighbour has been visited it retreats one step and tries again from there. When it has retreated all the way back to the start, every junction has been visited exactly once. **Every one of those retreats has left a dead end behind it** — a corridor that goes somewhere and stops. That is not a flaw in the walk, it is what a perfect maze is |
-| 6 | [braids](../../terminalgame/presentation/maze.py#L228), opening a second exit for every dead end | The second pass. A dead end is a junction with exactly one open neighbour, and the fix is to open a wall to a second one. Every junction has at least two neighbours, even one in a corner of the grid, so a second exit can always be found — which is what makes "no dead ends" a promise rather than an attempt |
+| 4 | walks to an unvisited junction and opens the wall between | The carve proper. From where it stands it looks at the junctions **two cells away** — north, south, east and west, never the cells touching it — picks one at random that it has not been to, opens the single wall cell separating the two, and moves there. Two cells of corridor are opened per step, never one. This is a depth-first walk, so it drives on as far as it can before it ever turns back |
+| 5 | backs up when there is nowhere new to go | When every junction two cells away has already been visited it retreats one step and tries again from there. When it has retreated all the way back to the start, every junction has been visited exactly once. **Every one of those retreats has left a dead end behind it** — a corridor that goes somewhere and stops. That is not a flaw in the walk, it is what a perfect maze is |
+| 6 | [braids](../../terminalgame/presentation/maze.py#L228), opening a second exit for every dead end | The second pass. A dead end is a junction with only one way out: of the four wall cells beside it, one has been opened and the rest are still closed. The fix is to open a second. Every junction has at least two other junctions two cells away from it, even one in the corner of the grid, so a second exit can always be found — which is what makes "no dead ends" a promise rather than an attempt |
 | 7 | pick which wall to open | Which of the closed walls is opened is random, and that is where the maze gets its character. A different choice makes a different set of loops, and therefore a different set of solid islands, out of exactly the same carve |
 | 8 | sweeps again until a pass changes nothing | Opening a wall raises the number of exits for **two** junctions at once, and never lowers one for anybody. So a junction that has been fixed stays fixed, and the sweep only has to repeat until it finds nothing left to do. There is no risk of it undoing its own work |
 | 9 | a maze with loops, islands and no dead ends | The result was checked over 200 mazes built from different seeds: not one dead end anywhere, every open cell reachable from every other, and an average of 14 solid islands per maze. [`dead_ends`](../../terminalgame/presentation/maze.py#L190) hands back the offending cells rather than a yes or no, so when it does find something it says where |

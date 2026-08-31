@@ -59,10 +59,13 @@ The times are the reading times, at the pace of somebody reading carefully
 rather than skimming.
 
 **Before the first lap, or at any point during it:**
-[Class overview](../CLASS_OVERVIEW.md) — 9 minutes. Not a scenario. It is the map:
-every class, every public member, and each class's own description of itself.
-Read it whenever you want the shape of the thing rather than the story of a
-moment, and come back to it between laps.
+[Class overview](../CLASS_OVERVIEW.md) — 20 minutes, and the one document here
+meant to be dipped into rather than read through. Not a scenario. It is the map:
+a diagram of every class and every public member, then, module by module, the
+docstring at the head of the file, the docstring on each class, and every public
+method with its signature and its own description of itself. Read it whenever
+you want the shape of the thing rather than the story of a moment, and come back
+to it between laps.
 
 ### Lap 1 — one frame, from cause to bytes
 
