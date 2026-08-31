@@ -274,6 +274,12 @@ between the parts. Start from the
 [scenario index](docs/scenarios/SCENARIO_INDEX.md), which carries a reading
 order in three laps.
 
+If you would rather operate the thing than read about it,
+[a tour from a Python prompt](docs/REPL_TOUR.md) drives the maze, the game and
+the clock from an ordinary `python3` session — no window, no game loop, no
+curses. The presentation layer imports no terminal code, and that tour is what
+the split is for.
+
 [`docs/lessons/`](docs/lessons/) is for a reader who knows Kotlin or Java and
 not Python. Two documents, each covering the subset of the language one file
 actually uses and nothing else: [`view_model.py`](docs/lessons/view_model_py.md)
