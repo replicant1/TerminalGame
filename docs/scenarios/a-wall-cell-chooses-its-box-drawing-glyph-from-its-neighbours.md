@@ -53,7 +53,7 @@ dependencies, no network access.
 A wall cell asks whether the cell to its north, south, west and east is also
 wall. Each answer that is yes contributes a number — 1, 2, 4 and 8 — and the
 four add up to one value between 0 and 15. That value chooses the glyph from
-[a table of sixteen](../../terminalgame/presentation/view_model.py#L64).
+[a table of sixteen](../../terminalgame/presentation/view_model.py#L70).
 
 Two decisions in those questions are worth stating, because both are what makes
 the border of the maze come out as a rectangle rather than a fringe.
