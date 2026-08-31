@@ -5,8 +5,8 @@
 A player presses an arrow key into a stretch of corridor they have not walked
 yet. The character moves one cell, as it always does, and one more thing
 happens on the way: the pill in that cell is taken, the score underneath the
-arena goes up by one, and the corridor behind the player stays blank for the
-rest of the game.
+arena[^arena] goes up by one, and the corridor behind the player stays blank
+for the rest of the game.
 
 This document is about that one extra step. Everything else in the story —
 the key arriving, the direction being looked up, the picture being drawn — is
@@ -22,13 +22,46 @@ sat on top of them. Taking a pill means the arena is no longer a constant, and
 the way that was arranged is the interesting part.
 
 The pill layer is kept twice over. There is
-[a list of rows](../../terminalgame/presentation/view_model.py#L227) that can be
+[a list of rows](../../terminalgame/presentation/view_model.py#L260) that can be
 edited, and there is the version handed out in pictures, which cannot be
 altered by anyone. When a pill is taken, one character in the editable list is
 replaced with a blank, and a fresh unalterable copy is made from it. That
 copying happens **once for each pill**, not once for each picture: a game of
 two hundred and sixty-odd pills makes two hundred and sixty-odd copies over
 several minutes of play, which is nothing at all.
+
+The obvious question is why one editable list would not do on its own. The
+answer is that a picture is a **value**, not a window onto the view model.
+[`StateFlow`](../../terminalgame/util/flow.py#L56) holds the last picture it
+published and compares the next one against it, and that comparison is the
+whole of how a repaint gets decided. What follows is a rule that reaches
+further than pills: every value a
+[`StateFlow`](../../terminalgame/util/flow.py#L13) emits has to be immutable,
+and immutable all the way down — a frozen picture holding an editable list is
+not a frozen picture.
+
+Hand every picture the same editable list and the comparison stops comparing.
+The pill layer of the picture being held and the pill layer of the picture
+being offered are the *same object*, so they are equal whatever was blanked in
+between, and a pill going could never be what makes a frame go out. Nothing is
+visibly broken today, and only for a reason that is luck rather than design:
+eating a pill always moves the player and raises the score in the same breath,
+so something else in the picture differs and the frame is published anyway.
+The layer would be relying on its neighbours to be noticed at all.
+
+The second cost is quieter. The picture the flow is holding is the program's
+record of what was last drawn. Share the list and that record rewrites itself
+every time a pill is taken — ask it afterwards what the arena looked like when
+the frame went out and it answers with the arena as it stands now. A picture
+that changes after it has been published is not a picture of anything, and a
+test that collects published frames and asserts on them would be asserting
+about a moving target.
+
+So the frozen[^frozen] copy is what a picture is made of, and the mutable list
+is kept alongside it for one reason only: blanking a pill is a single indexed
+assignment on a list, where the tuple of twenty-nine strings a picture carries
+would have to be rebuilt around the one row that changed. The list is the
+working copy. The tuple is what leaves the building.
 
 Three details decide what a player actually sees, and none of them is
 obvious.
@@ -38,11 +71,12 @@ the pill sits in the left one — the same column the walls draw their lines in,
 and the column a sprite is centred on. So taking a pill is a single character
 becoming a blank.
 
-![Four panels showing three cells of corridor drawn to scale: the two
-characters that make a cell, the pill in the left character, the player's three
-characters of ink centred on that same column and overhanging into the cells
-either side, and the cell left blank after the pill has been
-eaten.](../images/a-cell-and-what-sits-in-it.svg)
+![Four panels showing three cells of corridor boxed in by the maze walls,
+drawn to scale in the game's own colours -- black cells, blue walls, gold
+pills, a bright yellow player: the two characters that make a cell, the pill in
+the left character, the player's three characters of ink centred on that same
+column and overhanging into the character alongside, and the cell left blank
+after the pill has been eaten.](../images/a-cell-and-what-sits-in-it.svg)
 
 **The pill the player is standing on cannot be seen.** The character the
 player controls is drawn over the whole cell, so the pill underneath it is
@@ -131,6 +165,31 @@ layer would fold those two together and make the opening score read one.
   pill exactly as it passes over the player.
 
 ### Footnotes
+
+[^arena]: The **arena** is the maze as it appears on screen: the walls and the
+    pills together, filling the top 29 rows of the
+    [playfield](../../terminalgame/presentation/state.py#L13) and leaving the
+    last row for the line of readings. It is what the player and the ghost move
+    *over*; they are drawn on top of it and are no part of it.
+
+    It reaches the screen as two layers rather than one --
+    [`walls` and `pills`](../../terminalgame/presentation/state.py#L88) -- each
+    blank wherever the other has something, which is what lets a pill be a
+    different colour from the walls it sits between.
+
+    Until pills became something that could be taken, the arena was built once
+    at startup and handed out unaltered for the rest of the run. Eating is the
+    only thing in the program that changes it.
+
+[^frozen]: A **frozen** value is one that cannot be altered after it is made.
+    If something different is wanted, an entirely new one is built. Both
+    [`ViewState`](../../terminalgame/presentation/state.py#L66) and
+    [`Sprite`](../../terminalgame/presentation/state.py#L45) are frozen. Two
+    benefits follow, and this program relies on both. Two of them can be
+    compared by their contents, which is what allows an unchanged picture to be
+    recognised and dropped. And a picture handed to the drawing code can never
+    be altered underneath it while it is being drawn, because nothing anywhere
+    is able to alter one.
 
 [^viewmodel]: The **view model** is the part of the program that keeps track of
     what is happening in the game and turns that into pictures. It is
