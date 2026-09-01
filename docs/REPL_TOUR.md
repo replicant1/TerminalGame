@@ -369,8 +369,8 @@ from sleep does not replay an hour of missed beats.
 - [The class overview](CLASS_OVERVIEW.md) — every public member, with the
   docstring it was written with.
 - The two step-through pages, for the parts that are easier watched than read:
-  [carving and braiding](maze-step-by-step.html) and
-  [every wall cell picking its glyph](wall-glyphs-step-by-step.html).
+  [carving and braiding](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html) and
+  [every wall cell picking its glyph](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html).
 
 The one thing you cannot reach from here is
 [`GameScreen`](../terminalgame/ui/screen.py#L59): importing it imports curses,
