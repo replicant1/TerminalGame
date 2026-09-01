@@ -47,7 +47,7 @@ that those openings happened to cut off from the border.*
 
 ### Step through it yourself
 
-[**Carving and braiding, one step at a time**](../maze-step-by-step.html) is the
+[**Carving and braiding, one step at a time**](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html) is the
 picture above with the pauses put back in: the same eleven by eleven maze, built
 one decision at a time. Press a button and the algorithm does exactly one thing
 and says what it did — which junction it is standing on, how many unvisited
@@ -67,15 +67,16 @@ red.
 
 **On opening it.** GitHub renders Markdown with scripts and iframes stripped
 out, so an interactive example cannot live inside this document; it has to be
-its own HTML file alongside it. It is live at
-[replicant1.github.io/TerminalGame/docs/maze-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html),
-and [`docs/maze-step-by-step.html`](../maze-step-by-step.html) opens straight
-from a clone as well — one file, no build step, no dependencies, no network
-access. Following the relative link on github.com shows you its source rather
-than running it, which is a limitation of that viewer rather than of the file.
+its own HTML file alongside it. Every link to it above points at the published
+copy, [replicant1.github.io/TerminalGame/docs/maze-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html),
+so following one runs the page wherever you are reading this from. A link to
+the file in this repository would show you its source instead, which is a
+limitation of that viewer rather than of the file. `docs/maze-step-by-step.html`
+opens straight from a clone as well — one file, no build step, no dependencies,
+no network access.
 
 There is a companion page for the pass that comes next:
-[every wall cell picks its glyph](../wall-glyphs-step-by-step.html) turns the
+[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html) turns the
 finished maze into the two layers a picture is drawn from, cell by cell. Seed 7
 is the same maze in both.
 
