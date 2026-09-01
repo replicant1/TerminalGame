@@ -280,6 +280,20 @@ the clock from an ordinary `python3` session — no window, no game loop, no
 curses. The presentation layer imports no terminal code, and that tour is what
 the split is for.
 
+Two of the passes are easier watched than read, and there is a page for each.
+[Carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html)
+builds an eleven by eleven maze one decision at a time, saying what it did and
+why after each one, and
+[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html)
+turns that finished maze into the two layers a frame is drawn from, cell by
+cell. Both carry a Mersenne Twister seeded and drawn from the way CPython's
+`random` module seeds and draws from its own, so a seed typed into either gives
+the maze Python gives for that seed — and seed 7 is the same maze in both. The
+links point at the published copies, because github.com renders an HTML file as
+source rather than running it; `docs/maze-step-by-step.html` and
+`docs/wall-glyphs-step-by-step.html` open straight from a clone, one file each
+and no build step.
+
 [`tests/`](tests/) is 256 tests in plain `unittest`, none of which needs a
 terminal. Nobody should read all of it: the
 [test index](tests/README.md) picks out ten that cross the whole game in about
