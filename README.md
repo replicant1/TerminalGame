@@ -294,6 +294,21 @@ source rather than running it; `docs/maze-step-by-step.html` and
 `docs/wall-glyphs-step-by-step.html` open straight from a clone, one file each
 and no build step.
 
+If Python is not your first language, [`docs/lessons/`](docs/lessons/) is four
+notes for a reader fluent in Kotlin or Java, one per file worth the trouble:
+[`view_model.py`](docs/lessons/view_model_py.md) for the everyday syntax,
+[`flow.py`](docs/lessons/flow_py.md) for generics, closures and callables,
+[`screen.py`](docs/lessons/screen_py.md) for the context manager protocol and
+enough curses to follow the drawing, and
+[`launcher.py`](docs/lessons/launcher_py.md) for processes, atomic writes and
+signals used as questions. Each covers the subset its file actually uses and
+nothing else, and each ends with the traps a Kotlin instinct sets.
+
+[The glossary](docs/GLOSSARY.md) collects the vocabulary the rest of the
+documents assume -- cell, layer, glyph, braid, island, sentinel -- and starts
+with the distinction worth getting straight before any of it: a cell is one
+character row by two character columns, and the game counts in cells.
+
 [`tests/`](tests/) is 256 tests in plain `unittest`, none of which needs a
 terminal. Nobody should read all of it: the
 [test index](tests/README.md) picks out ten that cross the whole game in about
