@@ -225,5 +225,9 @@ half-drawn — the reasoning is in
 ## Where to go next
 
 [`clock.py`](../../terminalgame/util/clock.py) is the other half of `util`, at
-about the same length, and introduces almost nothing new — which is the point:
-after these two lessons the utility layer should read as ordinary code.
+about the same length, and introduces almost no new *syntax* — which is the
+point: after these two lessons the utility layer should read as ordinary code.
+What it does introduce is worth having, and [its lesson](clock_py.md) spends
+its length on two things rather than on grammar: how `import time` leaves a
+seam a test can reach through to wind the clock by hand, and why a tick
+deadline has to be advanced rather than reset.
