@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The ghost, one tick at a time</title>
+<!--
+  A companion to docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md.
+
+  The arena below is a port of Maze._carve and Maze._braid, and the movement is
+  a port of GameViewModel._advance_ghost. The random numbers come from two
+  MT19937 streams seeded and drawn from exactly as CPython's random module does
+  -- one for the maze, one for the ghost's turns -- which is what
+  GameViewModel(seed=n) makes. So a seed typed in here gives the arena, the
+  starting positions and the ghost's whole route that Python gives for that
+  seed, as long as the player never presses a key.
+
+  No build step, no dependencies, no network. Open the file in a browser.
+-->
+<style>
+  :root {
+    --ink: #1b1b1b;
+    --muted: #5b6472;
+    --wall: #2f3b52;
+    --corridor: #ffffff;
+    --trail: #dbe6f6;
+    --ghost: #c0398f;
+    --player: #d99b12;
+    --mark: #c0392b;
+    --line: #dfe4ec;
+    --panel: #f4f6f9;
+  }
+  body {
+    margin: 0;
+    padding: 32px 24px 64px;
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #ffffff;
+  }
+  main { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 70ch; }
+  .lede code { background: var(--panel); padding: 1px 5px; border-radius: 3px; }
+  .layout { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .board { flex: 0 0 auto; }
+  .side { flex: 1 1 380px; min-width: 320px; }
+  svg { display: block; }
+  .controls { display: flex; gap: 8px; align-items: center; margin: 16px 0 0; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 14px; padding: 7px 14px; cursor: pointer;
+    color: var(--ink); background: #fff;
+    border: 1px solid #c3cad6; border-radius: 5px;
+  }
+  button:hover:enabled { background: var(--panel); }
+  button:disabled { color: #a7aeb9; cursor: default; }
+  button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  button.primary:hover:enabled { background: #33383f; }
+  button.primary:disabled { background: #c9ced7; border-color: #c9ced7; color: #f2f4f7; }
+  label { font-size: 14px; color: var(--muted); }
+  input[type="number"] {
+    font: inherit; font-size: 14px; width: 92px; padding: 6px 8px;
+    border: 1px solid #c3cad6; border-radius: 5px;
+  }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    background: var(--panel); color: var(--muted); border: 1px solid var(--line);
+  }
+  .badge.straight { background: #e6f3ea; color: #26643c; border-color: #c2e0cd; }
+  .badge.turn { background: #fdf1dc; color: #8a6314; border-color: #edd6a6; }
+  .badge.reverse { background: #f6e4ef; color: #8d2a68; border-color: #e7c3da; }
+  .badge.caught { background: #fbe3e3; color: #a02020; border-color: #efc4c4; }
+  .badge.stopped { background: #eceff3; color: #4c5666; border-color: #d7dce4; }
+  .narration {
+    margin: 14px 0 0; padding: 14px 16px; background: var(--panel);
+    border-left: 3px solid var(--line); border-radius: 0 5px 5px 0; min-height: 6.8em;
+  }
+  .counts { display: flex; gap: 22px; margin: 18px 0 0; padding: 0; list-style: none; }
+  .counts li { font-size: 13px; color: var(--muted); }
+  .counts b { display: block; font-size: 22px; font-weight: 600; color: var(--ink); }
+  .legend { margin: 24px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  .legend li { display: flex; align-items: center; gap: 9px; margin: 0 0 7px; }
+  .swatch { width: 20px; height: 20px; border: 1px solid var(--line); flex: 0 0 auto; }
+  .note { margin: 30px 0 0; font-size: 13.5px; color: var(--muted); max-width: 74ch; }
+  .note code { background: var(--panel); padding: 1px 5px; border-radius: 3px; }
+  a { color: #2f4c86; }
+</style>
+
+<main>
+  <h1>The ghost, one tick at a time</h1>
+  <p class="lede">
+    The game's own arena — twenty-nine cells by nineteen, the size
+    <code>GameViewModel</code> builds — with the ghost moving one cell per tick and
+    saying what it did and why. It is not hunting. It carries straight on until the
+    cell ahead is wall, and only then draws a random number. Press <b>Step</b> for
+    one tick. The player stands still here, so anything that happens to them happens
+    by accident, which is the whole point.
+  </p>
+
+  <div class="layout">
+    <div class="board">
+      <svg id="grid" width="424" height="628" viewBox="0 0 424 628" role="img"
+           aria-label="A maze with a ghost moving through it one cell at a time"></svg>
+      <div class="controls">
+        <button id="step" class="primary">Step</button>
+        <button id="back">Back</button>
+        <button id="play">Play</button>
+        <button id="end">To the end</button>
+        <button id="reset">Reset</button>
+      </div>
+      <div class="controls">
+        <label for="seed">Seed</label>
+        <input id="seed" type="number" value="7" min="0" step="1">
+        <button id="reseed">Use it</button>
+        <button id="random">Random seed</button>
+      </div>
+    </div>
+
+    <div class="side">
+      <span id="phase" class="badge">Ready</span>
+      <span id="counter" class="badge">tick 0 of 0</span>
+      <span id="heading" class="badge">heading east</span>
+      <p id="narration" class="narration"></p>
+      <ul class="counts">
+        <li><b id="c-tick">0</b>ticks</li>
+        <li><b id="c-turn">0</b>turns drawn</li>
+        <li><b id="c-rev">0</b>reversals</li>
+        <li><b id="c-gap">0</b>cells from the player</li>
+      </ul>
+      <ul class="legend">
+        <li><span class="swatch" style="background:#2f3b52"></span> wall</li>
+        <li><span class="swatch" style="background:#ffffff"></span> corridor</li>
+        <li><span class="swatch" style="background:#dbe6f6"></span> where the ghost has been</li>
+        <li><span class="swatch" style="background:#c0398f"></span> the ghost, with its heading</li>
+        <li><span class="swatch" style="background:#d99b12"></span> the player, standing still</li>
+        <li><span class="swatch" style="border:2px dashed #8493ad"></span> a way out being considered at a turn</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>The rule, in three lines.</b> Try the cell ahead; if it is corridor, move
+    there and keep going. Otherwise collect the sides that are corridor and are not
+    the way it came, draw one of them at random, and turn. If there are none — a
+    dead end — reverse. That is <code>GameViewModel._advance_ghost</code> in full,
+    and there is nothing else: no target, no distance, no path.
+  </p>
+  <p class="note">
+    <b>Watch the reversal counter stay at zero.</b> Reversing is the only branch
+    that needs a dead end, and braiding removed every dead end from this maze before
+    play started — see
+    <a href="maze-step-by-step.html">carving and braiding, one step at a time</a>.
+    The branch is still written, because a maze built by hand in a test need not be
+    braided, and because a ghost that could not reverse would be stuck rather than
+    slow.
+  </p>
+  <p class="note">
+    <b>Where the randomness goes.</b> A corridor costs nothing: carrying straight on
+    draws no random number at all. The draw happens only where the ghost is blocked,
+    and only among the ways out that are not the way back — usually one or two of
+    them. That is why a seeded game is reproducible, and why the ghost reads as
+    moving with purpose while having none.
+  </p>
+  <p class="note">
+    <b>What this page leaves out.</b> The player. In a real game they move a whole
+    cell per arrow key, they eat the pills, and a capture can happen from either
+    side: the ghost walking onto them, in <code>tick</code>, or them walking onto the
+    ghost, in <code>on_direction</code>. Here they stand where
+    <code>farthest_open</code> put them and wait. The endings are collected in
+    <a href="https://github.com/replicant1/TerminalGame/blob/main/docs/LIFECYCLE.md">how a game begins and ends</a>.
+  </p>
+  <p class="note">
+    <b>Seeds.</b> The maze and the ghost's turns come from two Mersenne Twisters,
+    each seeded the way CPython's <code>random</code> module seeds its own — which
+    is exactly what <code>GameViewModel(seed=n)</code> holds. So this arena, these
+    two starting cells and this route are what Python produces for the same seed,
+    tick for tick, as long as nobody presses an arrow key.
+  </p>
+</main>
+
+<script>
+// MT19937, seeded and drawn from exactly as CPython's random module does, so a
+// seed here produces the maze and the turns Python produces there.
+function Mt(seedInt) {
+  this.mt = new Uint32Array(624);
+  this.index = 625;
+  var key = [];
+  var n = Math.abs(seedInt);
+  if (n === 0) key = [0];
+  while (n > 0) { key.push(n >>> 0); n = Math.floor(n / 4294967296); }
+  this.initByArray(key);
+}
+Mt.prototype.initGenrand = function (s) {
+  var mt = this.mt;
+  mt[0] = s >>> 0;
+  for (var i = 1; i < 624; i++) {
+    var prev = mt[i - 1] ^ (mt[i - 1] >>> 30);
+    var lo = (prev & 0xffff) * 1812433253;
+    var hi = (((prev >>> 16) * 1812433253) & 0xffff) << 16;
+    mt[i] = (lo + hi + i) >>> 0;
+  }
+  this.index = 624;
+};
+function mul32(a, b) {
+  var lo = (a & 0xffff) * b;
+  var hi = (((a >>> 16) * b) & 0xffff) << 16;
+  return (lo + hi) >>> 0;
+}
+Mt.prototype.initByArray = function (key) {
+  this.initGenrand(19650218);
+  var mt = this.mt, i = 1, j = 0, k = Math.max(624, key.length);
+  for (; k; k--) {
+    mt[i] = ((mt[i] ^ mul32(mt[i - 1] ^ (mt[i - 1] >>> 30), 1664525)) + key[j] + j) >>> 0;
+    i++; j++;
+    if (i >= 624) { mt[0] = mt[623]; i = 1; }
+    if (j >= key.length) j = 0;
+  }
+  for (k = 623; k; k--) {
+    mt[i] = ((mt[i] ^ mul32(mt[i - 1] ^ (mt[i - 1] >>> 30), 1566083941)) - i) >>> 0;
+    i++;
+    if (i >= 624) { mt[0] = mt[623]; i = 1; }
+  }
+  mt[0] = 0x80000000;
+  this.index = 624;
+};
+Mt.prototype.genrand = function () {
+  var mt = this.mt;
+  if (this.index >= 624) {
+    for (var i = 0; i < 624; i++) {
+      var y = ((mt[i] & 0x80000000) | (mt[(i + 1) % 624] & 0x7fffffff)) >>> 0;
+      var next = (mt[(i + 397) % 624] ^ (y >>> 1)) >>> 0;
+      if (y & 1) next = (next ^ 0x9908b0df) >>> 0;
+      mt[i] = next;
+    }
+    this.index = 0;
+  }
+  var v = mt[this.index++];
+  v = (v ^ (v >>> 11)) >>> 0;
+  v = (v ^ ((v << 7) & 0x9d2c5680)) >>> 0;
+  v = (v ^ ((v << 15) & 0xefc60000)) >>> 0;
+  return (v ^ (v >>> 18)) >>> 0;
+};
+Mt.prototype.getrandbits = function (k) {
+  if (k === 0) return 0;
+  return this.genrand() >>> (32 - k);
+};
+Mt.prototype.below = function (n) {
+  var k = 32 - Math.clz32(n);
+  var r = this.getrandbits(k);
+  while (r >= n) r = this.getrandbits(k);
+  return r;
+};
+Mt.prototype.choice = function (seq) { return seq[this.below(seq.length)]; };
+
+// Two cells apart for carving, one for walking. Both in the order the Python
+// lists them: north, south, west, east -- which is the order the ghost's
+// candidate turns are collected in, so a draw here picks what a draw there does.
+var JUNCTION_STEPS = [[-2, 0], [2, 0], [0, -2], [0, 2]];
+var WALK_STEPS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+/** Carves and braids a maze, exactly as Maze.generate does. */
+function buildMaze(rows, cols, seed) {
+  var junctionRows = [], junctionCols = [];
+  for (var r = 1; r < rows - 1; r += 2) junctionRows.push(r);
+  for (var c = 1; c < cols - 1; c += 2) junctionCols.push(c);
+
+  var rng = new Mt(seed);
+  var open = [];
+  for (var i = 0; i < rows; i++) open.push(new Array(cols).fill(false));
+  var isJunction = function (row, col) {
+    return junctionRows.indexOf(row) >= 0 && junctionCols.indexOf(col) >= 0;
+  };
+
+  var startRow = rng.choice(junctionRows);
+  var startCol = rng.choice(junctionCols);
+  open[startRow][startCol] = true;
+  var stack = [[startRow, startCol]];
+  while (stack.length) {
+    var top = stack[stack.length - 1], row = top[0], col = top[1];
+    var unvisited = [];
+    for (var s = 0; s < JUNCTION_STEPS.length; s++) {
+      var nr = row + JUNCTION_STEPS[s][0], nc = col + JUNCTION_STEPS[s][1];
+      if (isJunction(nr, nc) && !open[nr][nc]) unvisited.push([nr, nc]);
+    }
+    if (!unvisited.length) { stack.pop(); continue; }
+    var chosen = rng.choice(unvisited);
+    open[(row + chosen[0]) / 2][(col + chosen[1]) / 2] = true;
+    open[chosen[0]][chosen[1]] = true;
+    stack.push(chosen);
+  }
+
+  for (;;) {
+    var changed = false;
+    for (var ri = 0; ri < junctionRows.length; ri++) {
+      for (var ci = 0; ci < junctionCols.length; ci++) {
+        var jr = junctionRows[ri], jc = junctionCols[ci];
+        if (!open[jr][jc]) continue;
+        var exits = 0, closed = [];
+        for (var d = 0; d < JUNCTION_STEPS.length; d++) {
+          var dr = JUNCTION_STEPS[d][0], dc = JUNCTION_STEPS[d][1];
+          if (!isJunction(jr + dr, jc + dc)) continue;
+          var w = [jr + Math.floor(dr / 2), jc + Math.floor(dc / 2)];
+          if (open[w[0]][w[1]]) exits += 1;
+          else closed.push([w, [jr + dr, jc + dc]]);
+        }
+        if (exits > 1 || !closed.length) continue;
+        var pick = rng.choice(closed);
+        open[pick[0][0]][pick[0][1]] = true;
+        open[pick[1][0]][pick[1][1]] = true;
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  return open;
+}
+
+function isOpen(grid, row, col) {
+  return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length
+    && grid[row][col];
+}
+
+/** Every corridor cell, row-major, as Maze.open_cells returns them. */
+function openCells(grid) {
+  var cells = [];
+  for (var r = 0; r < grid.length; r++) {
+    for (var c = 0; c < grid[0].length; c++) if (grid[r][c]) cells.push([r, c]);
+  }
+  return cells;
+}
+function distance(a, b) { return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]); }
+
+// min() and max() in Python keep the *first* of equal candidates, and
+// open_cells is row-major, so the tie-breaking here has to match.
+function nearestOpen(grid, row, col) {
+  var cells = openCells(grid), best = cells[0], bestD = distance(best, [row, col]);
+  for (var i = 1; i < cells.length; i++) {
+    var d = distance(cells[i], [row, col]);
+    if (d < bestD) { best = cells[i]; bestD = d; }
+  }
+  return best;
+}
+function farthestOpen(grid, row, col) {
+  var cells = openCells(grid), best = cells[0], bestD = distance(best, [row, col]);
+  for (var i = 1; i < cells.length; i++) {
+    var d = distance(cells[i], [row, col]);
+    if (d > bestD) { best = cells[i]; bestD = d; }
+  }
+  return best;
+}
+
+var COMPASS = { "-1,0": "north", "1,0": "south", "0,-1": "west", "0,1": "east" };
+function named(step) { return COMPASS[step[0] + "," + step[1]]; }
+function listed(names) {
+  if (names.length === 1) return names[0];
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}
+
+/**
+ * Replays GameViewModel._advance_ghost as a list of ticks, each one move and
+ * the reason for it. The draws happen in the order the Python makes them.
+ */
+function ghostSteps(grid, player, start, seed, maxTicks) {
+  var rng = new Mt(seed);           // GameViewModel's own Random(seed)
+  var ghost = start.slice();
+  var step = [0, 1];                // _ghost_step starts east
+  var steps = [], trail = [ghost.slice()];
+
+  for (var tick = 1; tick <= maxTicks; tick++) {
+    var ahead = [ghost[0] + step[0], ghost[1] + step[1]];
+    var kind, considered = [], text;
+
+    if (isOpen(grid, ahead[0], ahead[1])) {
+      kind = "straight";
+      ghost = ahead;
+      text = "Tick " + tick + ". The cell ahead, " + ghost[0] + "," + ghost[1] +
+             ", is corridor, so the ghost carries on " + named(step) +
+             " into it. No decision to make, and no random number drawn.";
+    } else {
+      var back = [-step[0], -step[1]];
+      var turns = [];
+      for (var i = 0; i < WALK_STEPS.length; i++) {
+        var s = WALK_STEPS[i];
+        if (s[0] === back[0] && s[1] === back[1]) continue;
+        if (isOpen(grid, ghost[0] + s[0], ghost[1] + s[1])) turns.push(s);
+      }
+      var reversing = turns.length === 0;
+      if (reversing) turns = [back];
+      considered = turns.map(function (s) {
+        return [ghost[0] + s[0], ghost[1] + s[1]];
+      });
+      var blocked = named(step);
+      step = rng.choice(turns);
+      ghost = [ghost[0] + step[0], ghost[1] + step[1]];
+      if (reversing) {
+        kind = "reverse";
+        text = "Tick " + tick + ". " + blocked[0].toUpperCase() + blocked.slice(1) +
+               " is wall, and so is every other side except the way it came. This " +
+               "is a dead end, so the ghost reverses — the one branch a braided " +
+               "maze should never reach.";
+      } else {
+        kind = "turn";
+        var names = considered.map(function (cell, n) { return named(turns[n]); });
+        text = "Tick " + tick + ". " + blocked[0].toUpperCase() + blocked.slice(1) +
+               " is wall. " + (turns.length === 1
+                 ? "One way out is not the way it came — " + names[0] +
+                   " — so that is the way it goes. The draw still happens, from a " +
+                   "list of one."
+                 : "There are " + turns.length + " ways out that are not the way it " +
+                   "came — " + listed(names) + " — and one is drawn at random: " +
+                   named(step) + ".") +
+               " The ghost is now at " + ghost[0] + "," + ghost[1] + ".";
+      }
+    }
+
+    trail.push(ghost.slice());
+    var caught = ghost[0] === player[0] && ghost[1] === player[1];
+    if (caught) {
+      kind = "caught";
+      text += " That cell is the player's. The ghost has walked into them, which " +
+              "ends the game — and it found them by wandering, having never once " +
+              "asked where they were.";
+    }
+    steps.push({
+      tick: tick, kind: kind, ghost: ghost.slice(), heading: step.slice(),
+      considered: considered, trail: trail.slice(), caught: caught, text: text,
+    });
+    if (caught) break;
+  }
+  if (steps.length && !steps[steps.length - 1].caught) {
+    var last = steps[steps.length - 1];
+    steps.push({
+      tick: last.tick, kind: "stopped", ghost: last.ghost, heading: last.heading,
+      considered: [], trail: last.trail, caught: false,
+      text: "That is " + maxTicks + " ticks — about a minute of play — and the " +
+            "ghost has still not found the player. This page stops here; the game " +
+            "would carry straight on, because nothing about the ghost changes with " +
+            "time. It has no memory of where it has been and no idea where it is " +
+            "going, so the only thing that ends a game this way is luck.",
+    });
+  }
+  return steps;
+}
+
+// -- drawing ---------------------------------------------------------------
+var ROWS = 29, COLS = 19, SIZE = 20, PAD = 4;
+var GUTTER = 22, X0 = GUTTER + PAD, Y0 = GUTTER + PAD;
+var MAX_TICKS = 400;
+var NS = "http://www.w3.org/2000/svg";
+var svg = typeof document !== "undefined" ? document.getElementById("grid") : null;
+var grid = null, player = null, ghostStart = null;
+var steps = [], at = -1, timer = null, seed = 7;
+
+function el(name, attrs) {
+  var node = document.createElementNS(NS, name);
+  for (var key in attrs) node.setAttribute(key, attrs[key]);
+  return node;
+}
+
+function draw(state) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  var ghost = state.ghost, trail = state.trail || [];
+  var seen = {};
+  trail.forEach(function (c) { seen[c[0] + "," + c[1]] = true; });
+
+  var hotRow = ghost[0], hotCol = ghost[1];
+  for (var i = 0; i < COLS; i++) {
+    var label = el("text", {
+      x: X0 + i * SIZE + SIZE / 2, y: GUTTER - 7, "text-anchor": "middle",
+      "font-size": 9, fill: i === hotCol ? "#c0392b" : "#8891a0",
+      "font-weight": i === hotCol ? 700 : 400,
+    });
+    label.textContent = i;
+    svg.appendChild(label);
+  }
+  for (var j = 0; j < ROWS; j++) {
+    var rowLabel = el("text", {
+      x: GUTTER - 6, y: Y0 + j * SIZE + SIZE / 2 + 3, "text-anchor": "end",
+      "font-size": 9, fill: j === hotRow ? "#c0392b" : "#8891a0",
+      "font-weight": j === hotRow ? 700 : 400,
+    });
+    rowLabel.textContent = j;
+    svg.appendChild(rowLabel);
+  }
+
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var fill = grid[r][c]
+        ? (seen[r + "," + c] ? "#dbe6f6" : "#ffffff")
+        : "#2f3b52";
+      svg.appendChild(el("rect", {
+        x: X0 + c * SIZE, y: Y0 + r * SIZE, width: SIZE, height: SIZE,
+        fill: fill, stroke: "#e6eaf1", "stroke-width": 0.5,
+      }));
+    }
+  }
+
+  (state.considered || []).forEach(function (cell) {
+    svg.appendChild(el("rect", {
+      x: X0 + cell[1] * SIZE + 2.5, y: Y0 + cell[0] * SIZE + 2.5,
+      width: SIZE - 5, height: SIZE - 5,
+      fill: "none", stroke: "#8493ad", "stroke-width": 1.6, "stroke-dasharray": "3 2",
+    }));
+  });
+
+  svg.appendChild(el("circle", {
+    cx: X0 + player[1] * SIZE + SIZE / 2, cy: Y0 + player[0] * SIZE + SIZE / 2,
+    r: SIZE * 0.34, fill: "#d99b12",
+  }));
+
+  svg.appendChild(el("circle", {
+    cx: X0 + ghost[1] * SIZE + SIZE / 2, cy: Y0 + ghost[0] * SIZE + SIZE / 2,
+    r: SIZE * 0.38, fill: "#c0398f",
+  }));
+  var head = state.heading || [0, 1];
+  svg.appendChild(el("line", {
+    x1: X0 + ghost[1] * SIZE + SIZE / 2, y1: Y0 + ghost[0] * SIZE + SIZE / 2,
+    x2: X0 + ghost[1] * SIZE + SIZE / 2 + head[1] * SIZE * 0.75,
+    y2: Y0 + ghost[0] * SIZE + SIZE / 2 + head[0] * SIZE * 0.75,
+    stroke: "#c0398f", "stroke-width": 2.5, "stroke-linecap": "round",
+  }));
+}
+
+function show() {
+  var state = at < 0
+    ? {
+        ghost: ghostStart, heading: [0, 1], considered: [], trail: [ghostStart],
+        kind: "ready", tick: 0, caught: false,
+        text: "Nothing has moved yet. The player stands on the open cell nearest " +
+              "the middle of the arena, and the ghost on the open cell furthest " +
+              "from the player — which is how GameViewModel places them, so the " +
+              "two never start on top of each other whatever shape the maze took. " +
+              "The ghost's heading starts east. Press Step.",
+      }
+    : steps[at];
+  draw(state);
+
+  var names = {
+    ready: "Ready", straight: "Carrying on", turn: "Turning",
+    reverse: "Reversing", caught: "Caught", stopped: "Stopped",
+  };
+  var badge = document.getElementById("phase");
+  badge.textContent = names[state.kind];
+  badge.className = "badge " + (state.kind === "ready" ? "" : state.kind);
+  document.getElementById("counter").textContent =
+    "tick " + state.tick + " of " + (steps.length ? steps[steps.length - 1].tick : 0);
+  document.getElementById("heading").textContent = "heading " + named(state.heading);
+  document.getElementById("narration").textContent = state.text;
+
+  var turns = 0, reversals = 0;
+  for (var i = 0; i <= at; i++) {
+    if (steps[i].kind === "turn") turns++;
+    if (steps[i].kind === "reverse") reversals++;
+  }
+  document.getElementById("c-tick").textContent = state.tick;
+  document.getElementById("c-turn").textContent = turns;
+  document.getElementById("c-rev").textContent = reversals;
+  document.getElementById("c-gap").textContent = distance(state.ghost, player);
+
+  document.getElementById("back").disabled = at < 0;
+  document.getElementById("step").disabled = at >= steps.length - 1;
+  document.getElementById("end").disabled = at >= steps.length - 1;
+  if (at >= steps.length - 1) pause();
+}
+
+function pause() {
+  if (timer) { clearInterval(timer); timer = null; }
+  document.getElementById("play").textContent = "Play";
+}
+
+function load(newSeed) {
+  pause();
+  seed = newSeed;
+  grid = buildMaze(ROWS, COLS, seed);
+  // GameViewModel places the player by the playfield's middle in cells, which
+  // is GRID_ROWS // 2 and GRID_COLS // 2 -- 14 and 10, not the maze's own
+  // middle, since the maze is one column narrower than the grid it sits in.
+  player = nearestOpen(grid, 14, 10);
+  ghostStart = farthestOpen(grid, player[0], player[1]);
+  steps = ghostSteps(grid, player, ghostStart, seed, MAX_TICKS);
+  at = -1;
+  document.getElementById("seed").value = seed;
+  show();
+}
+
+if (svg) {
+  document.getElementById("step").onclick = function () {
+    if (at < steps.length - 1) { at++; show(); }
+  };
+  document.getElementById("back").onclick = function () {
+    pause();
+    if (at >= 0) { at--; show(); }
+  };
+  document.getElementById("end").onclick = function () {
+    pause(); at = steps.length - 1; show();
+  };
+  document.getElementById("reset").onclick = function () { load(seed); };
+  document.getElementById("reseed").onclick = function () {
+    var value = parseInt(document.getElementById("seed").value, 10);
+    load(isNaN(value) || value < 0 ? 0 : value);
+  };
+  document.getElementById("random").onclick = function () {
+    load(Math.floor(Math.random() * 100000));
+  };
+  document.getElementById("play").onclick = function () {
+    if (timer) { pause(); return; }
+    this.textContent = "Pause";
+    timer = setInterval(function () {
+      if (at >= steps.length - 1) { pause(); return; }
+      at++; show();
+    }, 220);
+  };
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") { document.getElementById("step").click(); }
+    if (e.key === "ArrowLeft") { document.getElementById("back").click(); }
+  });
+  load(7);
+}
+</script>

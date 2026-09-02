@@ -280,7 +280,7 @@ the clock from an ordinary `python3` session — no window, no game loop, no
 curses. The presentation layer imports no terminal code, and that tour is what
 the split is for.
 
-Two of the passes are easier watched than read, and there is a page for each.
+Three of the passes are easier watched than read, and there is a page for each.
 [Carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html)
 builds an eleven by eleven maze one decision at a time, saying what it did and
 why after each one, and
@@ -293,6 +293,20 @@ links point at the published copies, because github.com renders an HTML file as
 source rather than running it; `docs/maze-step-by-step.html` and
 `docs/wall-glyphs-step-by-step.html` open straight from a clone, one file each
 and no build step.
+
+[The ghost, one tick at a time](https://replicant1.github.io/TerminalGame/docs/ghost-step-by-step.html)
+is the third, and it is the game's own arena rather than an illustration of
+one: twenty-nine cells by nineteen, the player standing where the code puts
+them, and the ghost moving one cell per tick saying what it did and why. A seed
+there gives the arena, the two starting cells and the whole route
+`GameViewModel(seed=n)` gives here, tick for tick, as long as nobody presses an
+arrow key. Watch the reversal counter stay at zero: reversing needs a dead end,
+and braiding removed them all before play started.
+
+[How a game begins and ends](docs/LIFECYCLE.md) collects the four ways a run
+finishes -- the terminal is refused, the ghost catches the player, the last
+pill goes, or the player quits -- as one state diagram, since each of them is
+decided in a different file and the scenario documents each see only their own.
 
 If Python is not your first language, [`docs/lessons/`](docs/lessons/) is four
 notes for a reader fluent in Kotlin or Java, one per file worth the trouble:
