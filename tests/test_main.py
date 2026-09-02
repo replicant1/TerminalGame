@@ -157,16 +157,18 @@ class PlayTest(unittest.TestCase):
         return FakeGameScreen
 
     def play_with(self, screen_factory, run_impl=lambda screen: None, spawned=False):
-        announced = []
+        # Kept on the instance as well as returned, so a test whose game
+        # raises can still read what the launcher was told on the way out.
+        self.announced = []
         with mock.patch.object(main_module, "GameScreen", screen_factory), \
                 mock.patch.object(main_module, "run", run_impl), \
                 mock.patch.object(main_module.launcher, "announce_started",
-                                  lambda path: announced.append(("started", path))), \
+                                  lambda path: self.announced.append(("started", path))), \
                 mock.patch.object(main_module.launcher, "announce_finished",
-                                  lambda path, code: announced.append(("finished", code))), \
+                                  lambda path, code: self.announced.append(("finished", code))), \
                 mock.patch.object(main_module.sys, "stderr", io.StringIO()):
             code = play("/tmp/sentinel", spawned=spawned)
-            return code, announced, main_module.sys.stderr.getvalue()
+            return code, self.announced, main_module.sys.stderr.getvalue()
 
     def test_a_normal_game_exits_zero(self):
         code, announced, _ = self.play_with(self.fake_screen_factory())
@@ -192,13 +194,15 @@ class PlayTest(unittest.TestCase):
         self.assertEqual(0, code)
         self.assertIn(("finished", 0), announced)
 
-    def test_the_launcher_is_told_even_when_the_game_falls_over(self):
-        """Otherwise it waits out its whole startup timeout for nothing."""
+    def test_a_game_that_falls_over_is_reported_as_a_failure(self):
+        """Otherwise `python3 -m terminalgame.app.main && echo OK` prints OK."""
         def explode(screen):
             raise ZeroDivisionError("mid-game")
 
         with self.assertRaises(ZeroDivisionError):
             self.play_with(self.fake_screen_factory(), explode)
+
+        self.assertIn(("finished", 1), self.announced)
 
 
 class ArgumentTest(unittest.TestCase):

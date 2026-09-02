@@ -85,22 +85,25 @@ def play(sentinel: str, spawned: bool) -> int:
             before the window closes.
 
     Returns:
-        0 for a normal exit, 1 if the terminal was too small to play in.
+        0 for a normal exit, 1 if the terminal was too small to play in or
+        the game fell over.
     """
     launcher.announce_started(sentinel)
-    exit_code = 0
+    # A crash must not reach the sentinel as success, so 1 is what an
+    # unhandled exception leaves behind: only the endings below clear it.
+    exit_code = 1
     try:
         with GameScreen() as screen:
             run(screen)
+        exit_code = 0
     except TerminalTooSmall as error:
-        exit_code = 1
         print(error, file=sys.stderr)
         if spawned:
             # The launcher closes this window the moment we exit, so hold it
             # open long enough for the message to be read.
             _pause("Press Return to close this window.")
     except KeyboardInterrupt:
-        pass
+        exit_code = 0
     finally:
         launcher.announce_finished(sentinel, exit_code)
     return exit_code
