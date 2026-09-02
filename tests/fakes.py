@@ -98,10 +98,14 @@ class FakeCurses:
     COLOR_RED = curses.COLOR_RED
     COLOR_YELLOW = curses.COLOR_YELLOW
 
-    def __init__(self, window=None, colors=256, supports_default_colors=True):
+    def __init__(self, window=None, colors=256, supports_default_colors=True,
+                 supports_cursor_visibility=True):
         self.window = window if window is not None else FakeWindow()
         self.COLORS = colors
         self.supports_default_colors = supports_default_colors
+        # vt100 and dumb have no civis/cnorm, and curs_set raises on both --
+        # in either direction, so hiding the caret and restoring it both fail.
+        self.supports_cursor_visibility = supports_cursor_visibility
         self.pairs = {}        # slot -> (foreground, background)
         self.calls = []
         self.updates = 0
@@ -126,6 +130,8 @@ class FakeCurses:
         self.calls.append("endwin")
 
     def curs_set(self, visibility):
+        if not self.supports_cursor_visibility:
+            raise curses.error("curs_set() returned ERR")
         self.calls.append("curs_set {}".format(visibility))
 
     def has_colors(self):

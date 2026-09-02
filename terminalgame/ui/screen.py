@@ -100,46 +100,90 @@ class GameScreen:
         The terminal is asked to resize itself to the playfield first, since a
         window smaller than the playfield cannot be drawn into.
 
+        Anything that goes wrong after `initscr` hands the terminal back before
+        it propagates, because by then nothing else will: an exception here
+        means `__enter__` never returns, so `__exit__` never runs and the
+        `with` block that would have closed the screen was never entered.
+
         Raises:
             TerminalTooSmall: If the terminal ignored the resize request and
                 is still shorter or narrower than the playfield.
+            curses.error: If the terminal cannot do something curses needs.
+                `curs_set` raises on a terminal whose terminfo has no cursor
+                visibility, which vt100 and dumb do not.
         """
         locale.setlocale(locale.LC_ALL, "")  # required before any wide glyphs
         self._request_window_size()
 
         self._stdscr = curses.initscr()
-        curses.noecho()          # don't echo typed keys onto the playfield
-        curses.cbreak()          # deliver keys immediately, no Enter needed
-        curses.curs_set(0)       # hide the caret so it can't flash across a frame
-        self._stdscr.keypad(True)  # decode arrow keys into KEY_* constants
-        self._init_colors()
+        # Implement a "rollback on failed initialisation" strategy. initscr()
+        # has acquired the terminal; everything below only configures or measures it,
+        # and any of it can fail e.g. curs_set(0) raises an exception if the terminal
+        # does not support invisible cursors. If the size granted is smaller than
+        # the size requested, a TerminalTooSmall exception is raised. A Ctrl-C
+        # raises a KeyboardInterrupt, which is a subclass of BaseException.
+        #
+        # What is being rolled back is the terminal's own settings -- its echo
+        # and line-discipline flags, which initscr() changed -- and not any
+        # state of this process's. That distinction is the point: the terminal
+        # belongs to the user and outlives us, so exiting does not undo
+        # initscr(). The settings simply stay, and the shell that gets the
+        # terminal back is in cbreak with echo off, showing nothing of what is
+        # typed.
+        #
+        # Nothing else can do it. open() is called from __enter__, so a failure
+        # here means __enter__ never returns, the `with` body is never entered
+        # and __exit__ never runs -- there is no screen handed to anyone that
+        # could be closed later.
+        try:
+            curses.noecho()          # don't echo typed keys onto the playfield
+            curses.cbreak()          # deliver keys immediately, no Enter needed
+            curses.curs_set(0)       # hide the caret so it can't flash across a frame
+            self._stdscr.keypad(True)  # decode arrow keys into KEY_* constants
+            self._init_colors()
 
-        height, width = self._stdscr.getmaxyx()
-        if height < self._rows or width < self._cols:
-            self.close()
-            raise TerminalTooSmall(
-                "Need at least {}x{} (rows x cols); terminal is {}x{}. "
-                "Your terminal ignored the resize request -- resize it by hand.".format(
-                    self._rows, self._cols, height, width
+            height, width = self._stdscr.getmaxyx()
+            if height < self._rows or width < self._cols:
+                raise TerminalTooSmall(
+                    "Need at least {}x{} (rows x cols); terminal is {}x{}. "
+                    "Your terminal ignored the resize request -- resize it by hand.".format(
+                        self._rows, self._cols, height, width
+                    )
                 )
-            )
+        except BaseException:
+            # endwin(), inside close(), is the call that does the restoring: it
+            # puts back the tty state ncurses saved during initscr(). The rest
+            # of close() is tidying -- echo() alone does not bring echo back.
+            self.close()
+            raise
 
     def close(self) -> None:
         """Gives the terminal back, and stops collecting the state flow.
 
         Safe to call twice: a screen that was never opened, or has been closed
         already, does nothing.
+
+        Safe on a terminal that refuses the tidying up, too. Restoring the
+        caret raises where hiding it did, and the terminals that cannot do
+        either are exactly the ones this has to work on, since they are why
+        `open` failed. `endwin` is the call that actually hands the terminal
+        back, so it runs whatever the cosmetic ones did.
         """
         if self._unsubscribe is not None:
             self._unsubscribe()
             self._unsubscribe = None
         if self._stdscr is not None:
-            curses.curs_set(1)
-            self._stdscr.keypad(False)
-            curses.nocbreak()
-            curses.echo()
-            curses.endwin()
-            self._stdscr = None
+            try:
+                try:
+                    curses.curs_set(1)
+                except curses.error:
+                    pass  # no cursor visibility here, so none was hidden either
+                self._stdscr.keypad(False)
+                curses.nocbreak()
+                curses.echo()
+            finally:
+                curses.endwin()
+                self._stdscr = None
 
     def _request_window_size(self) -> None:
         """Asks the terminal to resize itself, then waits for it to land."""
