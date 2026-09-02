@@ -555,10 +555,22 @@ function show() {
   document.getElementById("c-rev").textContent = reversals;
   document.getElementById("c-gap").textContent = distance(state.ghost, player);
 
+  // At the end of a run there is nothing left to step to, so Step goes quiet
+  // and Reset takes over as the obvious thing to press. Saying so in the
+  // narration matters more than the greying does: a disabled button on its own
+  // reads as broken rather than finished.
+  var atEnd = at >= steps.length - 1;
   document.getElementById("back").disabled = at < 0;
-  document.getElementById("step").disabled = at >= steps.length - 1;
-  document.getElementById("end").disabled = at >= steps.length - 1;
-  if (at >= steps.length - 1) pause();
+  document.getElementById("step").disabled = atEnd;
+  document.getElementById("end").disabled = atEnd;
+  document.getElementById("step").className = atEnd ? "" : "primary";
+  document.getElementById("reset").className = atEnd ? "primary" : "";
+  if (atEnd && at >= 0) {
+    document.getElementById("narration").textContent = state.text +
+      " — The run ends here, so there is nothing left to step to. Reset plays " +
+      "this seed again from tick zero, and any other seed gives another arena.";
+  }
+  if (atEnd) pause();
 }
 
 function pause() {
