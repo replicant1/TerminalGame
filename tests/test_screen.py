@@ -271,6 +271,27 @@ class LifecycleTest(unittest.TestCase):
         self.assertIn("echo", self.curses.calls)
         self.assertIn("endwin", self.curses.calls)
 
+    def test_a_failure_after_taking_the_terminal_hands_it_back(self):
+        """Nothing else will: __enter__ never returns, so __exit__ never runs."""
+        self.curses.supports_cursor_visibility = False
+
+        with self.assertRaises(screen_module.curses.error):
+            self.screen.open()
+
+        self.assertIn("endwin", self.curses.calls)
+        self.assertIn("nocbreak", self.curses.calls, "left in cbreak")
+        self.assertIn("echo", self.curses.calls, "left with echo off")
+
+    def test_closing_ends_the_window_even_when_the_caret_cannot_be_restored(self):
+        """curs_set raises on the terminals close() most has to work on."""
+        self.screen.open()
+        self.curses.supports_cursor_visibility = False
+
+        self.screen.close()
+
+        self.assertIn("endwin", self.curses.calls)
+        self.assertIsNone(self.screen._stdscr, "a closed screen still claims to be open")
+
     def test_closing_twice_does_nothing_the_second_time(self):
         self.screen.open()
         self.screen.close()
