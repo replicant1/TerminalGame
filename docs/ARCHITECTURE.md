@@ -163,6 +163,8 @@ GameClock --tick()--> GameViewModel --StateFlow<ViewState>--> GameScreen
   the words this document and the code both assume.
 - [The class overview](CLASS_OVERVIEW.md) — every public member, with the
   docstring it was written with.
+- [How a game begins and ends](LIFECYCLE.md) — the four endings as one state
+  diagram, and which layer decides each of them.
 - [The scenario index](scenarios/SCENARIO_INDEX.md) — one document per
   collaboration, each with a sequence diagram showing these layers in motion.
 - [A tour from a Python prompt](REPL_TOUR.md) — drives `presentation`, `domain`
