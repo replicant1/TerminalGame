@@ -172,6 +172,7 @@ GameClock --tick()--> GameViewModel --StateFlow<ViewState>--> GameScreen
   demonstration that the arrows above point the way this document claims.
 - [The lessons](lessons/) — enough Python to read a given file, for somebody
   fluent in Kotlin or Java. One per layer that has anything unusual in it:
-  [`view_model.py`](lessons/view_model_py.md) and [`flow.py`](lessons/flow_py.md)
-  for `presentation` and `util`, [`screen.py`](lessons/screen_py.md) for `ui`,
-  and [`launcher.py`](lessons/launcher_py.md) for `app`.
+  [`view_model.py`](lessons/view_model_py.md) for `presentation`,
+  [`flow.py`](lessons/flow_py.md) and [`clock.py`](lessons/clock_py.md) for
+  `util`, [`screen.py`](lessons/screen_py.md) for `ui`, and
+  [`launcher.py`](lessons/launcher_py.md) for `app`.

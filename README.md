@@ -308,15 +308,17 @@ finishes -- the terminal is refused, the ghost catches the player, the last
 pill goes, or the player quits -- as one state diagram, since each of them is
 decided in a different file and the scenario documents each see only their own.
 
-If Python is not your first language, [`docs/lessons/`](docs/lessons/) is four
+If Python is not your first language, [`docs/lessons/`](docs/lessons/) is five
 notes for a reader fluent in Kotlin or Java, one per file worth the trouble:
 [`view_model.py`](docs/lessons/view_model_py.md) for the everyday syntax,
 [`flow.py`](docs/lessons/flow_py.md) for generics, closures and callables,
 [`screen.py`](docs/lessons/screen_py.md) for the context manager protocol and
 enough curses to follow the drawing, and
 [`launcher.py`](docs/lessons/launcher_py.md) for processes, atomic writes and
-signals used as questions. Each covers the subset its file actually uses and
-nothing else, and each ends with the traps a Kotlin instinct sets.
+signals used as questions, and [`clock.py`](docs/lessons/clock_py.md) for the
+arithmetic behind a fixed timestep and the import that lets a test wind the
+clock by hand. Each covers the subset its file actually uses and nothing else,
+and each ends with the traps a Kotlin instinct sets.
 
 [The glossary](docs/GLOSSARY.md) collects the vocabulary the rest of the
 documents assume -- cell, layer, glyph, braid, island, sentinel -- and starts
