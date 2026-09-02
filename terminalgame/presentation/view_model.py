@@ -20,9 +20,10 @@ from .state import (
     ViewState,
 )
 
-# One cell of wall and one of open corridor, each CELL_ROWS strings of
-# CELL_COLS characters. Block glyphs rather than box-drawing: walls here are
-# solid regions rather than outlines, so there are no corners to draw.
+# The dot a corridor cell carries. There is no matching constant for a wall
+# cell: a wall is drawn as a line that has to join the lines of its wall
+# neighbours, so its glyph is chosen per cell from _WALL_GLYPH below rather
+# than being one fixed block written down here.
 #
 # A corridor carries exactly one dot, because a sprite occupies one cell and a
 # dot marks one place a sprite can stand. Two dots in a cell would say there
@@ -297,10 +298,12 @@ class GameViewModel:
     def on_direction(self, d_row: int, d_col: int) -> None:
         """Moves the player one cell, eating the pill it lands on.
 
-        Called by GameScreen when an arrow key arrives. One press moves one
-        whole cell, so the player never lands straddling two of them. A press
-        into a wall does nothing, which leaves the frame identical and costs
-        the terminal nothing, and a finished game ignores the press entirely.
+        Called by the game loop in app/main.py when an arrow key arrives --
+        GameScreen reads the key and hands it up, and never calls this itself.
+        One press moves one whole cell, so the player never lands straddling
+        two of them. A press into a wall does nothing, which leaves the frame
+        identical and costs the terminal nothing, and a finished game ignores
+        the press entirely.
 
         Args:
             d_row: -1, 0 or 1, the rows to move by.
