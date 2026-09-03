@@ -263,10 +263,14 @@ class GameScreen:
                 screen only ever receives frames; it never asks for one.
 
         Raises:
-            RuntimeError: If the screen has not been opened yet.
+            RuntimeError: If the screen has not been opened yet, or is already
+                attached. A second subscription paints every frame twice, and
+                `close` would remove only one of them.
         """
         if self._stdscr is None:
             raise RuntimeError("GameScreen.open() must be called before attach()")
+        if self._unsubscribe is not None:
+            raise RuntimeError("GameScreen is already attached")
         self._unsubscribe = view_model.state.subscribe(self.render)
 
     # -- input -----------------------------------------------------------

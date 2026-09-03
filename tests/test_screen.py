@@ -422,6 +422,26 @@ class AttachTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.screen.attach(self.view_model)
 
+    def test_attaching_twice_is_refused(self):
+        self.screen.open()
+        self.screen.attach(self.view_model)
+
+        with self.assertRaises(RuntimeError):
+            self.screen.attach(self.view_model)
+
+    def test_a_refused_second_attach_leaves_one_subscription_not_two(self):
+        """Two would paint every frame twice, and close would let go of one."""
+        self.screen.open()
+        self.screen.attach(self.view_model)
+        with self.assertRaises(RuntimeError):
+            self.screen.attach(self.view_model)
+        self.window.writes.clear()
+
+        self.view_model.tick()
+
+        status_writes = [w for w in self.window.writes if w[0] == PLAYFIELD_ROWS - 1]
+        self.assertEqual(1, len(status_writes), "the frame was painted twice")
+
     def test_attaching_paints_the_first_frame_at_once(self):
         """Subscribing replays the current value, so nothing has to ask for it."""
         self.screen.open()
