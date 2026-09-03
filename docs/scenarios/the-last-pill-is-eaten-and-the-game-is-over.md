@@ -3,7 +3,7 @@
 **Priority: `MEDIUM`** — it happens at most once in a run, and only in a run somebody plays to the end. But it is the only ending a player can aim at -- the other two are giving up and [being caught](the-ghost-catches-the-player-and-the-game-ends.md) -- and a fault here means there is nothing to play *towards*: the arena empties and the game carries on as though nothing had happened. [What the priorities mean](SCENARIO_INDEX.md#what-the-priorities-mean).
 
 The player takes the last pill on the arena. The line of readings stops naming
-a score and reads `GAME OVER` instead, and from that moment the picture never
+a score and reads `CLEARED` instead, and from that moment the picture never
 changes again. The ghost, which has been pacing the corridors since the game
 began, stops where it stands. Arrow keys do nothing. The only keys that still
 mean anything are the ones that quit.
@@ -64,7 +64,7 @@ sequenceDiagram
     ViewModel->>ViewModel: moves, takes the pill, adds the point
     ViewModel->>ViewModel: counts the pills left, and finds none
     ViewModel->>ViewModel: marks the game finished
-    ViewModel->>Flow: emit(a picture whose readings line says GAME OVER)
+    ViewModel->>Flow: emit(a picture whose readings line says CLEARED)
     Flow->>Screen: render(that picture)
     Screen->>Screen: draws it — the last drawing of the run
     Main->>Clock: poll()
@@ -83,7 +83,7 @@ sequenceDiagram
 | 3 | moves, takes the pill, adds the point | Exactly the story told in [A pill is eaten and the score goes up](a-pill-is-eaten-and-the-score-goes-up.md), up to and including the score |
 | 4 | counts the pills left, and finds none | The count has been going down one at a time since the game began. It started at the number of corridor cells **less one**, because the pill the player was standing on at the start was taken silently and never counted as collected |
 | 5 | marks the game finished | One value changes. That is the whole of the mechanism, and everything below follows from it |
-| 6 | [`emit`](../../terminalgame/util/flow.py#L56)`(a picture whose readings line says GAME OVER)` | The line of readings is built fresh for every picture, and from now on [it takes the other branch](../../terminalgame/presentation/view_model.py#L423): the score, the words `GAME OVER`, and a reminder of the key that quits |
+| 6 | [`emit`](../../terminalgame/util/flow.py#L56)`(a picture whose readings line says CLEARED)` | The line of readings is built fresh for every picture, and from now on [it takes the other branch](../../terminalgame/presentation/view_model.py#L423): the score, the word `CLEARED`, and a reminder of the key that quits |
 | 7 | `render(that picture)` | Nothing asked for it. The screen has been registered since startup and is handed the finished picture |
 | 9 | draws it -- the last drawing of the run | Everything after this point in the diagram produces nothing at all. The picture on the terminal from here on is this one, left where it was drawn |
 | 9 | `poll()` | The loop goes on polling the clock on every pass, exactly as it always has. The clock has not been stopped, and nothing has told it to stop |
@@ -121,7 +121,7 @@ line:
 |║   ║   ═════════   ════════════╝   ║   |
 |║▗█▖                                ║   |
 |╚═══════════════════════════════════╝   |
-| GAME OVER  score 263  q quits          |
+| CLEARED  score 263  q quits            |
 ```
 
 Two hundred and sixty-three is not a fixed number. It is the count of corridor
@@ -138,7 +138,7 @@ so that the two cannot be confused, and covered in
 - [The ghost catches the player and the game ends](the-ghost-catches-the-player-and-the-game-ends.md)
   — the other way a game ends by itself. It reaches this same stopped state by a
   different route, and says so on the readings line: `CAUGHT` rather than
-  `GAME OVER`.
+  `CLEARED`.
 - [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md)
   — the only thing a player can still do here, and the only way the window closes.
 - [A clock tick moves the ghost and repaints the screen](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md)
