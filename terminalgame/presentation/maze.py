@@ -75,15 +75,20 @@ class Maze:
             A braided maze of that size, with a wall border and no dead ends.
 
         Raises:
-            ValueError: If the size leaves no room for junctions, which needs
-                at least three rows and three columns.
+            ValueError: If the size leaves a junction with fewer than two
+                junction neighbours, which braiding cannot open a second exit
+                for: that needs at least five rows and five columns.
         """
         junction_rows = tuple(range(1, rows - 1, 2))
         junction_cols = tuple(range(1, cols - 1, 2))
-        if not junction_rows or not junction_cols:
+        # Two junction rows and two junction columns are what give every
+        # junction the two neighbours _braid needs. One of either leaves the
+        # ends of a single-file corridor with one way out and no second to
+        # open that would not breach the border.
+        if len(junction_rows) < 2 or len(junction_cols) < 2:
             raise ValueError(
-                "a maze of {}x{} has no room for junctions - it needs at "
-                "least 3 rows and 3 columns".format(rows, cols)
+                "a maze of {}x{} cannot be braided - it needs at least 5 "
+                "rows and 5 columns".format(rows, cols)
             )
 
         rng = random.Random(seed)
@@ -340,9 +345,11 @@ class Maze:
 
         Opening a wall raises the count for two junctions at once and never
         lowers one, so this only has to sweep until a pass changes nothing.
-        Every junction has at least two neighbours, even in a corner, so a
-        second exit can always be found -- which is what makes "no dead ends"
-        a guarantee rather than an attempt.
+        Every junction has at least two junction neighbours, which `generate`
+        guarantees by refusing anything smaller than 5x5 -- and that is what
+        makes "no dead ends" a guarantee rather than an attempt. A junction
+        with one neighbour could only be given a second exit by opening the
+        border.
 
         Args:
             rng: Source of randomness for choosing which wall to open.
