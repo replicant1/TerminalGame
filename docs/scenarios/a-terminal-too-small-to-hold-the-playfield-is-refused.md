@@ -45,13 +45,13 @@ printed — into a terminal that is behaving normally again.
 sequenceDiagram
     autonumber
     actor Player
-    participant Play as play()
+    participant Play as _play()
     participant Screen as GameScreen
     participant Curses as curses
     participant Term as the terminal
 
     Player->>Play: python3 -m terminalgame.app.main --here
-    Play->>Screen: open()
+    Play->>Screen: _open()
     Screen->>Term: please become 30 rows by 40 columns
     Screen->>Screen: waits 150 thousandths of a second
     Note over Term: this terminal ignores the request

@@ -341,7 +341,7 @@ thread as the drawing.
 >>> from terminalgame.util.clock import GameClock
 >>> beats = []
 >>> clock = GameClock(0.05, lambda: beats.append(len(beats)))
->>> clock.running
+>>> clock._is_running
 False
 >>> clock.start()
 >>> clock.poll()
