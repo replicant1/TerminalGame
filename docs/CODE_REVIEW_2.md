@@ -4,10 +4,15 @@ A second look at the same source, made after
 [the first review](CODE_REVIEW.md) and deliberately aimed at where that one did
 not go: the two files it declared clean, the input path it never exercised, and
 the text the game puts on the screen. Everything here is new — none of it
-appears in the first document, and nothing has been fixed.
+appears in the first document.
 
 - **Reviewed:** [`terminalgame/`](../terminalgame) as it stands at commit
-  `0c702ef`, 2 September 2026. Line numbers are as of that commit.
+  `0c702ef`, 2 September 2026. Line numbers are as of that commit, so they
+  have drifted where a fix has landed since.
+- **Status:** as of `d1af551`, 3 September 2026. Four of the seven are fixed.
+  The findings themselves are left as they were written -- this is a review
+  with its outcome recorded against it, not a review rewritten to match what
+  happened next.
 - **Method:** where the first pass read, this one ran. Six of the seven
   findings were reproduced by executing the code — in a pty for the terminal
   ones, and against the real classes for the rest.
@@ -19,21 +24,23 @@ appears in the first document, and nothing has been fixed.
 
 ## Summary
 
-| # | Finding | File | Kind | Verified |
-|---|---|---|---|---|
-| 1 | Any unrecognised escape sequence quits the game | `app/main.py:40` | Correctness | Reproduced |
-| 2 | Winning the game says "GAME OVER" | `presentation/view_model.py:426` | Ambiguity | Reproduced |
-| 3 | `poll()` ignores a `stop()` made from inside a tick | `util/clock.py:76` | Correctness | Reproduced |
-| 4 | `emit` delivers out of order under re-entrancy | `util/flow.py:70` | Correctness | Reproduced |
-| 5 | `close()` cannot restore the terminals that need it most | `ui/screen.py:137` | Correctness | Reproduced |
-| 6 | A startup timeout deletes the sentinel under a live child | `app/launcher.py:260` | Correctness | Reasoned |
-| 7 | The conflation the design leans on never fires | `presentation/state.py:92` | Ambiguity | Reproduced |
+| # | Finding | File | Kind | Verified | Status |
+|---|---|---|---|---|---|
+| 1 | Any unrecognised escape sequence quits the game | `app/main.py:40` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/41) |
+| 2 | Winning the game says "GAME OVER" | `presentation/view_model.py:426` | Ambiguity | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/42) |
+| 3 | `poll()` ignores a `stop()` made from inside a tick | `util/clock.py:76` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/43) |
+| 4 | `emit` delivers out of order under re-entrancy | `util/flow.py:70` | Correctness | Reproduced | Open |
+| 5 | `close()` cannot restore the terminals that need it most | `ui/screen.py:137` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/33) |
+| 6 | A startup timeout deletes the sentinel under a live child | `app/launcher.py:260` | Correctness | Reasoned | Open |
+| 7 | The conflation the design leans on never fires | `presentation/state.py:92` | Ambiguity | Reproduced | Open |
 
 ---
 
 ## 1. Any unrecognised escape sequence quits the game
 
 `app/main.py:40` — **reproduced.**
+
+**Fixed** — [#41](https://github.com/replicant1/TerminalGame/pull/41), commit `be1dca9`. 27 was dropped from `_QUIT_KEYS`; Esc no longer quits at all.
 
 ```python
 _QUIT_KEYS = {ord("q"), ord("Q"), 27}  # 27 = Esc
@@ -71,6 +78,8 @@ within a few milliseconds, which is what `ESCDELAY` exists for.
 
 `presentation/view_model.py:426` — **reproduced.**
 
+**Fixed** — [#42](https://github.com/replicant1/TerminalGame/pull/42), commit `c179334`.
+
 ```
 cleared: ' GAME OVER  score 0    q quits'
 caught:  ' CAUGHT  score 0    q quits'
@@ -98,6 +107,8 @@ shape the docstring describes.
 ## 3. `poll()` ignores a `stop()` made from inside a tick
 
 `util/clock.py:76` — **reproduced.**
+
+**Fixed** — [#43](https://github.com/replicant1/TerminalGame/pull/43), commit `4b26702`.
 
 The loop tests only the deadline:
 
@@ -156,6 +167,8 @@ re-entrant emit queue behind it, or refuse re-entrancy outright with a flag.
 ## 5. `close()` cannot restore the terminals that need it most
 
 `ui/screen.py:137` — **reproduced.**
+
+**Fixed** — [#33](https://github.com/replicant1/TerminalGame/pull/33), commit `8853d90`. Fixed alongside finding 1 of the first review, which is the same method pair and the same terminals.
 
 `close()` restores the terminal in this order: `curs_set(1)`, `keypad(False)`,
 `nocbreak()`, `echo()`, and finally `endwin()` at `:141`. The first of those
@@ -266,3 +279,10 @@ holding it.
 
 The first pass's thirteen findings are in [`CODE_REVIEW.md`](CODE_REVIEW.md)
 and none of them are repeated here.
+
+## What is left
+
+**4** and **6** are the remaining correctness findings in either review: `emit`
+delivering out of order under re-entrancy, and a startup timeout deleting the
+sentinel under a live child. **7** is an ambiguity — the conflation the design
+leans on never fires — and costs nothing while it stands.
