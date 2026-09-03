@@ -38,11 +38,11 @@ methods that implement it are the counterparts of `AutoCloseable`:
 
 ```python
 def __enter__(self) -> "GameScreen":
-    self.open()
+    self._open()
     return self
 
 def __exit__(self, exc_type, exc, tb) -> bool:
-    self.close()
+    self._close()
     return False
 ```
 
@@ -50,19 +50,19 @@ Three things are worth pausing on.
 
 **`__enter__` decides what `as` binds.** Whatever it returns is what lands in
 `screen`. Returning `self` is the usual choice, but a context manager is free
-to hand back something else entirely — which is why `open()` and `__enter__`
+to hand back something else entirely — which is why `_open()` and `__enter__`
 are separate methods here rather than one.
 
 **`__exit__` is told how the block ended.** The three parameters are the
 exception type, the exception, and the traceback, all `None` when the block
-finished normally. `close()` is called either way, which is the whole point:
+finished normally. `_close()` is called either way, which is the whole point:
 the terminal is handed back even when the game crashes, and a terminal left in
 raw mode with no echo is a terminal you have to close the window on.
 
 **The return value is a trap with no Java equivalent.** Returning a *truthy*
 value from `__exit__` **swallows the exception** — the `with` block exits
 quietly and the program carries on as though nothing had happened. Java cannot
-do this; `close()` has no say in whether the exception propagates. That is why
+do this; `_close()` has no say in whether the exception propagates. That is why
 the `return False` is written out and documented rather than left implicit. A
 bare `return`, or falling off the end, gives `None`, which is falsey and
 behaves the same way — but says it by accident.
@@ -230,7 +230,7 @@ bitwise or is the same one you know from Java. `use_default_colors()` is
 wrapped in a `try` because it is an ncurses extension and not every terminal
 has it.
 
-Two calls in `open()` are not curses at all. `locale.setlocale(locale.LC_ALL,
+Two calls in `_open()` are not curses at all. `locale.setlocale(locale.LC_ALL,
 "")` adopts the environment's locale, which has to happen before anything wide
 or non-ASCII is drawn, and the escape sequence written straight to
 `sys.stdout` asks the terminal to resize itself — a request a terminal is free
@@ -245,13 +245,13 @@ handed around and closed by the code that owns it rather than by a callback.
 
 | Habit | What this file does |
 |---|---|
-| `close()` cannot affect the exception | `__exit__` returning truthy swallows it. Hence the explicit `return False` |
+| `_close()` cannot affect the exception | `__exit__` returning truthy swallows it. Hence the explicit `return False` |
 | x before y | Curses is y first, always. Rows, then columns |
 | `if (cond) a else b` | Python puts the value first: `a if cond else b` |
 | `a < b && b < c` | Python chains: `a < b < c`, with `b` evaluated once |
 | `map[key]` returns null | It raises `KeyError`. Use `.get(key, default)` |
 | Annotations are inert | They are expressions, evaluated at definition, so a self-reference has to be a string |
-| A resource closes itself | Only inside `with`. Calling `open()` by hand means calling `close()` by hand |
+| A resource closes itself | Only inside `with`. Calling `_open()` by hand means calling `_close()` by hand |
 
 ## Where to go next
 

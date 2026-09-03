@@ -107,7 +107,7 @@ class GameScreen:
 
     def __enter__(self) -> "GameScreen":
         """Opens curses and returns the screen, for use as a context manager."""
-        self.open()
+        self._open()
         return self
 
     def __exit__(self, exc_type, exc, tb) -> bool:
@@ -122,10 +122,10 @@ class GameScreen:
             False, so an exception carries on rather than being swallowed by
             the terminal being tidied up.
         """
-        self.close()
+        self._close()
         return False
 
-    def open(self) -> None:
+    def _open(self) -> None:
         """Takes over the terminal: raw keys, no echo, no caret, colours.
 
         The terminal is asked to resize itself to the playfield first, since a
@@ -175,10 +175,10 @@ class GameScreen:
             # endwin(), inside close(), is the call that does the restoring: it
             # puts back the tty state ncurses saved during initscr(). The rest
             # of close() is tidying -- echo() alone does not bring echo back.
-            self.close()
+            self._close()
             raise
 
-    def close(self) -> None:
+    def _close(self) -> None:
         """Gives the terminal back, and stops collecting the state flow.
 
         Safe to call twice: a screen that was never opened, or has been closed
@@ -268,7 +268,7 @@ class GameScreen:
                 `close` would remove only one of them.
         """
         if self._stdscr is None:
-            raise RuntimeError("GameScreen.open() must be called before attach()")
+            raise RuntimeError("GameScreen._open() must be called before attach()")
         if self._unsubscribe is not None:
             raise RuntimeError("GameScreen is already attached")
         self._unsubscribe = view_model.state.subscribe(self.render)

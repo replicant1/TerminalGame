@@ -35,7 +35,7 @@ printed — into a terminal that is behaving normally again.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
-| [`GameScreen`](../../terminalgame/ui/screen.py#L59) | In this scenario it is the **inspector**, and the only part that ever knows the terminal's real size: [`open`](../../terminalgame/ui/screen.py#L97) asks for the resize, measures what it got, restores the terminal and raises [`TerminalTooSmall`](../../terminalgame/ui/screen.py#L55) |
+| [`GameScreen`](../../terminalgame/ui/screen.py#L59) | In this scenario it is the **inspector**, and the only part that ever knows the terminal's real size: [`_open`](../../terminalgame/ui/screen.py#L97) asks for the resize, measures what it got, restores the terminal and raises [`TerminalTooSmall`](../../terminalgame/ui/screen.py#L55) |
 | [`main`](../../terminalgame/app/main.py) | In this scenario it is the **messenger**: [`_play`](../../terminalgame/app/main.py#L77) is the only place that catches this failure, and it decides both what the player is told and whether the window is held open long enough to read it |
 | [`launcher`](../../terminalgame/app/launcher.py) | Present only on the ordinary way in, where it is waiting on the same file it always waits on, and is told 1 instead of 0 |
 
@@ -67,7 +67,7 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | `python3 -m terminalgame.app.main --here` | The `--here` way in. On the ordinary way in the launcher opens a window *and sets its size*, so the size is right by construction and this scenario is nearly unreachable — nearly, because a font large enough that the window will not fit the display makes Terminal hand back fewer rows than were asked for, and then the same check catches it |
-| 2 | [`open`](../../terminalgame/ui/screen.py#L97)`()` | Everything below happens inside this one call. Until it returns, no picture exists and no view model has been built |
+| 2 | [`_open`](../../terminalgame/ui/screen.py#L97)`()` | Everything below happens inside this one call. Until it returns, no picture exists and no view model has been built |
 | 3 | please become 30 rows by 40 columns | [The instruction](../../terminalgame/ui/screen.py#L50) is sent to the terminal directly, before curses is started. It is a request with no answer: nothing comes back to say whether it was understood, ignored, or refused |
 | 4 | waits 150 thousandths of a second | A pause, because Terminal.app resizes a moment after being asked rather than immediately. Measuring straight away would find the old size and refuse a terminal that was about to be exactly right. Some terminals honour the request and some ignore it, and there is no way to tell which kind is on the other end except by measuring |
 | 5 | `initscr()`, and takes the terminal over | Only now does curses start. From this line until the screen is closed, the terminal is in a state the player did not ask for: no echo, no cursor, keys delivered one at a time |

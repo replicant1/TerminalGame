@@ -202,11 +202,11 @@ for anything — it subscribes once and is pushed complete frames.
 > **Raises**
 > - `ValueError` — If the size leaves a junction with fewer than two junction neighbours, which braiding cannot open a second exit for: that needs at least five rows and five columns.
 
-#### <u><code>from_rows(rows: Sequence[str], open_char: str='.') -> Maze</code></u> · `@classmethod`
+#### <u><code>_from_rows(rows: Sequence[str], open_char: str='.') -> Maze</code></u> · `@classmethod`
 
 > Builds a maze from lines of text, for tests that need a known shape.
 >
->     Maze.from_rows(["#####",
+>     Maze._from_rows(["#####",
 >                     "#...#",
 >                     "#.#.#",
 >                     "#...#",
@@ -238,15 +238,15 @@ for anything — it subscribes once and is pushed complete frames.
 > **Returns**
 > True if the cell is corridor. Out of bounds counts as wall.
 
-#### <code>open_cells() -> Tuple[Cell, ...]</code>
+#### <code>_open_cells() -> Tuple[Cell, ...]</code>
 
 > Returns every corridor cell, in row-major order.
 
-#### <code>wall_cells() -> Tuple[Cell, ...]</code>
+#### <code>_wall_cells() -> Tuple[Cell, ...]</code>
 
 > Returns every wall cell, in row-major order.
 
-#### <code>neighbours(row: int, col: int) -> Tuple[Cell, ...]</code>
+#### <code>_neighbours(row: int, col: int) -> Tuple[Cell, ...]</code>
 
 > Returns the cells adjacent to one cell, wall or not.
 >
@@ -258,7 +258,7 @@ for anything — it subscribes once and is pushed complete frames.
 > The neighbours that fall inside the grid, north, south, west and
 > east in that order.
 
-#### <code>open_neighbours(row: int, col: int) -> Tuple[Cell, ...]</code>
+#### <code>_open_neighbours(row: int, col: int) -> Tuple[Cell, ...]</code>
 
 > Returns the corridor cells adjacent to one cell.
 >
@@ -267,17 +267,17 @@ for anything — it subscribes once and is pushed complete frames.
 > - `col` — Cell column.
 >
 > **Returns**
-> The neighbours from `neighbours` that are corridor, so the ways
+> The neighbours from `_neighbours` that are corridor, so the ways
 > out of this cell.
 
-#### <code>dead_ends() -> Tuple[Cell, ...]</code>
+#### <code>_dead_ends() -> Tuple[Cell, ...]</code>
 
 > Returns the open cells with fewer than two ways out.
 >
 > A braided maze has none. This returns the cells rather than a
 > yes-or-no so that a failure says *where*.
 
-#### <code>reachable_from(row: int, col: int) -> FrozenSet[Cell]</code>
+#### <code>_reachable_from(row: int, col: int) -> FrozenSet[Cell]</code>
 
 > Returns every open cell that can be walked to from one cell.
 >
@@ -289,7 +289,7 @@ for anything — it subscribes once and is pushed complete frames.
 > The cells reachable from there, including the starting cell, or an
 > empty set if the starting cell is wall.
 
-#### <code>is_fully_connected() -> bool</code>
+#### <code>_is_fully_connected() -> bool</code>
 
 > Reports whether every open cell can be reached from every other.
 >
@@ -297,7 +297,7 @@ for anything — it subscribes once and is pushed complete frames.
 > True if the corridors form one connected region. An empty maze
 > counts as connected.
 
-#### <code>islands() -> Tuple[FrozenSet[Cell], ...]</code>
+#### <code>_islands() -> Tuple[FrozenSet[Cell], ...]</code>
 
 > Returns the wall regions that do not touch the border.
 >
@@ -334,7 +334,7 @@ for anything — it subscribes once and is pushed complete frames.
 > **Returns**
 > The corridor cell at the greatest distance from that spot.
 
-#### <code>to_rows(wall: str='#', corridor: str='.') -> Tuple[str, ...]</code>
+#### <code>_to_rows(wall: str='#', corridor: str='.') -> Tuple[str, ...]</code>
 
 > Draws the maze as text, for a test failure message or a print.
 >
@@ -594,7 +594,7 @@ what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 
 > Owns the curses lifetime and paints ViewStates onto the terminal.
 
-#### <code>open() -> None</code>
+#### <code>_open() -> None</code>
 
 > Takes over the terminal: raw keys, no echo, no caret, colours.
 >
@@ -604,7 +604,7 @@ what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 > **Raises**
 > - `TerminalTooSmall` — If the terminal ignored the resize request and is still shorter or narrower than the playfield.
 
-#### <code>close() -> None</code>
+#### <code>_close() -> None</code>
 
 > Gives the terminal back, and stops collecting the state flow.
 >

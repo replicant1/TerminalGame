@@ -105,7 +105,7 @@ looking at stays on the terminal at no cost at all — nothing is being redrawn.
 `q` and `Q` quit, and they are read by the loop in `app/main.py`
 rather than by anything in `presentation` — the ViewModel has no concept of
 quitting. The loop returns, the `with` block ends, `GameScreen.__exit__` runs
-`close()`, and the terminal gets its echo, its caret and its line discipline
+`_close()`, and the terminal gets its echo, its caret and its line discipline
 back. That happens whether the loop returned or threw:
 [the quit scenario](scenarios/a-quit-key-ends-the-game-and-closes-the-window.md).
 

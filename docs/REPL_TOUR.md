@@ -29,7 +29,7 @@ the illustrations use.
 >>> m = Maze.generate(11, 11, seed=7)
 >>> m
 Maze(11x11, 56 open cells)
->>> print("\n".join(m.to_rows()))
+>>> print("\n".join(m._to_rows()))
 ###########
 #.........#
 #.#.###.#.#
@@ -47,9 +47,9 @@ That is the whole maze: 121 cells, 56 of them corridor. Now ask it the two
 things it promises, which are the reason the braiding pass exists at all:
 
 ```pycon
->>> m.dead_ends()
+>>> m._dead_ends()
 ()
->>> m.is_fully_connected()
+>>> m._is_fully_connected()
 True
 ```
 
@@ -58,9 +58,9 @@ other. The blocks of wall that the braiding cut off from the border are the
 islands, and they are simply whatever was left over:
 
 ```pycon
->>> len(m.islands())
+>>> len(m._islands())
 7
->>> m.islands()[0]
+>>> m._islands()[0]
 frozenset({(2, 2)})
 ```
 
@@ -74,23 +74,23 @@ True
 False
 >>> m.is_open(99, 99)
 False
->>> m.open_neighbours(1, 1)
+>>> m._open_neighbours(1, 1)
 ((2, 1), (1, 2))
 ```
 
 You can also build one by hand, which is what
-[`from_rows`](../terminalgame/presentation/maze.py#L96) is for — a ring of
+[`_from_rows`](../terminalgame/presentation/maze.py#L96) is for — a ring of
 corridor around a single island:
 
 ```pycon
->>> tiny = Maze.from_rows(["#####",
+>>> tiny = Maze._from_rows(["#####",
 ...                        "#...#",
 ...                        "#.#.#",
 ...                        "#...#",
 ...                        "#####"])
->>> tiny.dead_ends()
+>>> tiny._dead_ends()
 ()
->>> tiny.islands()
+>>> tiny._islands()
 (frozenset({(2, 2)}),)
 ```
 
