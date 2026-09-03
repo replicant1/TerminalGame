@@ -47,7 +47,7 @@ which knows nothing about characters, colours or sprites.
 | **seed** | The number that fixes the random choices, so the same seed gives the same maze every run. Passed to `Maze.generate` and to `GameViewModel` |
 
 The carving and braiding passes are easier watched than read:
-[carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html)
+[carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/step-by-step/maze-step-by-step.html)
 builds an eleven by eleven maze one decision at a time.
 
 ## The frame
@@ -71,7 +71,7 @@ built in [`presentation/view_model.py`](../terminalgame/presentation/view_model.
 | **tick count** | How many times the clock has fired, carried on the frame so a test can tell two otherwise identical frames apart |
 
 A wall cell choosing its glyph is the other pass with a page of its own:
-[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html).
+[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/step-by-step/wall-glyphs-step-by-step.html).
 
 ## The moving parts
 

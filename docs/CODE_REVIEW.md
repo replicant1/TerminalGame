@@ -1,11 +1,17 @@
 # Code review — the `terminalgame` package
 
 A point-in-time review of the source, not part of the curated documentation
-around it. Nothing here has been fixed; each finding says what it would take.
+around it. Each finding says what it would take, and now also whether that has
+been done.
 
 - **Reviewed:** every Python file under [`terminalgame/`](../terminalgame),
   2,207 lines across 13 files, as a body of code rather than as a diff.
-- **Commit:** `0c702ef`, 2 September 2026. Line numbers are as of that commit.
+- **Commit:** `0c702ef`, 2 September 2026. Line numbers are as of that commit,
+  so they have drifted where a fix has landed since.
+- **Status:** as of `d1af551`, 3 September 2026. Seven of the thirteen are
+  fixed, every correctness finding among them. The findings themselves are
+  left as they were written -- this is a review with its outcome recorded
+  against it, not a review rewritten to match what happened next.
 - **Looked for:** correctness bugs, inefficiencies, ambiguities, and
   non-idiomatic Python — in that order of interest.
 
@@ -20,27 +26,29 @@ between a bug and a suspicion:
 
 ## Summary
 
-| # | Finding | File | Kind | Verified |
-|---|---|---|---|---|
-| 1 | A crash after `initscr()` leaves the terminal unusable | `ui/screen.py:113` | Correctness | Reproduced |
-| 2 | The launcher is told a crashed game succeeded | `app/main.py:91` | Correctness | Reproduced |
-| 3 | `_braid` does not deliver the guarantee it documents | `presentation/maze.py:370` | Correctness | Reproduced |
-| 4 | `_put` deletes a string instead of clipping it | `ui/screen.py:323` | Correctness | Confirmed in code |
-| 5 | The maze is re-decomposed into runs every frame | `ui/screen.py:252` | Efficiency | Confirmed in code |
-| 6 | The cell constants look parameterised but 1x2 is baked in | `presentation/view_model.py:150` | Ambiguity | Confirmed in code |
-| 7 | O(n) membership tests in both inner loops | `presentation/maze.py:313, 352` | Efficiency | Confirmed in code |
-| 8 | `attach` is silently not idempotent | `ui/screen.py:193` | Correctness | Confirmed in code |
-| 9 | `launch` returns 0 for a game that never reported | `app/launcher.py:379` | Ambiguity | Reported |
-| 10 | Rows built by `+=` on strings | `presentation/view_model.py:220` | Idiom | Confirmed in code |
-| 11 | An undocumented two-column dead margin | `presentation/state.py:32` | Ambiguity | Reproduced |
-| 12 | One midpoint, two spellings | `presentation/maze.py:331, 365` | Idiom | Confirmed in code |
-| 13 | A re-export rule the only consumer does not follow | `presentation/__init__.py` | Ambiguity | Confirmed in code |
+| # | Finding | File | Kind | Verified | Status |
+|---|---|---|---|---|---|
+| 1 | A crash after `initscr()` leaves the terminal unusable | `ui/screen.py:113` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/33) |
+| 2 | The launcher is told a crashed game succeeded | `app/main.py:91` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/35) |
+| 3 | `_braid` does not deliver the guarantee it documents | `presentation/maze.py:370` | Correctness | Reproduced | [Fixed](https://github.com/replicant1/TerminalGame/pull/36) |
+| 4 | `_put` deletes a string instead of clipping it | `ui/screen.py:323` | Correctness | Confirmed in code | [Fixed](https://github.com/replicant1/TerminalGame/pull/37) |
+| 5 | The maze is re-decomposed into runs every frame | `ui/screen.py:252` | Efficiency | Confirmed in code | [Fixed](https://github.com/replicant1/TerminalGame/pull/38) |
+| 6 | The cell constants look parameterised but 1x2 is baked in | `presentation/view_model.py:150` | Ambiguity | Confirmed in code | Open |
+| 7 | O(n) membership tests in both inner loops | `presentation/maze.py:313, 352` | Efficiency | Confirmed in code | [Fixed](https://github.com/replicant1/TerminalGame/pull/40) |
+| 8 | `attach` is silently not idempotent | `ui/screen.py:193` | Correctness | Confirmed in code | [Fixed](https://github.com/replicant1/TerminalGame/pull/39) |
+| 9 | `launch` returns 0 for a game that never reported | `app/launcher.py:379` | Ambiguity | Reported | Open |
+| 10 | Rows built by `+=` on strings | `presentation/view_model.py:220` | Idiom | Confirmed in code | Open |
+| 11 | An undocumented two-column dead margin | `presentation/state.py:32` | Ambiguity | Reproduced | Open |
+| 12 | One midpoint, two spellings | `presentation/maze.py:331, 365` | Idiom | Confirmed in code | Open |
+| 13 | A re-export rule the only consumer does not follow | `presentation/__init__.py` | Ambiguity | Confirmed in code | Open |
 
 ---
 
 ## 1. A crash after `initscr()` leaves the terminal unusable
 
 `ui/screen.py:113` — **reproduced.**
+
+**Fixed** — [#33](https://github.com/replicant1/TerminalGame/pull/33), commit `8853d90`.
 
 `open()` takes the terminal over and then calls `curs_set(0)`, which raises
 `curses.error` on any terminal whose terminfo lacks `civis`. The exception
@@ -72,6 +80,8 @@ branch calls `self.close()` by hand before raising. Every statement between
 
 `app/main.py:91`, with the `finally` at `:105` — **reproduced.**
 
+**Fixed** — [#35](https://github.com/replicant1/TerminalGame/pull/35), commit `defaf16`.
+
 `play()` sets `exit_code = 0` before the `try`, and only the `TerminalTooSmall`
 branch ever changes it. The `finally` writes
 `launcher.announce_finished(sentinel, exit_code)` whatever happened, so any
@@ -90,6 +100,8 @@ second is harder to get wrong later.
 ## 3. `_braid` does not deliver the guarantee it documents
 
 `presentation/maze.py:370` — **reproduced.**
+
+**Fixed** — [#36](https://github.com/replicant1/TerminalGame/pull/36), commit `298dd03`. The first of the two options below: the threshold went up to 5x5 and both docstrings were corrected. The braid could not be extended without breaching the border.
 
 The braid gives up on a junction when it has one exit and no *closed junction
 neighbour* to open: `if exits > 1 or not closed: continue`. That case arises
@@ -126,6 +138,8 @@ does; the second matches what the docstrings claim.
 
 `ui/screen.py:323` — **confirmed in code.**
 
+**Fixed** — [#37](https://github.com/replicant1/TerminalGame/pull/37), commit `02e8e17`.
+
 ```python
 if not (0 <= row < height) or col >= width:
     return
@@ -148,6 +162,8 @@ when it is negative, the way the right edge is already handled.
 ## 5. The maze is re-decomposed into runs on every frame
 
 `ui/screen.py:252` — **confirmed in code.**
+
+**Fixed** — [#38](https://github.com/replicant1/TerminalGame/pull/38), commit `a031e51`. Measured at 360.8 to 203.8 microseconds per frame.
 
 `state.walls` is the same tuple object for the entire game — `self._walls` is
 built once in `__init__` and never reassigned — and `state.pills` changes only
@@ -197,6 +213,8 @@ touching `_wall_cell`, `_pills_left` and `_take_pill` together.
 
 `presentation/maze.py:313` and `:352` — **confirmed in code.**
 
+**Fixed** — [#40](https://github.com/replicant1/TerminalGame/pull/40), commit `85eb9a6`. Generation of the shipped size went from 0.66 to 0.47 ms.
+
 Both `_carve` and `_braid` define `is_junction` as `row in junction_rows and
 col in junction_cols`, where both are tuples, so each test is a linear scan;
 `_braid` re-runs its full sweep until a pass changes nothing. `FrozenSet` is
@@ -209,6 +227,8 @@ one place with an unbounded outer loop.
 ## 8. `attach` is silently not idempotent
 
 `ui/screen.py:193` — **confirmed in code.**
+
+**Fixed** — [#39](https://github.com/replicant1/TerminalGame/pull/39), commit `b39f0a9`. `attach` now raises on a second call rather than unsubscribing first.
 
 A second `attach` overwrites `self._unsubscribe` and orphans the first
 subscription: `StateFlow.subscribe` appends unconditionally, so `render` is
@@ -308,17 +328,27 @@ the claim from the docstring. The second is smaller and just as honest.
 
 ## What to fix first
 
-**1 and 2 together.** They compound: a terminal that cannot hide its cursor
-wrecks the shell, and then the command reports success. Both are small, and a
-test for each is easy — the suite already fakes curses.
+The order this section originally recommended, kept as it was written:
 
-**3 next**, as a docstring and a `ValueError` threshold rather than an
-algorithm change, unless small mazes matter to you.
+> **1 and 2 together.** They compound: a terminal that cannot hide its cursor
+> wrecks the shell, and then the command reports success. Both are small, and a
+> test for each is easy — the suite already fakes curses.
+>
+> **3 next**, as a docstring and a `ValueError` threshold rather than an
+> algorithm change, unless small mazes matter to you.
+>
+> **5 if the game is ever felt to be slow**, which it is not today.
+>
+> The rest are tidiness, and 9, 11 and 13 are each a sentence of documentation
+> rather than a code change.
 
-**5 if the game is ever felt to be slow**, which it is not today.
+That order was followed, and 4, 7 and 8 went with it. What is left is the
+tidiness: **6** and **12** are a docstring and a spelling, **10** is an idiom
+worth about two per cent of a call that runs once a game, and **9**, **11** and
+**13** are still a sentence of documentation each.
 
-The rest are tidiness, and 9, 11 and 13 are each a sentence of documentation
-rather than a code change.
+Nothing left here can produce a wrong result. The remaining correctness
+findings are in [the second review](CODE_REVIEW_2.md).
 
 ## How this was produced
 
