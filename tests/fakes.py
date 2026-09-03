@@ -92,6 +92,7 @@ class FakeCurses:
     error = curses.error
     A_NORMAL = curses.A_NORMAL
     A_BOLD = curses.A_BOLD
+    A_DIM = curses.A_DIM
     COLOR_BLACK = curses.COLOR_BLACK
     COLOR_BLUE = curses.COLOR_BLUE
     COLOR_CYAN = curses.COLOR_CYAN

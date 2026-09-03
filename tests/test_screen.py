@@ -22,7 +22,12 @@ from terminalgame.presentation.state import (
 )
 from terminalgame.presentation.view_model import GameViewModel
 from terminalgame.ui import screen as screen_module
-from terminalgame.ui.screen import GameScreen, TerminalTooSmall
+from terminalgame.ui.screen import (
+    _BRIGHT_YELLOW,
+    _DIM_GOLD,
+    GameScreen,
+    TerminalTooSmall,
+)
 
 from .fakes import FakeCurses, FakeWindow
 
@@ -388,6 +393,14 @@ class ColorTest(unittest.TestCase):
 
         self.assertNotEqual(fake.pairs[COLOR_PILL][0], fake.pairs[COLOR_PLAYER][0])
 
+    def test_the_pills_are_dim_so_the_player_is_the_only_bright_thing(self):
+        """A player merely brighter than the pills is still one yellow square
+        among two hundred. The pills give way instead."""
+        _, fake = self.palette(colors=256)
+
+        self.assertEqual(_DIM_GOLD, fake.pairs[COLOR_PILL][0])
+        self.assertEqual(_BRIGHT_YELLOW, fake.pairs[COLOR_PLAYER][0])
+
     def test_on_an_eight_colour_terminal_the_player_is_bold_instead(self):
         """Both are yellow there, so brightness is all that separates them."""
         screen, fake = self.palette(colors=8)
@@ -395,6 +408,7 @@ class ColorTest(unittest.TestCase):
         self.assertEqual(fake.pairs[COLOR_PILL][0], fake.pairs[COLOR_PLAYER][0])
         self.assertTrue(screen._color_pairs[COLOR_PLAYER] & fake.A_BOLD)
         self.assertFalse(screen._color_pairs[COLOR_PILL] & fake.A_BOLD)
+        self.assertTrue(screen._color_pairs[COLOR_PILL] & fake.A_DIM)
 
     def test_a_terminal_with_no_colour_draws_everything_in_the_default(self):
         screen, _ = self.palette(colors=0)
