@@ -59,7 +59,7 @@ sequenceDiagram
 
 | Step | Message | What is going on |
 |---:|---|---|
-| 1 | presses `q` | The [quit keys](../../terminalgame/app/main.py#L40) are `q`, `Q` and the escape key. Any of the three does exactly what is described here |
+| 1 | presses `q` | The [quit keys](../../terminalgame/app/main.py#L40) are `q` and `Q`. Either does exactly what is described here |
 | 2 | finds the key among the quit keys, and returns | The test comes **first**, before the key is looked up in the table of directions and before the view model is consulted. That ordering is deliberate: a player can always leave, even if everything downstream of this point were broken. Returning from the loop is the entire mechanism — there is no flag, and nothing is asked to stop |
 | 3 | [`close`](../../terminalgame/ui/screen.py#L127)`()` | Not called by the loop. The screen was opened inside a block that guarantees it is closed on the way out, however the way out is reached — a return, an error, or an interruption from the keyboard |
 | 4 | stops collecting pictures | The registration made at startup is undone first, before the terminal is touched. The order matters: were a picture to arrive after the terminal had been handed back, it would be drawn into a terminal the game no longer owns |

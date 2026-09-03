@@ -7,7 +7,7 @@ No dependencies — the system Python 3.9 already ships everything needed.
     python3 -m terminalgame.app.main         # opens the game in its own 30x40 window
     python3 -m terminalgame.app.main --here  # runs in the current terminal instead
 
-Arrows move, `q` or Esc quits. The maze is different every game. To drive it from a
+Arrows move, `q` quits. The maze is different every game. To drive it from a
 script instead of by hand, see [Driving it headlessly](#driving-it-headlessly).
 
 <img src="docs/images/the-game-in-progress.png" alt="The game in play: a 30 by 40 terminal window on black, a maze drawn in blue double lines, gold pills in every corridor cell, a yellow player mid-maze with the corridor behind it eaten clean, a pink ghost near the bottom edge, and a cyan readings line underneath saying score 41, arrows, q quits." width="420">

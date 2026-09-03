@@ -74,7 +74,7 @@ Commands:
 | `status` | print just the bottom row (`score N  arrows, q quits`) |
 | `up`/`down`/`left`/`right [n]` | arrow key, n times (default 1) |
 | `key <text>` | send literal characters, e.g. `key q` |
-| `esc` | send Esc — **quits the game** |
+| `esc` | send Esc — the game ignores it |
 | `wait <seconds>` | let the clock run (ticks are 0.15s) |
 | `quit` | send `q`, wait for exit, print the exit code |
 
@@ -143,9 +143,10 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
 * **Arrow keys must be sent in application cursor mode: `ESC O C`, not
   `ESC [ C`.** `keypad(True)` emits `smkx` at startup, after which ncurses only
   recognises the `SS3` form. Send the CSI form and ncurses hands the loop a bare
-  `27`, which is in `_QUIT_KEYS` — so the game *silently exits on the first
-  arrow press* and the next write to the pty fails with `EIO`. Looks exactly
-  like a crash on input. The driver already sends the right form.
+  `27`, which the game ignores — so the player simply does not move, and the
+  `[` and `A` that follow arrive as ordinary keys the loop also ignores. The
+  driver already sends the right form. Until the Esc key was taken out of
+  `_QUIT_KEYS` this exited the game outright, which is why the note is here.
 * **The pty must be 30x40 before the game measures it.** `GameScreen.open()`
   writes `ESC [ 8 ; 30 ; 40 t` asking the terminal to resize, which a pty
   ignores; it then measures and raises if the size is short:

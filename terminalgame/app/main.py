@@ -37,7 +37,12 @@ _DIRECTIONS = {
     curses.KEY_LEFT: (0, -1),
     curses.KEY_RIGHT: (0, 1),
 }
-_QUIT_KEYS = {ord("q"), ord("Q"), 27}  # 27 = Esc
+# Esc is deliberately not here. ncurses hands back a bare 27 for the first
+# byte of any escape sequence its terminfo cannot decode -- an arrow key in the
+# wrong cursor mode, a bracketed-paste marker, Option-f with Option as Meta --
+# so treating 27 as a quit key ends the game on input the player never aimed
+# at the game at all.
+_QUIT_KEYS = {ord("q"), ord("Q")}
 
 
 def run(screen: GameScreen) -> None:

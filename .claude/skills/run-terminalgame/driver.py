@@ -19,7 +19,7 @@ Commands
     status             print just the status line (bottom row)
     up|down|left|right [n]   arrow key, n times (default 1)
     key <text>         send literal characters, e.g. `key q`
-    esc                send Esc (quits the game)
+    esc                send Esc (the game ignores it)
     wait <seconds>     let the clock run
     quit               send q, wait for exit, report the exit code
 
@@ -54,7 +54,7 @@ HANGUP_GRACE = 2.0
 # Arrow keys in APPLICATION cursor mode -- ESC O C, not ESC [ C. keypad(True)
 # sends smkx at startup, which puts the terminal in that mode; ncurses then
 # only recognises this form. See Gotchas in SKILL.md: the CSI form is decoded
-# as a bare Esc, which the game treats as quit.
+# as a bare Esc, which the game ignores, so the move never happens.
 ARROWS = {
     "up": b"\x1bOA",
     "down": b"\x1bOB",

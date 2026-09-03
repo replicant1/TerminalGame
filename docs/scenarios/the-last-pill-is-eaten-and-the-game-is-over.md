@@ -99,7 +99,7 @@ The loop tests a key against the quit keys **before** it looks it up in the
 table of directions, and before the view model is consulted at all. So the
 route out is untouched by any of this, and it is untouched by design: a
 finished game that could not be closed would be a program the player has to
-kill. Pressing `q` or the escape key at this point runs the story told in
+kill. Pressing `q` at this point runs the story told in
 [A quit key ends the game and closes the window](a-quit-key-ends-the-game-and-closes-the-window.md),
 in exactly the form it takes at any other moment.
 
