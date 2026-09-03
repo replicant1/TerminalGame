@@ -150,7 +150,7 @@ class LaunchError(RuntimeError):
     """Raised when the game window could not be opened."""
 
 
-def is_supported() -> bool:
+def _is_supported() -> bool:
     """Reports whether Terminal.app can be driven on this machine.
 
     Returns:
@@ -240,7 +240,7 @@ def launch(rows: int, cols: int, child_arguments: List[str]) -> int:
             "it.".format(ENV_CHILD)
         )
 
-    if not is_supported():
+    if not _is_supported():
         raise LaunchError(
             "Spawning a window needs macOS with Terminal.app. "
             "Run with --here to play in this terminal instead."

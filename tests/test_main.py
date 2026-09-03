@@ -13,7 +13,7 @@ import unittest
 from unittest import mock
 
 from terminalgame.app import main as main_module
-from terminalgame.app.main import parse_arguments, play, run
+from terminalgame.app.main import _parse_arguments, _play, _run
 from terminalgame.presentation.state import COLOR_PLAYER
 from terminalgame.presentation.view_model import GameViewModel
 from terminalgame.ui.screen import TerminalTooSmall
@@ -56,7 +56,7 @@ class GameLoopTest(unittest.TestCase):
     def play(self, keys, idle_reads=0):
         screen = FakeScreen(keys=keys, idle_reads=idle_reads)
         with seeded_view_model():
-            run(screen)
+            _run(screen)
         return screen
 
     def test_q_ends_the_game(self):
@@ -119,7 +119,7 @@ class GameLoopTest(unittest.TestCase):
         screen = FakeScreen(keys=[], idle_reads=3)
 
         with seeded_view_model(), self.assertRaises(LoopDidNotQuit):
-            run(screen)
+            _run(screen)
 
         self.assertEqual(0, screen.idle_reads, "it gave up before the third timeout")
 
@@ -136,7 +136,7 @@ class GameLoopTest(unittest.TestCase):
         screen = FakeScreen(keys=[ord("z"), ord("z"), QUIT])
         with seeded_view_model(), \
                 mock.patch.object(main_module, "TICK_INTERVAL_SECONDS", 0.0):
-            run(screen)
+            _run(screen)
 
         self.assertGreater(screen.frames[-1].tick, 0, "the clock was never polled")
 
@@ -167,13 +167,13 @@ class PlayTest(unittest.TestCase):
         # raises can still read what the launcher was told on the way out.
         self.announced = []
         with mock.patch.object(main_module, "GameScreen", screen_factory), \
-                mock.patch.object(main_module, "run", run_impl), \
+                mock.patch.object(main_module, "_run", run_impl), \
                 mock.patch.object(main_module.launcher, "announce_started",
                                   lambda path: self.announced.append(("started", path))), \
                 mock.patch.object(main_module.launcher, "announce_finished",
                                   lambda path, code: self.announced.append(("finished", code))), \
                 mock.patch.object(main_module.sys, "stderr", io.StringIO()):
-            code = play("/tmp/sentinel", spawned=spawned)
+            code = _play("/tmp/sentinel", spawned=spawned)
             return code, self.announced, main_module.sys.stderr.getvalue()
 
     def test_a_normal_game_exits_zero(self):
@@ -215,7 +215,7 @@ class ArgumentTest(unittest.TestCase):
 
     def parse(self, argv, environment=None):
         with mock.patch.dict(os.environ, environment or {}, clear=True):
-            return parse_arguments(argv)
+            return _parse_arguments(argv)
 
     def test_by_default_the_game_gets_its_own_window(self):
         arguments = self.parse([])
@@ -254,7 +254,7 @@ class MainTest(unittest.TestCase):
     """Which of the two roles `main` takes, and what it does when spawning fails."""
 
     def test_here_plays_in_this_terminal_instead_of_spawning(self):
-        with mock.patch.object(main_module, "play", return_value=0) as played, \
+        with mock.patch.object(main_module, "_play", return_value=0) as played, \
                 mock.patch.object(main_module.launcher, "launch") as launched:
             code = main_module.main(["--here"])
 
@@ -263,12 +263,12 @@ class MainTest(unittest.TestCase):
         self.assertEqual(0, launched.call_count, "it spawned a window anyway")
 
     def test_the_game_forwards_its_own_exit_code(self):
-        with mock.patch.object(main_module, "play", return_value=1):
+        with mock.patch.object(main_module, "_play", return_value=1):
             self.assertEqual(1, main_module.main(["--here"]))
 
     def test_the_child_plays_rather_than_spawning_another_window(self):
         with mock.patch.dict(os.environ, {"TERMINALGAME_CHILD": "1"}, clear=True), \
-                mock.patch.object(main_module, "play", return_value=0) as played, \
+                mock.patch.object(main_module, "_play", return_value=0) as played, \
                 mock.patch.object(main_module.launcher, "launch") as launched:
             main_module.main([])
 

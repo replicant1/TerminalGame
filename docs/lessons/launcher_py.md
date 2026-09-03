@@ -36,7 +36,7 @@ Kotlin's top-level functions in a file are exactly the same idea; Java's
 `static` on a `final class` is the workaround for not having them.
 
 The underscore convention does the rest of the work: `launch`,
-`announce_started`, `announce_finished` and `is_supported` are the entry
+`announce_started`, `announce_finished` and `_is_supported` are the entry
 points, and everything named `_like_this` is internal. Nothing enforces it.
 
 ## Running another program

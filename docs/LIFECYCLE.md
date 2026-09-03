@@ -34,7 +34,7 @@ player presses a quit key, and that is the only way out of it.
 | **Cleared** | `GameViewModel.on_direction`, when the last pill goes | The status line says so, with the score | 0 |
 | **Quit** | The loop in `app/main.py` | The window closes | 0 |
 
-Ctrl-C is a fifth way out and deliberately unremarkable: `play` catches
+Ctrl-C is a fifth way out and deliberately unremarkable: `_play` catches
 `KeyboardInterrupt` and passes, so it leaves exactly like a quit key, tidying
 the terminal on the way through `__exit__`.
 

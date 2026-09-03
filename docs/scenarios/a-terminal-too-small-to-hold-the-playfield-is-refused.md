@@ -36,7 +36,7 @@ printed — into a terminal that is behaving normally again.
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | In this scenario it is the **inspector**, and the only part that ever knows the terminal's real size: [`open`](../../terminalgame/ui/screen.py#L97) asks for the resize, measures what it got, restores the terminal and raises [`TerminalTooSmall`](../../terminalgame/ui/screen.py#L55) |
-| [`main`](../../terminalgame/app/main.py) | In this scenario it is the **messenger**: [`play`](../../terminalgame/app/main.py#L77) is the only place that catches this failure, and it decides both what the player is told and whether the window is held open long enough to read it |
+| [`main`](../../terminalgame/app/main.py) | In this scenario it is the **messenger**: [`_play`](../../terminalgame/app/main.py#L77) is the only place that catches this failure, and it decides both what the player is told and whether the window is held open long enough to read it |
 | [`launcher`](../../terminalgame/app/launcher.py) | Present only on the ordinary way in, where it is waiting on the same file it always waits on, and is told 1 instead of 0 |
 
 ## Asking, measuring, and giving up

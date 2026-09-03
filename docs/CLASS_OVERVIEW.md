@@ -399,7 +399,7 @@ what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 > - `status_line` — The row of readings underneath the playfield.
 > - `tick` — How many times the clock has fired, carried so a test can tell two otherwise identical frames apart.
 
-#### <code>with_sprites(*sprites: Sprite) -> ViewState</code>
+#### <code>_with_sprites(*sprites: Sprite) -> ViewState</code>
 
 > Returns a copy of this frame carrying different sprites.
 >
@@ -501,7 +501,7 @@ what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 > **Returns**
 > True if it differed from the last one and subscribers were called.
 
-#### <code>update(transform: Callable[[T], T]) -> bool</code>
+#### <code>_update(transform: Callable[[T], T]) -> bool</code>
 
 > Emits transform(current), the equivalent of MutableStateFlow.update.
 >
@@ -535,17 +535,17 @@ what `GameScreen` draws in, and in game cells, which is what the game thinks in.
 
 #### <code>running: bool</code> · `@property`
 
-> Whether the clock is ticking, so between `start` and `stop`.
+> Whether the clock is ticking, so between `start` and `_stop`.
 
 #### <code>start() -> None</code>
 
 > Begins ticking, with the first tick one full interval from now.
 
-#### <code>stop() -> None</code>
+#### <code>_stop() -> None</code>
 
 > Stops ticking. `poll` fires nothing until `start` is called again.
 
-#### <code>seconds_until_next_tick() -> float</code>
+#### <code>_seconds_until_next_tick() -> float</code>
 
 > Returns how long until the next tick is due.
 >

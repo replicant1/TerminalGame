@@ -363,7 +363,7 @@ from sleep does not replay an hour of missed beats.
 
 - Wire it together yourself: `clock = GameClock(0.15, game.tick)`, then poll it
   in a loop and print `as_text(game.state.value)`. That is
-  [`run`](../terminalgame/app/main.py#L43) with the curses taken out.
+  [`_run`](../terminalgame/app/main.py#L43) with the curses taken out.
 - [The scenario index](scenarios/SCENARIO_INDEX.md) — the same material as
   stories, in a suggested reading order.
 - [The class overview](CLASS_OVERVIEW.md) — every public member, with the

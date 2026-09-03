@@ -204,7 +204,7 @@ read-only by omission rather than by keyword.
 | Subscribers resume on a dispatcher | Subscribers run **inline**, on the thread that emitted |
 | Cancellation via a `Job` or scope | `subscribe` returns a function that unsubscribes |
 | Thread-safe, with locks | Single-threaded by design, so no locks exist |
-| Operators: `map`, `filter`, `combine` | None. `update` is the only extra |
+| Operators: `map`, `filter`, `combine` | None. `_update` is the only extra |
 
 The single-threadedness is not laziness. `curses` is not thread safe, so every
 emission happening on the main loop's thread is what keeps a frame from being
