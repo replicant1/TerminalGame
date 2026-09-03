@@ -49,19 +49,9 @@ classDiagram
         +rows int
         +cols int
         +generate(rows, cols, seed)$ Maze
-        +from_rows(rows, open_char)$ Maze
         +is_open(row, col) bool
-        +open_cells() Tuple~Cell~
-        +wall_cells() Tuple~Cell~
-        +neighbours(row, col) Tuple~Cell~
-        +open_neighbours(row, col) Tuple~Cell~
-        +dead_ends() Tuple~Cell~
-        +reachable_from(row, col) FrozenSet~Cell~
-        +is_fully_connected() bool
-        +islands() Tuple~FrozenSet~
         +nearest_open(row, col) Cell
         +farthest_open(row, col) Cell
-        +to_rows(wall, corridor) Tuple~str~
     }
 
     class GameViewModel {
@@ -86,7 +76,6 @@ classDiagram
         +sprites Tuple~Sprite~
         +status_line str
         +tick int
-        +with_sprites(sprites) ViewState
     }
 
     class StateFlow~T~ {
@@ -94,23 +83,17 @@ classDiagram
         +value T
         +subscribe(on_each) Callable
         +emit(new_value) bool
-        +update(transform) bool
     }
 
     class GameClock {
         <<util>>
         +MAX_CATCH_UP_TICKS int
-        +running bool
         +start() None
-        +stop() None
-        +seconds_until_next_tick() float
         +poll() int
     }
 
     class GameScreen {
         <<ui>>
-        +open() None
-        +close() None
         +attach(view_model) None
         +set_input_timeout(milliseconds) None
         +read_key() int
@@ -120,15 +103,11 @@ classDiagram
 
     class main {
         <<module>>
-        +run(screen) None
-        +play(sentinel, spawned) int
-        +parse_arguments(argv) Namespace
         +main(argv) int
     }
 
     class launcher {
         <<module>>
-        +is_supported() bool
         +announce_started(sentinel_path) None
         +announce_finished(sentinel_path, exit_code) None
         +launch(rows, cols, child_arguments) int
