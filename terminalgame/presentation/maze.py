@@ -315,8 +315,11 @@ class Maze:
             junction_rows: The rows junctions sit on, every other row.
             junction_cols: The columns junctions sit on, every other column.
         """
+        junction_row_set = frozenset(junction_rows)
+        junction_col_set = frozenset(junction_cols)
+
         def is_junction(row: int, col: int) -> bool:
-            return row in junction_rows and col in junction_cols
+            return row in junction_row_set and col in junction_col_set
 
         start = (rng.choice(junction_rows), rng.choice(junction_cols))
         self._open[start[0]][start[1]] = True
@@ -356,8 +359,11 @@ class Maze:
             junction_rows: The rows junctions sit on, every other row.
             junction_cols: The columns junctions sit on, every other column.
         """
+        junction_row_set = frozenset(junction_rows)
+        junction_col_set = frozenset(junction_cols)
+
         def is_junction(row: int, col: int) -> bool:
-            return row in junction_rows and col in junction_cols
+            return row in junction_row_set and col in junction_col_set
 
         while True:
             changed = False
