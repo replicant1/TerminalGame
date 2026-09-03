@@ -152,7 +152,7 @@ a terminal with no colour, where the dictionary was never filled in.
 
 ### A `while` loop, on purpose
 
-`_put_runs` walks a row of text looking for runs of non-space characters, and
+`_runs_in` walks a row of text looking for runs of non-space characters, and
 it does it with an index and a `while` rather than a comprehension:
 
 ```python
@@ -164,7 +164,7 @@ while col < end_of_text:
     run_end = col
     while run_end < end_of_text and text[run_end] != " ":
         run_end += 1
-    self._put(window, row, col, text[col:run_end], color_slot, height, width)
+    runs.append((row, col, text[col:run_end]))
     col = run_end
 ```
 
