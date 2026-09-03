@@ -200,7 +200,7 @@ for anything — it subscribes once and is pushed complete frames.
 > A braided maze of that size, with a wall border and no dead ends.
 >
 > **Raises**
-> - `ValueError` — If the size leaves no room for junctions, which needs at least three rows and three columns.
+> - `ValueError` — If the size leaves a junction with fewer than two junction neighbours, which braiding cannot open a second exit for: that needs at least five rows and five columns.
 
 #### <u><code>from_rows(rows: Sequence[str], open_char: str='.') -> Maze</code></u> · `@classmethod`
 

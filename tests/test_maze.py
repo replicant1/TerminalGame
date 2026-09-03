@@ -212,7 +212,7 @@ class MazePlacementTest(unittest.TestCase):
 class MazeGenerationTest(unittest.TestCase):
     """What generation promises, checked over a spread of seeds and sizes."""
 
-    SIZES = ((9, 9), (11, 21), (29, 19), (5, 7))
+    SIZES = ((5, 5), (9, 9), (11, 21), (29, 19), (5, 7))
 
     def test_a_seed_gives_the_same_maze_twice(self):
         self.assertEqual(
@@ -283,15 +283,18 @@ class MazeGenerationTest(unittest.TestCase):
 
         self.assertGreater(len(maze.open_cells()), 10)
 
-    def test_a_maze_with_no_room_for_junctions_is_refused(self):
-        for rows, cols in ((2, 9), (9, 2), (1, 1), (0, 5)):
+    def test_a_maze_too_small_to_braid_is_refused(self):
+        """One junction row means a corridor end with one way out and no second."""
+        for rows, cols in ((2, 9), (9, 2), (1, 1), (0, 5),
+                           (3, 3), (3, 9), (9, 3), (4, 9), (9, 4)):
             with self.assertRaises(ValueError):
                 Maze.generate(rows, cols)
 
-    def test_the_smallest_maze_with_room_for_a_junction_is_allowed(self):
-        maze = Maze.generate(3, 3, seed=0)
+    def test_the_smallest_maze_that_can_be_braided_is_allowed(self):
+        maze = Maze.generate(5, 5, seed=0)
 
-        self.assertEqual(((1, 1),), maze.open_cells())
+        self.assertEqual((), maze.dead_ends())
+        self.assertTrue(maze.is_fully_connected())
 
 
 if __name__ == "__main__":
