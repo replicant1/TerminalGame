@@ -100,14 +100,16 @@ which is why a template can live in a constant at the top of the file.
 Now the trap. AppleScript uses braces for its own list literals, and this line
 is in the template:
 
+{% raw %}
 ```applescript
 set bounds to {{nx, ny, nx + wd, ny + ht}}
 ```
+{% endraw %}
 
-`{{` and `}}` are how you write a **literal brace** in a format string, the way
-`\\` writes a literal backslash. After `.format()` runs, the AppleScript
-receives `{nx, ny, nx + wd, ny + ht}`. Single braces there would have been read
-as a field name and raised `KeyError: 'nx'`.
+{% raw %}`{{` and `}}`{% endraw %} are how you write a **literal brace** in a
+format string, the way `\\` writes a literal backslash. After `.format()` runs,
+the AppleScript receives `{nx, ny, nx + wd, ny + ht}`. Single braces there would
+have been read as a field name and raised `KeyError: 'nx'`.
 
 Two levels of quoting are in play here, and it is worth seeing them separately.
 The command is quoted for the **shell** with `shlex.quote` — the standard
@@ -258,7 +260,7 @@ problem worth propagating.
 | A command is a string | It is a list of argv entries. No shell, so no quoting rules |
 | Subprocess output is text | It is `bytes` unless you pass `text=True` |
 | A non-zero exit code raises | Only with `check=True`; otherwise it is just a field on the result |
-| `{` in a format string | Write `{{` for a literal brace, or get `KeyError` |
+| `{` in a format string | Write {% raw %}`{{`{% endraw %} for a literal brace, or get `KeyError` |
 | Environment values have types | They are always strings. Compare against `"1"` |
 | `os.kill` kills | Signal 0 sends nothing and is used to ask whether a pid exists |
 | `PermissionError` means failure | Here it means the process is alive and owned by somebody else |
