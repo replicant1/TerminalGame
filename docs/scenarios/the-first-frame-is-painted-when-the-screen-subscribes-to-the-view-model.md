@@ -49,7 +49,7 @@ sequenceDiagram
     participant Maze as Maze<br/>knows nothing about characters
     participant Flow as StateFlow<br/>always holds a value
 
-    Main->>Screen: open()
+    Main->>Screen: _open()
     Screen->>Curses: writes the ten byte resize request
     Screen->>Screen: waits 0.15 seconds for the window to settle
     Screen->>Curses: initscr()

@@ -37,14 +37,14 @@ sequenceDiagram
     actor Player
     participant Main as run loop<br/>in the game's window
     participant Screen as GameScreen
-    participant Play as play()<br/>the game's outermost frame
+    participant Play as _play()<br/>the game's outermost frame
     participant Sentinel as a file on disk
     participant Launcher as launcher<br/>asleep in the original window
     participant Terminal as Terminal.app
 
     Player->>Main: presses q
     Main->>Main: finds the key among the quit keys, and returns
-    Main->>Screen: close()
+    Main->>Screen: _close()
     Screen->>Screen: stops collecting pictures
     Screen->>Screen: gives the terminal back: cursor on, echo on, endwin
     Screen-->>Play: the block the screen was opened in ends

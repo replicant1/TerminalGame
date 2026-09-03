@@ -318,7 +318,7 @@ function isOpen(grid, row, col) {
     && grid[row][col];
 }
 
-/** Every corridor cell, row-major, as Maze.open_cells returns them. */
+/** Every corridor cell, row-major, as Maze._open_cells returns them. */
 function openCells(grid) {
   var cells = [];
   for (var r = 0; r < grid.length; r++) {

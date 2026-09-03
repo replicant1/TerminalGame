@@ -29,7 +29,7 @@ player presses a quit key, and that is the only way out of it.
 
 | Ending | Decided in | What the player sees | Exit code |
 |---|---|---|---|
-| **Refused** | `GameScreen.open`, before anything is drawn | A message on stderr saying what size was needed and what the terminal is. In a spawned window, a prompt holding it open long enough to read | 1 |
+| **Refused** | `GameScreen._open`, before anything is drawn | A message on stderr saying what size was needed and what the terminal is. In a spawned window, a prompt holding it open long enough to read | 1 |
 | **Caught** | `GameViewModel.tick` or `GameViewModel.on_direction` | The status line says so, and the ghost is drawn on top of the player | 0 |
 | **Cleared** | `GameViewModel.on_direction`, when the last pill goes | The status line says so, with the score | 0 |
 | **Quit** | The loop in `app/main.py` | The window closes | 0 |
@@ -48,7 +48,7 @@ inside it, and waits — which is
 
 Either way the game itself starts the same three steps:
 
-1. `GameScreen.open` asks the terminal to resize itself to 30 by 40, takes it
+1. `GameScreen._open` asks the terminal to resize itself to 30 by 40, takes it
    over, and measures what it actually got. A terminal that ignored the request
    and is still too small raises `TerminalTooSmall`, and nothing further
    happens — [that scenario](scenarios/a-terminal-too-small-to-hold-the-playfield-is-refused.md).

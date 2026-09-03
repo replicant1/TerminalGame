@@ -194,7 +194,7 @@ timeout is the input latency, not the frame rate.
 ## The method the game does not call
 
 ```python
-def seconds_until_next_tick(self) -> float:
+def _seconds_until_next_tick(self) -> float:
     if not self._running:
         return self._interval
     return max(0.0, self._next_deadline - time.monotonic())

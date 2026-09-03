@@ -56,9 +56,9 @@ sequenceDiagram
     participant Child as the second copy<br/>of this same program
 
     Player->>Main: python3 -m terminalgame.app.main
-    Main->>Main: parse_arguments(argv)
+    Main->>Main: _parse_arguments(argv)
     Main->>Launcher: launch(30, 40, [])
-    Launcher->>Launcher: is_supported()
+    Launcher->>Launcher: _is_supported()
     Launcher->>Launcher: makes a temporary folder to hold the sentinel file
     Launcher->>Launcher: builds the line of shell text the new window will run
     Launcher->>Terminal: hands the AppleScript instruction to osascript

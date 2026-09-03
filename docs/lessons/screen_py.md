@@ -30,7 +30,7 @@ this:
 
 ```python
 with GameScreen() as screen:
-    run(screen)
+    _run(screen)
 ```
 
 Java's try-with-resources and Kotlin's `use` are the same idea, and the two
