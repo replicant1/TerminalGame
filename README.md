@@ -193,7 +193,7 @@ and are deliberately left alone.
 ### --here, and the escape-sequence fallback
 
 `--here` plays in the current terminal. That path still needs to size the
-window itself, so `GameScreen.open()` writes the xterm sequence
+window itself, so `GameScreen._open()` writes the xterm sequence
 `ESC [ 8 ; 30 ; 40 t`, which Terminal.app and iTerm2 both honour, waits 150 ms
 for the resize to land, then verifies with `getmaxyx()` and raises
 `TerminalTooSmall` if the terminal ignored it. It runs on the spawned path too,

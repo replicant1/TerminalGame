@@ -260,7 +260,7 @@ class LifecycleTest(unittest.TestCase):
         self.screen = GameScreen()
 
     def test_opening_asks_the_terminal_for_the_size_the_playfield_needs(self):
-        self.screen.open()
+        self.screen._open()
 
         self.assertEqual(
             "\033[8;{};{}t".format(PLAYFIELD_ROWS, PLAYFIELD_COLS),
@@ -268,7 +268,7 @@ class LifecycleTest(unittest.TestCase):
         )
 
     def test_opening_hides_the_caret_and_takes_the_keys_raw(self):
-        self.screen.open()
+        self.screen._open()
 
         self.assertIn("noecho", self.curses.calls)
         self.assertIn("cbreak", self.curses.calls)
@@ -279,7 +279,7 @@ class LifecycleTest(unittest.TestCase):
         self.window.height, self.window.width = 10, 20
 
         with self.assertRaises(TerminalTooSmall) as caught:
-            self.screen.open()
+            self.screen._open()
 
         message = str(caught.exception)
         self.assertIn("30x40", message)
@@ -290,18 +290,18 @@ class LifecycleTest(unittest.TestCase):
         self.window.height = 10
 
         with self.assertRaises(TerminalTooSmall):
-            self.screen.open()
+            self.screen._open()
 
         self.assertIn("endwin", self.curses.calls)
 
     def test_a_terminal_exactly_the_size_of_the_playfield_is_accepted(self):
-        self.screen.open()  # 30x40 exactly
+        self.screen._open()  # 30x40 exactly
 
         self.assertIn("initscr", self.curses.calls)
 
     def test_closing_gives_the_terminal_back(self):
-        self.screen.open()
-        self.screen.close()
+        self.screen._open()
+        self.screen._close()
 
         self.assertIn("curs_set 1", self.curses.calls)
         self.assertIn("nocbreak", self.curses.calls)
@@ -313,7 +313,7 @@ class LifecycleTest(unittest.TestCase):
         self.curses.supports_cursor_visibility = False
 
         with self.assertRaises(screen_module.curses.error):
-            self.screen.open()
+            self.screen._open()
 
         self.assertIn("endwin", self.curses.calls)
         self.assertIn("nocbreak", self.curses.calls, "left in cbreak")
@@ -321,25 +321,25 @@ class LifecycleTest(unittest.TestCase):
 
     def test_closing_ends_the_window_even_when_the_caret_cannot_be_restored(self):
         """curs_set raises on the terminals close() most has to work on."""
-        self.screen.open()
+        self.screen._open()
         self.curses.supports_cursor_visibility = False
 
-        self.screen.close()
+        self.screen._close()
 
         self.assertIn("endwin", self.curses.calls)
         self.assertIsNone(self.screen._stdscr, "a closed screen still claims to be open")
 
     def test_closing_twice_does_nothing_the_second_time(self):
-        self.screen.open()
-        self.screen.close()
+        self.screen._open()
+        self.screen._close()
         endwins = self.curses.calls.count("endwin")
 
-        self.screen.close()
+        self.screen._close()
 
         self.assertEqual(endwins, self.curses.calls.count("endwin"))
 
     def test_closing_a_screen_that_never_opened_is_harmless(self):
-        GameScreen().close()
+        GameScreen()._close()
 
         self.assertEqual([], self.curses.calls)
 
@@ -368,7 +368,7 @@ class ColorTest(unittest.TestCase):
                 mock.patch.object(screen_module.time, "sleep"), \
                 mock.patch.object(screen_module.sys, "stdout", io.StringIO()):
             screen = GameScreen()
-            screen.open()
+            screen._open()
         return screen, fake
 
     def test_every_logical_slot_gets_a_colour(self):
@@ -437,7 +437,7 @@ class AttachTest(unittest.TestCase):
             self.screen.attach(self.view_model)
 
     def test_attaching_twice_is_refused(self):
-        self.screen.open()
+        self.screen._open()
         self.screen.attach(self.view_model)
 
         with self.assertRaises(RuntimeError):
@@ -445,7 +445,7 @@ class AttachTest(unittest.TestCase):
 
     def test_a_refused_second_attach_leaves_one_subscription_not_two(self):
         """Two would paint every frame twice, and close would let go of one."""
-        self.screen.open()
+        self.screen._open()
         self.screen.attach(self.view_model)
         with self.assertRaises(RuntimeError):
             self.screen.attach(self.view_model)
@@ -458,14 +458,14 @@ class AttachTest(unittest.TestCase):
 
     def test_attaching_paints_the_first_frame_at_once(self):
         """Subscribing replays the current value, so nothing has to ask for it."""
-        self.screen.open()
+        self.screen._open()
 
         self.screen.attach(self.view_model)
 
         self.assertTrue(self.window.writes, "the opening frame never reached the terminal")
 
     def test_a_later_frame_is_painted_without_being_asked_for(self):
-        self.screen.open()
+        self.screen._open()
         self.screen.attach(self.view_model)
         self.window.writes.clear()
 
@@ -481,10 +481,10 @@ class AttachTest(unittest.TestCase):
         started painting over the new one. So it is opened again, which is the
         only thing that tells the two apart.
         """
-        self.screen.open()
+        self.screen._open()
         self.screen.attach(self.view_model)
-        self.screen.close()
-        self.screen.open()
+        self.screen._close()
+        self.screen._open()
         self.window.writes.clear()
 
         self.view_model.tick()
@@ -492,9 +492,9 @@ class AttachTest(unittest.TestCase):
         self.assertEqual([], self.window.writes, "a frame arrived on a flow that was let go")
 
     def test_a_frame_arriving_while_the_screen_is_shut_paints_nothing(self):
-        self.screen.open()
+        self.screen._open()
         self.screen.attach(self.view_model)
-        self.screen.close()
+        self.screen._close()
         self.window.writes.clear()
 
         self.view_model.tick()
@@ -502,7 +502,7 @@ class AttachTest(unittest.TestCase):
         self.assertEqual([], self.window.writes)
 
     def test_a_resize_re_measures_and_repaints_from_scratch(self):
-        self.screen.open()
+        self.screen._open()
 
         self.screen.handle_resize()
 
@@ -510,20 +510,20 @@ class AttachTest(unittest.TestCase):
         self.assertEqual([True], self.window.cleared_ok)
 
     def test_the_input_timeout_is_passed_to_the_window(self):
-        self.screen.open()
+        self.screen._open()
 
         self.screen.set_input_timeout(33)
 
         self.assertEqual([33], self.window.timeouts)
 
     def test_a_key_is_read_straight_through(self):
-        self.screen.open()
+        self.screen._open()
         self.window.keys = [65]
 
         self.assertEqual(65, self.screen.read_key())
 
     def test_a_timeout_with_no_key_reads_as_nothing_rather_than_minus_one(self):
-        self.screen.open()
+        self.screen._open()
 
         self.assertIsNone(self.screen.read_key())
 

@@ -21,16 +21,16 @@ class SupportTest(unittest.TestCase):
     def test_a_mac_with_osascript_can_be_driven(self):
         with mock.patch.object(launcher.sys, "platform", "darwin"), \
                 mock.patch.object(launcher.os.path, "exists", return_value=True):
-            self.assertTrue(launcher.is_supported())
+            self.assertTrue(launcher._is_supported())
 
     def test_another_platform_cannot(self):
         with mock.patch.object(launcher.sys, "platform", "linux"):
-            self.assertFalse(launcher.is_supported())
+            self.assertFalse(launcher._is_supported())
 
     def test_a_mac_without_osascript_cannot(self):
         with mock.patch.object(launcher.sys, "platform", "darwin"), \
                 mock.patch.object(launcher.os.path, "exists", return_value=False):
-            self.assertFalse(launcher.is_supported())
+            self.assertFalse(launcher._is_supported())
 
 
 class SentinelTest(unittest.TestCase):
@@ -288,7 +288,7 @@ class LaunchTest(unittest.TestCase):
 
     def test_a_platform_that_cannot_drive_terminal_says_to_use_here_instead(self):
         with mock.patch.dict(os.environ, {}, clear=True), \
-                mock.patch.object(launcher, "is_supported", return_value=False):
+                mock.patch.object(launcher, "_is_supported", return_value=False):
             with self.assertRaises(LaunchError) as caught:
                 launcher.launch(30, 40, [])
 
@@ -320,7 +320,7 @@ class LaunchTest(unittest.TestCase):
             return directories[-1]
 
         with mock.patch.dict(os.environ, {}, clear=True), \
-                mock.patch.object(launcher, "is_supported", return_value=True), \
+                mock.patch.object(launcher, "_is_supported", return_value=True), \
                 mock.patch.object(launcher.tempfile, "mkdtemp", record), \
                 mock.patch.object(launcher, "_spawn_window",
                                   side_effect=LaunchError("refused")):
@@ -338,7 +338,7 @@ class LaunchTest(unittest.TestCase):
             def __enter__(inner):
                 inner.patchers = [
                     mock.patch.dict(os.environ, {}, clear=True),
-                    mock.patch.object(launcher, "is_supported", return_value=True),
+                    mock.patch.object(launcher, "_is_supported", return_value=True),
                     mock.patch.object(
                         launcher, "_spawn_window",
                         side_effect=lambda *a: (calls.append(("spawn",)), window_id)[1]),

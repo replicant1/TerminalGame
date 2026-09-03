@@ -33,7 +33,7 @@ class GameClockTest(unittest.TestCase):
         self.clock = GameClock(1.0, lambda: self.ticks.append(self.time.now))
 
     def test_a_new_clock_is_not_running(self):
-        self.assertFalse(self.clock.running)
+        self.assertFalse(self.clock._is_running)
 
     def test_a_stopped_clock_fires_nothing_however_late_it_gets(self):
         self.time.now = 1000.0
@@ -44,7 +44,7 @@ class GameClockTest(unittest.TestCase):
     def test_starting_makes_it_run(self):
         self.clock.start()
 
-        self.assertTrue(self.clock.running)
+        self.assertTrue(self.clock._is_running)
 
     def test_no_tick_fires_before_the_first_interval_is_up(self):
         self.clock.start()
@@ -72,12 +72,12 @@ class GameClockTest(unittest.TestCase):
 
         self.assertEqual(2, self.clock.poll())
         self.assertEqual([2.5, 2.5], self.ticks)
-        self.assertAlmostEqual(0.5, self.clock.seconds_until_next_tick())
+        self.assertAlmostEqual(0.5, self.clock._seconds_until_next_tick())
 
     def test_a_tick_that_stops_the_clock_is_the_last_one_to_fire(self):
         """Otherwise stop() means "after this backlog", which is not what it says."""
         self.clock = GameClock(1.0, lambda: (self.ticks.append(self.time.now),
-                                             self.clock.stop()))
+                                             self.clock._stop()))
         self.clock.start()
         self.time.now = 3.0  # three ticks outstanding
 
@@ -107,21 +107,21 @@ class GameClockTest(unittest.TestCase):
         self.time.now = 100.0
         self.clock.poll()
 
-        self.assertAlmostEqual(1.0, self.clock.seconds_until_next_tick())
+        self.assertAlmostEqual(1.0, self.clock._seconds_until_next_tick())
         self.assertEqual(0, self.clock.poll(), "still replaying the backlog")
 
     def test_stopping_silences_the_clock(self):
         self.clock.start()
-        self.clock.stop()
+        self.clock._stop()
         self.time.now = 50.0
 
-        self.assertFalse(self.clock.running)
+        self.assertFalse(self.clock._is_running)
         self.assertEqual(0, self.clock.poll())
         self.assertEqual([], self.ticks)
 
     def test_restarting_measures_the_first_tick_from_the_restart(self):
         self.clock.start()
-        self.clock.stop()
+        self.clock._stop()
         self.time.now = 50.0
         self.clock.start()
 
@@ -130,20 +130,20 @@ class GameClockTest(unittest.TestCase):
         self.assertEqual(1, self.clock.poll())
 
     def test_a_stopped_clock_offers_a_whole_interval_as_an_input_timeout(self):
-        self.assertEqual(1.0, self.clock.seconds_until_next_tick())
+        self.assertEqual(1.0, self.clock._seconds_until_next_tick())
 
     def test_the_wait_shrinks_as_the_deadline_approaches(self):
         self.clock.start()
         self.time.now = 0.25
 
-        self.assertAlmostEqual(0.75, self.clock.seconds_until_next_tick())
+        self.assertAlmostEqual(0.75, self.clock._seconds_until_next_tick())
 
     def test_the_wait_is_never_negative(self):
         """A caller passes this to getch() as a timeout, which cannot be negative."""
         self.clock.start()
         self.time.now = 7.0
 
-        self.assertEqual(0.0, self.clock.seconds_until_next_tick())
+        self.assertEqual(0.0, self.clock._seconds_until_next_tick())
 
 
 if __name__ == "__main__":

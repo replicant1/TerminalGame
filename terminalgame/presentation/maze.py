@@ -99,7 +99,7 @@ class Maze:
         return maze
 
     @classmethod
-    def from_rows(cls, rows: Sequence[str], open_char: str = ".") -> "Maze":
+    def _from_rows(cls, rows: Sequence[str], open_char: str = ".") -> "Maze":
         """Builds a maze from lines of text, for tests that need a known shape.
 
             Maze.from_rows(["#####",
@@ -142,7 +142,7 @@ class Maze:
         """
         return 0 <= row < self.rows and 0 <= col < self.cols and self._open[row][col]
 
-    def open_cells(self) -> Tuple[Cell, ...]:
+    def _open_cells(self) -> Tuple[Cell, ...]:
         """Returns every corridor cell, in row-major order."""
         return tuple(
             (row, col)
@@ -151,7 +151,7 @@ class Maze:
             if self._open[row][col]
         )
 
-    def wall_cells(self) -> Tuple[Cell, ...]:
+    def _wall_cells(self) -> Tuple[Cell, ...]:
         """Returns every wall cell, in row-major order."""
         return tuple(
             (row, col)
@@ -160,7 +160,7 @@ class Maze:
             if not self._open[row][col]
         )
 
-    def neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
+    def _neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
         """Returns the cells adjacent to one cell, wall or not.
 
         Args:
@@ -177,7 +177,7 @@ class Maze:
             if 0 <= row + d_row < self.rows and 0 <= col + d_col < self.cols
         )
 
-    def open_neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
+    def _open_neighbours(self, row: int, col: int) -> Tuple[Cell, ...]:
         """Returns the corridor cells adjacent to one cell.
 
         Args:
@@ -188,11 +188,11 @@ class Maze:
             The neighbours from `neighbours` that are corridor, so the ways
             out of this cell.
         """
-        return tuple(c for c in self.neighbours(row, col) if self._open[c[0]][c[1]])
+        return tuple(c for c in self._neighbours(row, col) if self._open[c[0]][c[1]])
 
     # -- the properties this maze promises -------------------------------
 
-    def dead_ends(self) -> Tuple[Cell, ...]:
+    def _dead_ends(self) -> Tuple[Cell, ...]:
         """Returns the open cells with fewer than two ways out.
 
         A braided maze has none. This returns the cells rather than a
@@ -200,11 +200,11 @@ class Maze:
         """
         return tuple(
             cell
-            for cell in self.open_cells()
-            if len(self.open_neighbours(*cell)) < 2
+            for cell in self._open_cells()
+            if len(self._open_neighbours(*cell)) < 2
         )
 
-    def reachable_from(self, row: int, col: int) -> FrozenSet[Cell]:
+    def _reachable_from(self, row: int, col: int) -> FrozenSet[Cell]:
         """Returns every open cell that can be walked to from one cell.
 
         Args:
@@ -221,25 +221,25 @@ class Maze:
         pending = [(row, col)]
         while pending:
             cell = pending.pop()
-            for neighbour in self.open_neighbours(*cell):
+            for neighbour in self._open_neighbours(*cell):
                 if neighbour not in seen:
                     seen.add(neighbour)
                     pending.append(neighbour)
         return frozenset(seen)
 
-    def is_fully_connected(self) -> bool:
+    def _is_fully_connected(self) -> bool:
         """Reports whether every open cell can be reached from every other.
 
         Returns:
             True if the corridors form one connected region. An empty maze
             counts as connected.
         """
-        cells = self.open_cells()
+        cells = self._open_cells()
         if not cells:
             return True
-        return len(self.reachable_from(*cells[0])) == len(cells)
+        return len(self._reachable_from(*cells[0])) == len(cells)
 
-    def islands(self) -> Tuple[FrozenSet[Cell], ...]:
+    def _islands(self) -> Tuple[FrozenSet[Cell], ...]:
         """Returns the wall regions that do not touch the border.
 
         These are the solid blocks the corridors run around. They hold no dots
@@ -251,7 +251,7 @@ class Maze:
         """
         found: List[FrozenSet[Cell]] = []
         seen = set()
-        for cell in self.wall_cells():
+        for cell in self._wall_cells():
             if cell in seen:
                 continue
             region, pending, touches_border = set(), [cell], False
@@ -261,7 +261,7 @@ class Maze:
                 region.add((row, col))
                 if row in (0, self.rows - 1) or col in (0, self.cols - 1):
                     touches_border = True
-                for neighbour in self.neighbours(row, col):
+                for neighbour in self._neighbours(row, col):
                     if not self._open[neighbour[0]][neighbour[1]] and neighbour not in seen:
                         seen.add(neighbour)
                         pending.append(neighbour)
@@ -281,7 +281,7 @@ class Maze:
         Returns:
             The corridor cell at the smallest distance from that spot.
         """
-        return min(self.open_cells(), key=lambda c: _distance(c, (row, col)))
+        return min(self._open_cells(), key=lambda c: _distance(c, (row, col)))
 
     def farthest_open(self, row: int, col: int) -> Cell:
         """Returns the open cell furthest from a spot.
@@ -297,7 +297,7 @@ class Maze:
         Returns:
             The corridor cell at the greatest distance from that spot.
         """
-        return max(self.open_cells(), key=lambda c: _distance(c, (row, col)))
+        return max(self._open_cells(), key=lambda c: _distance(c, (row, col)))
 
     # -- generation ------------------------------------------------------
 
@@ -391,7 +391,7 @@ class Maze:
 
     # -- for looking at --------------------------------------------------
 
-    def to_rows(self, wall: str = "#", corridor: str = ".") -> Tuple[str, ...]:
+    def _to_rows(self, wall: str = "#", corridor: str = ".") -> Tuple[str, ...]:
         """Draws the maze as text, for a test failure message or a print.
 
         Args:
@@ -409,7 +409,7 @@ class Maze:
     def __repr__(self) -> str:
         """Returns the maze's size and how much of it is corridor."""
         return "Maze({}x{}, {} open cells)".format(
-            self.rows, self.cols, len(self.open_cells())
+            self.rows, self.cols, len(self._open_cells())
         )
 
 

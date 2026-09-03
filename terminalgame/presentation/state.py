@@ -91,7 +91,7 @@ class ViewState:
     status_line: str
     tick: int = 0
 
-    def with_sprites(self, *sprites: Sprite) -> "ViewState":
+    def _with_sprites(self, *sprites: Sprite) -> "ViewState":
         """Returns a copy of this frame carrying different sprites.
 
         Args:

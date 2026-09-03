@@ -41,7 +41,7 @@ which knows nothing about characters, colours or sprites.
 | **carve** | The depth-first walk that opens passages between junctions, producing a maze with exactly one route between any two cells |
 | **perfect** | Having exactly one route between any two cells. What carving produces, and what braiding deliberately destroys |
 | **braid** | The pass that removes dead ends by opening a second way out of every cell that has only one. It costs the maze its perfectness and gains it loops |
-| **dead end** | An open cell with fewer than two ways out. A braided maze has none, and `dead_ends()` returns the cells rather than a yes or no so a failing test can say *where* |
+| **dead end** | An open cell with fewer than two ways out. A braided maze has none, and `_dead_ends()` returns the cells rather than a yes or no so a failing test can say *where* |
 | **island** | A region of wall that does not touch the border — what a braided-away wall becomes, and the reason the maze looks like a maze rather than a comb |
 | **fully connected** | Every open cell reachable from every other. Checked, not assumed |
 | **seed** | The number that fixes the random choices, so the same seed gives the same maze every run. Passed to `Maze.generate` and to `GameViewModel` |

@@ -100,7 +100,7 @@ class StateFlowTest(unittest.TestCase):
         received = []
         flow.subscribe(received.append)
 
-        changed = flow.update(lambda value: value * 3)
+        changed = flow._update(lambda value: value * 3)
 
         self.assertTrue(changed)
         self.assertEqual(30, flow.value)
@@ -111,7 +111,7 @@ class StateFlowTest(unittest.TestCase):
         received = []
         flow.subscribe(received.append)
 
-        changed = flow.update(lambda value: value)
+        changed = flow._update(lambda value: value)
 
         self.assertFalse(changed)
         self.assertEqual([10], received)

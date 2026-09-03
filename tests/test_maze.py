@@ -18,7 +18,7 @@ RING = (
 class MazeShapeTest(unittest.TestCase):
 
     def test_from_rows_reads_the_shape_it_is_given(self):
-        maze = Maze.from_rows(RING)
+        maze = Maze._from_rows(RING)
 
         self.assertEqual(5, maze.rows)
         self.assertEqual(5, maze.cols)
@@ -27,14 +27,14 @@ class MazeShapeTest(unittest.TestCase):
         self.assertFalse(maze.is_open(0, 0))
 
     def test_from_rows_takes_a_different_corridor_character(self):
-        maze = Maze.from_rows(("XX", "X."), open_char="X")
+        maze = Maze._from_rows(("XX", "X."), open_char="X")
 
         self.assertTrue(maze.is_open(0, 0))
         self.assertFalse(maze.is_open(1, 1), "the default corridor character still counted")
 
     def test_out_of_bounds_counts_as_wall(self):
         """Everything that walks the grid leans on this instead of guarding."""
-        maze = Maze.from_rows(RING)
+        maze = Maze._from_rows(RING)
 
         self.assertFalse(maze.is_open(-1, 1))
         self.assertFalse(maze.is_open(1, -1))
@@ -60,116 +60,116 @@ class MazeShapeTest(unittest.TestCase):
         self.assertTrue(maze.is_open(0, 0), "an edit to the caller's grid reached the maze")
 
     def test_to_rows_draws_what_it_was_built_from(self):
-        self.assertEqual(RING, Maze.from_rows(RING).to_rows())
+        self.assertEqual(RING, Maze._from_rows(RING)._to_rows())
 
     def test_to_rows_takes_the_characters_it_is_given(self):
         self.assertEqual(
             ("@@", "@ "),
-            Maze.from_rows(("##", "#.")).to_rows(wall="@", corridor=" "),
+            Maze._from_rows(("##", "#."))._to_rows(wall="@", corridor=" "),
         )
 
     def test_repr_says_the_size_and_how_much_is_corridor(self):
-        self.assertEqual("Maze(5x5, 8 open cells)", repr(Maze.from_rows(RING)))
+        self.assertEqual("Maze(5x5, 8 open cells)", repr(Maze._from_rows(RING)))
 
 
 class MazeQueryTest(unittest.TestCase):
 
     def setUp(self):
-        self.maze = Maze.from_rows(RING)
+        self.maze = Maze._from_rows(RING)
 
     def test_open_cells_come_back_in_row_major_order(self):
         self.assertEqual(
             ((1, 1), (1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2), (3, 3)),
-            self.maze.open_cells(),
+            self.maze._open_cells(),
         )
 
     def test_wall_cells_are_the_rest(self):
-        walls = self.maze.wall_cells()
+        walls = self.maze._wall_cells()
 
         self.assertEqual(25 - 8, len(walls))
         self.assertIn((2, 2), walls)
         self.assertNotIn((1, 1), walls)
 
     def test_neighbours_are_the_four_sides_that_are_on_the_grid(self):
-        self.assertEqual(((1, 2), (3, 2), (2, 1), (2, 3)), self.maze.neighbours(2, 2))
+        self.assertEqual(((1, 2), (3, 2), (2, 1), (2, 3)), self.maze._neighbours(2, 2))
 
     def test_neighbours_are_clipped_at_a_corner(self):
-        self.assertEqual(((1, 0), (0, 1)), self.maze.neighbours(0, 0))
+        self.assertEqual(((1, 0), (0, 1)), self.maze._neighbours(0, 0))
 
     def test_open_neighbours_are_the_ways_out(self):
-        self.assertEqual(((1, 2), (3, 2), (2, 1), (2, 3)), self.maze.open_neighbours(2, 2))
-        self.assertEqual(((2, 1), (1, 2)), self.maze.open_neighbours(1, 1))
+        self.assertEqual(((1, 2), (3, 2), (2, 1), (2, 3)), self.maze._open_neighbours(2, 2))
+        self.assertEqual(((2, 1), (1, 2)), self.maze._open_neighbours(1, 1))
 
     def test_reachable_from_finds_the_whole_loop(self):
-        self.assertEqual(set(self.maze.open_cells()), set(self.maze.reachable_from(1, 1)))
+        self.assertEqual(set(self.maze._open_cells()), set(self.maze._reachable_from(1, 1)))
 
     def test_reachable_from_includes_where_it_started(self):
-        self.assertIn((1, 1), self.maze.reachable_from(1, 1))
+        self.assertIn((1, 1), self.maze._reachable_from(1, 1))
 
     def test_nothing_is_reachable_from_inside_a_wall(self):
-        self.assertEqual(frozenset(), self.maze.reachable_from(2, 2))
+        self.assertEqual(frozenset(), self.maze._reachable_from(2, 2))
 
     def test_reachable_from_stops_at_the_edge_of_its_own_region(self):
-        maze = Maze.from_rows(("#####",
+        maze = Maze._from_rows(("#####",
                                "#.#.#",
                                "#####"))
 
-        self.assertEqual(frozenset({(1, 1)}), maze.reachable_from(1, 1))
+        self.assertEqual(frozenset({(1, 1)}), maze._reachable_from(1, 1))
 
     def test_a_ring_is_fully_connected(self):
-        self.assertTrue(self.maze.is_fully_connected())
+        self.assertTrue(self.maze._is_fully_connected())
 
     def test_two_separated_corridors_are_not_fully_connected(self):
-        maze = Maze.from_rows(("#####",
+        maze = Maze._from_rows(("#####",
                                "#.#.#",
                                "#####"))
 
-        self.assertFalse(maze.is_fully_connected())
+        self.assertFalse(maze._is_fully_connected())
 
     def test_a_maze_with_no_corridor_counts_as_connected(self):
-        self.assertTrue(Maze.from_rows(("##", "##")).is_fully_connected())
+        self.assertTrue(Maze._from_rows(("##", "##"))._is_fully_connected())
 
     def test_a_ring_has_no_dead_ends(self):
-        self.assertEqual((), self.maze.dead_ends())
+        self.assertEqual((), self.maze._dead_ends())
 
     def test_a_dead_end_is_reported_by_position(self):
         """Both ends of an unbraided corridor have one way out, so both are named."""
-        maze = Maze.from_rows(("#####",
+        maze = Maze._from_rows(("#####",
                                "#...#",
                                "###.#",
                                "#####"))
 
-        self.assertEqual(((1, 1), (2, 3)), maze.dead_ends())
+        self.assertEqual(((1, 1), (2, 3)), maze._dead_ends())
 
     def test_a_lone_cell_is_a_dead_end_with_no_ways_out_at_all(self):
-        maze = Maze.from_rows(("###",
+        maze = Maze._from_rows(("###",
                                "#.#",
                                "###"))
 
-        self.assertEqual(((1, 1),), maze.dead_ends())
+        self.assertEqual(((1, 1),), maze._dead_ends())
 
     def test_a_wall_block_away_from_the_border_is_an_island(self):
-        self.assertEqual((frozenset({(2, 2)}),), self.maze.islands())
+        self.assertEqual((frozenset({(2, 2)}),), self.maze._islands())
 
     def test_the_border_is_not_an_island(self):
         """It is all one region, and it touches the edge, so it is not counted."""
-        maze = Maze.from_rows(("###",
+        maze = Maze._from_rows(("###",
                                "#.#",
                                "###"))
 
-        self.assertEqual((), maze.islands())
+        self.assertEqual((), maze._islands())
 
     def test_islands_are_whole_regions_rather_than_single_cells(self):
-        maze = Maze.from_rows(("######",
+        maze = Maze._from_rows(("######",
                                "#....#",
                                "#.##.#",
                                "#....#",
                                "######"))
 
-        self.assertEqual((frozenset({(2, 2), (2, 3)}),), maze.islands())
+        self.assertEqual((frozenset({(2, 2), (2, 3)}),), maze._islands())
 
     def test_two_islands_are_reported_separately(self):
-        maze = Maze.from_rows(("#######",
+        maze = Maze._from_rows(("#######",
                                "#.....#",
                                "#.#.#.#",
                                "#.....#",
@@ -177,14 +177,14 @@ class MazeQueryTest(unittest.TestCase):
 
         self.assertEqual(
             {frozenset({(2, 2)}), frozenset({(2, 4)})},
-            set(maze.islands()),
+            set(maze._islands()),
         )
 
 
 class MazePlacementTest(unittest.TestCase):
 
     def setUp(self):
-        self.maze = Maze.from_rows(RING)
+        self.maze = Maze._from_rows(RING)
 
     def test_nearest_open_to_a_wall_is_the_corridor_beside_it(self):
         """The island's centre is wall, so something wanting it stands next to it."""
@@ -216,12 +216,12 @@ class MazeGenerationTest(unittest.TestCase):
 
     def test_a_seed_gives_the_same_maze_twice(self):
         self.assertEqual(
-            Maze.generate(15, 15, seed=42).to_rows(),
-            Maze.generate(15, 15, seed=42).to_rows(),
+            Maze.generate(15, 15, seed=42)._to_rows(),
+            Maze.generate(15, 15, seed=42)._to_rows(),
         )
 
     def test_different_seeds_give_different_mazes(self):
-        shapes = {Maze.generate(15, 15, seed=seed).to_rows() for seed in range(8)}
+        shapes = {Maze.generate(15, 15, seed=seed)._to_rows() for seed in range(8)}
 
         self.assertGreater(len(shapes), 1, "the seed made no difference")
 
@@ -237,9 +237,9 @@ class MazeGenerationTest(unittest.TestCase):
                 maze = Maze.generate(rows, cols, seed=seed)
 
                 self.assertEqual(
-                    (), maze.dead_ends(),
+                    (), maze._dead_ends(),
                     "{}x{} seed {} left dead ends:\n{}".format(
-                        rows, cols, seed, "\n".join(maze.to_rows())
+                        rows, cols, seed, "\n".join(maze._to_rows())
                     ),
                 )
 
@@ -250,9 +250,9 @@ class MazeGenerationTest(unittest.TestCase):
                 maze = Maze.generate(rows, cols, seed=seed)
 
                 self.assertTrue(
-                    maze.is_fully_connected(),
+                    maze._is_fully_connected(),
                     "{}x{} seed {} came out in pieces:\n{}".format(
-                        rows, cols, seed, "\n".join(maze.to_rows())
+                        rows, cols, seed, "\n".join(maze._to_rows())
                     ),
                 )
 
@@ -276,12 +276,12 @@ class MazeGenerationTest(unittest.TestCase):
         """A perfect maze is all one wall region; loops are what cut islands out."""
         maze = Maze.generate(11, 21, seed=3)
 
-        self.assertTrue(maze.islands(), "no island survived braiding")
+        self.assertTrue(maze._islands(), "no island survived braiding")
 
     def test_something_was_actually_carved(self):
         maze = Maze.generate(11, 11, seed=0)
 
-        self.assertGreater(len(maze.open_cells()), 10)
+        self.assertGreater(len(maze._open_cells()), 10)
 
     def test_a_maze_too_small_to_braid_is_refused(self):
         """One junction row means a corridor end with one way out and no second."""
@@ -293,8 +293,8 @@ class MazeGenerationTest(unittest.TestCase):
     def test_the_smallest_maze_that_can_be_braided_is_allowed(self):
         maze = Maze.generate(5, 5, seed=0)
 
-        self.assertEqual((), maze.dead_ends())
-        self.assertTrue(maze.is_fully_connected())
+        self.assertEqual((), maze._dead_ends())
+        self.assertTrue(maze._is_fully_connected())
 
 
 if __name__ == "__main__":

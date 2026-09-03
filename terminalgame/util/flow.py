@@ -73,7 +73,7 @@ class StateFlow(Generic[T]):
             subscriber(new_value)
         return True
 
-    def update(self, transform: Callable[[T], T]) -> bool:
+    def _update(self, transform: Callable[[T], T]) -> bool:
         """Emits transform(current), the equivalent of MutableStateFlow.update.
 
         Args:

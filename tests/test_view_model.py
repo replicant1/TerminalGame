@@ -88,7 +88,7 @@ class WallGlyphTest(unittest.TestCase):
     """A wall cell picks its line from which of its four neighbours are wall."""
 
     def glyph(self, rows, row, col):
-        return _wall_cell(Maze.from_rows(rows), row, col)
+        return _wall_cell(Maze._from_rows(rows), row, col)
 
     def test_a_wall_with_no_wall_neighbours_is_a_pillar(self):
         """Nothing to join, so it is a block rather than a length of line."""
@@ -177,7 +177,7 @@ class LayerTest(unittest.TestCase):
             "#####")
 
     def setUp(self):
-        self.walls, self.pills = _to_layers(Maze.from_rows(self.RING))
+        self.walls, self.pills = _to_layers(Maze._from_rows(self.RING))
 
     def test_each_layer_is_one_line_per_character_row(self):
         self.assertEqual(5 * CELL_ROWS, len(self.walls))
@@ -196,9 +196,9 @@ class LayerTest(unittest.TestCase):
 
     def test_every_corridor_cell_carries_exactly_one_pill(self):
         """One pill marks one place a sprite can stand -- two would say there were two."""
-        maze = Maze.from_rows(self.RING)
+        maze = Maze._from_rows(self.RING)
 
-        self.assertEqual(len(maze.open_cells()), sum(line.count(_PILL) for line in self.pills))
+        self.assertEqual(len(maze._open_cells()), sum(line.count(_PILL) for line in self.pills))
 
     def test_the_pill_sits_on_the_cell_centre_line(self):
         """The left character, which is where a wall's line sits too."""

@@ -34,7 +34,7 @@ player presses a quit key, and that is the only way out of it.
 | **Cleared** | `GameViewModel.on_direction`, when the last pill goes | The status line says so, with the score | 0 |
 | **Quit** | The loop in `app/main.py` | The window closes | 0 |
 
-Ctrl-C is a fifth way out and deliberately unremarkable: `play` catches
+Ctrl-C is a fifth way out and deliberately unremarkable: `_play` catches
 `KeyboardInterrupt` and passes, so it leaves exactly like a quit key, tidying
 the terminal on the way through `__exit__`.
 
@@ -105,7 +105,7 @@ looking at stays on the terminal at no cost at all — nothing is being redrawn.
 `q` and `Q` quit, and they are read by the loop in `app/main.py`
 rather than by anything in `presentation` — the ViewModel has no concept of
 quitting. The loop returns, the `with` block ends, `GameScreen.__exit__` runs
-`close()`, and the terminal gets its echo, its caret and its line discipline
+`_close()`, and the terminal gets its echo, its caret and its line discipline
 back. That happens whether the loop returned or threw:
 [the quit scenario](scenarios/a-quit-key-ends-the-game-and-closes-the-window.md).
 

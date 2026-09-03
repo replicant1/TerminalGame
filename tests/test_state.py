@@ -81,7 +81,7 @@ class ViewStateTest(unittest.TestCase):
     def test_with_sprites_replaces_them_rather_than_adding_to_them(self):
         state = a_state(sprites=(Sprite(0, 0, ("A",)), Sprite(1, 1, ("B",))))
 
-        replaced = state.with_sprites(Sprite(2, 2, ("C",)))
+        replaced = state._with_sprites(Sprite(2, 2, ("C",)))
 
         self.assertEqual((Sprite(2, 2, ("C",)),), replaced.sprites)
 
@@ -89,14 +89,14 @@ class ViewStateTest(unittest.TestCase):
         original = a_state()
         sprites_before = original.sprites
 
-        original.with_sprites(Sprite(9, 9, ("Z",)))
+        original._with_sprites(Sprite(9, 9, ("Z",)))
 
         self.assertEqual(sprites_before, original.sprites)
 
     def test_with_sprites_carries_the_rest_of_the_frame_across(self):
         state = a_state(status_line=" score 12", tick=7)
 
-        replaced = state.with_sprites(Sprite(2, 2, ("C",)))
+        replaced = state._with_sprites(Sprite(2, 2, ("C",)))
 
         self.assertEqual(state.walls, replaced.walls)
         self.assertEqual(state.pills, replaced.pills)
@@ -104,7 +104,7 @@ class ViewStateTest(unittest.TestCase):
         self.assertEqual(7, replaced.tick)
 
     def test_with_sprites_and_no_sprites_empties_the_layer(self):
-        self.assertEqual((), a_state().with_sprites().sprites)
+        self.assertEqual((), a_state()._with_sprites().sprites)
 
 
 if __name__ == "__main__":

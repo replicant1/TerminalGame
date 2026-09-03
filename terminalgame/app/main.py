@@ -45,7 +45,7 @@ _DIRECTIONS = {
 _QUIT_KEYS = {ord("q"), ord("Q")}
 
 
-def run(screen: GameScreen) -> None:
+def _run(screen: GameScreen) -> None:
     """Runs the game loop until the player quits.
 
     Keys are handled the moment they arrive and the clock is polled between
@@ -79,7 +79,7 @@ def run(screen: GameScreen) -> None:
         clock.poll()
 
 
-def play(sentinel: str, spawned: bool) -> int:
+def _play(sentinel: str, spawned: bool) -> int:
     """Plays the game in whatever terminal this process already owns.
 
     Args:
@@ -99,7 +99,7 @@ def play(sentinel: str, spawned: bool) -> int:
     exit_code = 1
     try:
         with GameScreen() as screen:
-            run(screen)
+            _run(screen)
         exit_code = 0
     except TerminalTooSmall as error:
         print(error, file=sys.stderr)
@@ -126,7 +126,7 @@ def _pause(message: str) -> None:
         pass
 
 
-def parse_arguments(argv):
+def _parse_arguments(argv):
     """Reads the command line, falling back to the launcher's environment.
 
     Args:
@@ -162,10 +162,10 @@ def main(argv=None) -> int:
     Returns:
         The game's exit code, or 1 if the window could not be opened.
     """
-    arguments = parse_arguments(argv)
+    arguments = _parse_arguments(argv)
 
     if arguments.child or arguments.here:
-        return play(arguments.sentinel, spawned=arguments.child)
+        return _play(arguments.sentinel, spawned=arguments.child)
 
     try:
         return launcher.launch(PLAYFIELD_ROWS, PLAYFIELD_COLS, [])

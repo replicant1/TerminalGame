@@ -34,7 +34,7 @@ class GameClock:
         self._running = False
 
     @property
-    def running(self) -> bool:
+    def _is_running(self) -> bool:
         """Whether the clock is ticking, so between `start` and `stop`."""
         return self._running
 
@@ -43,7 +43,7 @@ class GameClock:
         self._next_deadline = time.monotonic() + self._interval
         self._running = True
 
-    def stop(self) -> None:
+    def _stop(self) -> None:
         """Stops ticking. `poll` fires nothing until `start` is called again.
 
         Including from inside a tick: the poll in flight abandons whatever
@@ -51,7 +51,7 @@ class GameClock:
         """
         self._running = False
 
-    def seconds_until_next_tick(self) -> float:
+    def _seconds_until_next_tick(self) -> float:
         """Returns how long until the next tick is due.
 
         Returns:
