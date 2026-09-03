@@ -281,20 +281,20 @@ curses. The presentation layer imports no terminal code, and that tour is what
 the split is for.
 
 Three of the passes are easier watched than read, and there is a page for each.
-[Carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html)
+[Carving and braiding, one step at a time](https://replicant1.github.io/TerminalGame/docs/step-by-step/maze-step-by-step.html)
 builds an eleven by eleven maze one decision at a time, saying what it did and
 why after each one, and
-[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html)
+[every wall cell picks its glyph](https://replicant1.github.io/TerminalGame/docs/step-by-step/wall-glyphs-step-by-step.html)
 turns that finished maze into the two layers a frame is drawn from, cell by
 cell. Both carry a Mersenne Twister seeded and drawn from the way CPython's
 `random` module seeds and draws from its own, so a seed typed into either gives
 the maze Python gives for that seed — and seed 7 is the same maze in both. The
 links point at the published copies, because github.com renders an HTML file as
-source rather than running it; `docs/maze-step-by-step.html` and
-`docs/wall-glyphs-step-by-step.html` open straight from a clone, one file each
+source rather than running it; `docs/step-by-step/maze-step-by-step.html` and
+`docs/step-by-step/wall-glyphs-step-by-step.html` open straight from a clone, one file each
 and no build step.
 
-[The ghost, one tick at a time](https://replicant1.github.io/TerminalGame/docs/ghost-step-by-step.html)
+[The ghost, one tick at a time](https://replicant1.github.io/TerminalGame/docs/step-by-step/ghost-step-by-step.html)
 is the third, and it is the game's own arena rather than an illustration of
 one: twenty-nine cells by nineteen, the player standing where the code puts
 them, and the ghost moving one cell per tick saying what it did and why. A seed

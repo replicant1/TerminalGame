@@ -17,7 +17,7 @@ gap a pill in the next cell needs.](../images/a-wall-cell-picks-its-glyph.svg)
 
 ### Step through it yourself
 
-[**Every wall cell picks its glyph, one at a time**](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html)
+[**Every wall cell picks its glyph, one at a time**](https://replicant1.github.io/TerminalGame/docs/step-by-step/wall-glyphs-step-by-step.html)
 sets the panels above in motion. It opens on an eleven by eleven maze in the only
 state the maze itself understands — every wall cell a solid block, because open
 or not open is the whole of what it knows — and then walks the arena cell by
@@ -37,16 +37,16 @@ see the point of until you watch it apply.
 
 The glyph table is [`_WALL_GLYPH`](../../terminalgame/presentation/view_model.py#L70)
 and the walk is the one the code makes. The maze comes from the same seeded
-Mersenne Twister the [maze walkthrough](https://replicant1.github.io/TerminalGame/docs/maze-step-by-step.html) uses, so **seed
+Mersenne Twister the [maze walkthrough](https://replicant1.github.io/TerminalGame/docs/step-by-step/maze-step-by-step.html) uses, so **seed
 7 is the same maze in both pages**, and both layers were checked against
 `_to_layers` for seeds 7, 0 and 42, character for character.
 
 **On opening it.** GitHub renders Markdown with scripts stripped out, so an
 interactive example cannot live inside this document; it has to be its own HTML
 file alongside it. Every link to it above points at the published copy,
-[replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/wall-glyphs-step-by-step.html),
+[replicant1.github.io/TerminalGame/docs/step-by-step/wall-glyphs-step-by-step.html](https://replicant1.github.io/TerminalGame/docs/step-by-step/wall-glyphs-step-by-step.html),
 so following one runs the page rather than showing you its source.
-`docs/wall-glyphs-step-by-step.html` opens straight from a clone as well — one
+`docs/step-by-step/wall-glyphs-step-by-step.html` opens straight from a clone as well — one
 file, no build step, no dependencies, no network access.
 
 ## The four questions
