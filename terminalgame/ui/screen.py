@@ -43,7 +43,7 @@ from ..presentation.state import (
 # of the player or the gold of the pills, so the ghost is told apart at a
 # glance rather than by shade.
 _BRIGHT_YELLOW = 226
-_GOLD = 178
+_DIM_GOLD = 136
 _BRIGHT_PINK = 213
 
 # Terminals honouring the xterm window-manipulation sequence resize on this.
@@ -227,19 +227,23 @@ class GameScreen:
         except curses.error:
             background = curses.COLOR_BLACK
 
-        # The player and the pills are both yellow, and the player has to be
-        # the brighter of the two or it disappears into the pills it is eating.
-        # Where 256 colours are available the two shades are named outright,
-        # which is exact. Otherwise the player falls back to bold yellow, which
-        # most terminals render brighter -- though that depends on a setting
-        # the terminal owns, which is why it is the fallback and not the rule.
+        # The player and the pills are both yellow, so the board is the thing
+        # the player has to be found against: two hundred pills, and one of
+        # them moving. Making the player brighter than the pills was not
+        # enough -- 226 against 178 reads as two clear shades in a palette
+        # chart and as one more yellow square on the board. So the pills are
+        # pushed down to a dim gold instead, which leaves the player the only
+        # bright thing among them. Where there are only eight colours both are
+        # the same yellow, and the same gap is asked of bold against dim,
+        # which depends on a setting the terminal owns -- which is why it is
+        # the fallback and not the rule.
         if curses.COLORS >= 256:
             player, player_attribute = _BRIGHT_YELLOW, curses.A_NORMAL
-            pill = _GOLD
+            pill, pill_attribute = _DIM_GOLD, curses.A_NORMAL
             ghost, ghost_attribute = _BRIGHT_PINK, curses.A_NORMAL
         else:
             player, player_attribute = curses.COLOR_YELLOW, curses.A_BOLD
-            pill = curses.COLOR_YELLOW
+            pill, pill_attribute = curses.COLOR_YELLOW, curses.A_DIM
             ghost, ghost_attribute = curses.COLOR_RED, curses.A_BOLD
 
         palette = {
@@ -247,7 +251,7 @@ class GameScreen:
             COLOR_PLAYER: (player, player_attribute),
             COLOR_GHOST: (ghost, ghost_attribute),
             COLOR_STATUS: (curses.COLOR_CYAN, curses.A_NORMAL),
-            COLOR_PILL: (pill, curses.A_NORMAL),
+            COLOR_PILL: (pill, pill_attribute),
         }
         for slot, (foreground, attribute) in palette.items():
             curses.init_pair(slot, foreground, background)
