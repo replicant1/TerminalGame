@@ -56,6 +56,34 @@ class TerminalTooSmall(RuntimeError):
     """Raised when the terminal could not be sized to the playfield."""
 
 
+def _runs_in(layer):
+    """Splits a layer into its runs of non-space characters, skipping the gaps.
+
+    A space is a character like any other, so writing a layer whole would paint
+    its gaps over the layer beneath. Only the runs are drawn, and erase() has
+    already blanked the window, so the gaps need no drawing at all.
+
+    Args:
+        layer: The layer's rows of text.
+
+    Returns:
+        One (row, col, text) per run, in row order.
+    """
+    runs = []
+    for row, text in enumerate(layer):
+        col, end_of_text = 0, len(text)
+        while col < end_of_text:
+            if text[col] == " ":
+                col += 1
+                continue
+            run_end = col
+            while run_end < end_of_text and text[run_end] != " ":
+                run_end += 1
+            runs.append((row, col, text[col:run_end]))
+            col = run_end
+    return tuple(runs)
+
+
 class GameScreen:
     """Owns the curses lifetime and paints ViewStates onto the terminal."""
 
@@ -71,6 +99,9 @@ class GameScreen:
         self._stdscr = None
         self._unsubscribe = None
         self._color_pairs = {}
+        # Colour slot -> (layer, runs). See _runs_for: a layer is the same
+        # tuple object frame after frame, so its runs are worth keeping.
+        self._runs_cache = {}
 
     # -- lifecycle -------------------------------------------------------
 
@@ -283,11 +314,12 @@ class GameScreen:
         # of a layer are drawn: a space is a character like any other, so
         # writing a layer whole would paint its gaps over the layer beneath.
         # erase() has already blanked the window, so the gaps need no drawing.
-        for rows, color in ((state.walls, COLOR_WALL), (state.pills, COLOR_PILL)):
-            for row_index, row_text in enumerate(rows):
-                if row_index >= min(self._rows, height):
-                    break
-                self._put_runs(window, row_index, row_text, color, height, width)
+        visible_rows = min(self._rows, height)
+        for layer, color in ((state.walls, COLOR_WALL), (state.pills, COLOR_PILL)):
+            for row, col, text in self._runs_for(layer, color):
+                if row >= visible_rows:
+                    break  # runs come out in row order, so the rest are lower
+                self._put(window, row, col, text, color, height, width)
 
         for sprite in state.sprites:
             # One _put per character row of the sprite. Bounds are checked
@@ -311,32 +343,30 @@ class GameScreen:
         window.noutrefresh()
         curses.doupdate()  # single atomic write of only the changed cells
 
-    def _put_runs(self, window, row, text, color_slot, height, width):
-        """Draws each run of non-space characters in a layer, skipping the gaps.
+    def _runs_for(self, layer, color_slot):
+        """Returns a layer's runs, decomposing it only when it has changed.
 
-        A space is a character like any other, so writing a layer whole would
-        paint its gaps over the layer beneath.
+        The walls are the same tuple object for the whole game and the pills
+        are replaced only when one is eaten, so the runs a layer decomposes
+        into are the same frame after frame. Identity is the test rather than
+        equality: a new tuple means new runs, and comparing the two would cost
+        what decomposing them costs.
 
         Args:
-            window: The curses window to draw into.
-            row: Character row to draw on.
-            text: The layer's text for that row.
-            color_slot: Logical colour to draw the runs in.
-            height: Height of the window, for bounds checking.
-            width: Width of the window, for bounds checking.
+            layer: The layer's rows of text.
+            color_slot: Logical colour of that layer, which is what the cache
+                is keyed on -- there is one entry per layer, for the life of
+                the screen.
+
+        Returns:
+            The layer's runs as (row, col, text), in row order.
         """
-        col, end_of_text = 0, len(text)
-        while col < end_of_text:
-            if text[col] == " ":
-                col += 1
-                continue
-            run_end = col
-            while run_end < end_of_text and text[run_end] != " ":
-                run_end += 1
-            self._put(
-                window, row, col, text[col:run_end], color_slot, height, width
-            )
-            col = run_end
+        cached_layer, runs = self._runs_cache.get(color_slot, (None, ()))
+        if cached_layer is layer:
+            return runs
+        runs = _runs_in(layer)
+        self._runs_cache[color_slot] = (layer, runs)
+        return runs
 
     def _put(self, window, row, col, text, color_slot, height, width):
         """Writes text at one position, clipping rather than raising.

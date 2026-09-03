@@ -101,6 +101,27 @@ class RenderTest(unittest.TestCase):
 
         self.assertEqual([(0, 3, "##", PAIRS[COLOR_WALL])], self.layer_writes())
 
+    def test_a_layer_is_decomposed_once_however_often_it_is_drawn(self):
+        """The walls are one tuple for the whole game; runs cost nothing after
+        the first frame."""
+        state = a_state(walls=("## ##",), pills=("  .  ",))
+
+        with mock.patch.object(screen_module, "_runs_in",
+                               wraps=screen_module._runs_in) as runs_in:
+            for _ in range(5):
+                self.screen.render(state)
+
+        self.assertEqual(2, runs_in.call_count, "one per layer, not per frame")
+
+    def test_a_replaced_layer_is_drawn_again_rather_than_from_the_cache(self):
+        """Eating a pill hands render a new tuple, which must not be missed."""
+        self.screen.render(a_state(pills=("..",)))
+        self.window.writes.clear()
+
+        self.screen.render(a_state(pills=(" .",)))
+
+        self.assertEqual([(0, 1, ".", PAIRS[COLOR_PILL])], self.layer_writes())
+
     def test_a_sprite_is_drawn_at_its_own_position_and_colour(self):
         self.screen.render(a_state(sprites=(Sprite(4, 7, ("▐█▌",), COLOR_PLAYER),)))
 
