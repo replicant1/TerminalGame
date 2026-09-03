@@ -411,9 +411,9 @@ class GameViewModel:
 
         A finished game says which of the two ways it finished, in the same
         shape either way: the word, the score, the key that leaves. A line
-        reading GAME OVER after a ghost walked into somebody says what
-        happened but not why, and the two endings are worth telling apart at a
-        glance -- which the frame does as well, by drawing the ghost on top.
+        reading GAME OVER says what happened but not why, whichever ending it
+        follows, and the two are worth telling apart at a glance -- which the
+        frame does as well, by drawing the ghost on top.
 
         The last row loses its final cell to curses, so the budget is
         PLAYFIELD_COLS - 1, which is 39. No line comes near it: three digits
@@ -423,7 +423,7 @@ class GameViewModel:
         if self._ending == _CAUGHT:
             return " CAUGHT  score {:<3}  q quits".format(self._score)
         if self._ending == _CLEARED:
-            return " GAME OVER  score {:<3}  q quits".format(self._score)
+            return " CLEARED  score {:<3}  q quits".format(self._score)
         return " score {:<3}  arrows, q quits".format(self._score)
 
     def _publish(self) -> None:

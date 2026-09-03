@@ -487,7 +487,7 @@ class EndingTest(unittest.TestCase):
 
         self.view_model.on_direction(*self.step)
 
-        self.assertIn("GAME OVER", self.view_model.state.value.status_line)
+        self.assertIn("CLEARED", self.view_model.state.value.status_line)
 
     def test_the_two_endings_are_told_apart_by_name(self):
         cleared = GameViewModel(seed=SEED)
@@ -495,7 +495,7 @@ class EndingTest(unittest.TestCase):
         cleared.on_direction(*self.step)
 
         self.assertNotIn("CAUGHT", cleared.state.value.status_line)
-        self.assertIn("GAME OVER", cleared.state.value.status_line)
+        self.assertIn("CLEARED", cleared.state.value.status_line)
 
     def test_walking_into_the_ghost_for_the_last_pill_is_still_a_capture(self):
         """The capture is checked first: they still walked into the ghost."""
@@ -505,7 +505,7 @@ class EndingTest(unittest.TestCase):
         self.view_model.on_direction(*self.step)
 
         self.assertIn("CAUGHT", self.view_model.state.value.status_line)
-        self.assertNotIn("GAME OVER", self.view_model.state.value.status_line)
+        self.assertNotIn("CLEARED", self.view_model.state.value.status_line)
 
     def test_a_finished_game_stops_ticking(self):
         self.put_ghost_on(self.landing)

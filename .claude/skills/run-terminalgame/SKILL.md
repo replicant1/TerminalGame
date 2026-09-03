@@ -169,9 +169,9 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   scrollback, which for a curses app is blank lines. Use the driver to inspect
   frames; the window query above is only good for size and title.
 * **A game can end under a script, in two ways.** Eating the last pill ends it
-  with `GAME OVER  score N  q quits`; the ghost walking onto the player — or
+  with `CLEARED  score N  q quits`; the ghost walking onto the player — or
   the player walking onto the ghost — ends it with `CAUGHT  score N  q quits`.
-  Either way the ghost freezes, arrows do nothing, only `q` or Esc still works,
+  Either way the ghost freezes, arrows do nothing, only `q` still works,
   and every later `show` returns the same final frame.
   The capture is the one to watch for: it is **not** under the script's
   control. The ghost wanders while your script thinks, so a long walk can be
@@ -188,7 +188,7 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
   script, close the pty master (it notices the hangup within 0.1s) or send
   `q`, with SIGKILL as the backstop. `driver.py` cleans up that way on every
   exit path, including a malformed command, so nothing is left holding a pty.
-* **`q`, `Q` and Esc all quit**, so `key q` in the middle of a script ends the
+* **`q` and `Q` quit**, so `key q` in the middle of a script ends the
   run. Anything after it prints `driver: game already exited`.
 
 ## Troubleshooting
@@ -196,7 +196,7 @@ kill $(pgrep -f "terminalgame.app.main" | tail -1)   # two pids: launcher, then 
 | Symptom | Cause / fix |
 |---|---|
 | `driver: expected a repeat count, got 'foo'`, exit 1 | A malformed command (`right foo`, `wait x`, `right 0`). The script stops there and the game is shut down. |
-| `driver: game already exited (0)` partway through a script | An Esc or a `q` reached the game — check for a CSI-form arrow key, or a stray `key q`. |
+| `driver: game already exited (0)` partway through a script | A `q` or `Q` reached the game — check for a stray `key q`. A CSI-form arrow no longer does this; it is ignored. |
 | Frames identical across two `show`s, tick not advancing | The game has exited; the emulator keeps the last frame. Add `status` after each key to catch it early. |
 | `Need at least 30x40 ...`, exit 1 | Something other than the driver launched the game in a terminal shorter than 30x40. The driver sizes the pty before the child can measure it and strips `LINES`/`COLUMNS`, so it should not come from there. |
 | `ImportError: attempted relative import` | Launched by path instead of `python3 -m terminalgame.app.main`. |
