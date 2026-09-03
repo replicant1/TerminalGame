@@ -74,6 +74,18 @@ class GameClockTest(unittest.TestCase):
         self.assertEqual([2.5, 2.5], self.ticks)
         self.assertAlmostEqual(0.5, self.clock.seconds_until_next_tick())
 
+    def test_a_tick_that_stops_the_clock_is_the_last_one_to_fire(self):
+        """Otherwise stop() means "after this backlog", which is not what it says."""
+        self.clock = GameClock(1.0, lambda: (self.ticks.append(self.time.now),
+                                             self.clock.stop()))
+        self.clock.start()
+        self.time.now = 3.0  # three ticks outstanding
+
+        fired = self.clock.poll()
+
+        self.assertEqual(1, fired)
+        self.assertEqual(1, len(self.ticks))
+
     def test_a_long_suspension_fires_at_most_the_catch_up_limit(self):
         """Ctrl-Z or a laptop sleep must not replay hours of missed ticks."""
         self.clock.start()
