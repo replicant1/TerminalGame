@@ -44,7 +44,11 @@ class GameClock:
         self._running = True
 
     def stop(self) -> None:
-        """Stops ticking. `poll` fires nothing until `start` is called again."""
+        """Stops ticking. `poll` fires nothing until `start` is called again.
+
+        Including from inside a tick: the poll in flight abandons whatever
+        backlog was still due rather than finishing it.
+        """
         self._running = False
 
     def seconds_until_next_tick(self) -> float:
@@ -67,13 +71,14 @@ class GameClock:
 
         Returns:
             How many ticks fired, at most MAX_CATCH_UP_TICKS. Zero while the
-            clock is stopped.
+            clock is stopped, and a tick that stops the clock is the last one
+            this call fires.
         """
         if not self._running:
             return 0
 
         fired = 0
-        while time.monotonic() >= self._next_deadline:
+        while self._running and time.monotonic() >= self._next_deadline:
             self._next_deadline += self._interval
             fired += 1
             self._on_tick()
