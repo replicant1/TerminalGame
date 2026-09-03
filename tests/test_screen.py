@@ -165,6 +165,17 @@ class RenderTest(unittest.TestCase):
 
         self.assertEqual([], [w for w in self.window.writes if w[0] == 1])
 
+    def test_a_sprite_off_the_left_edge_keeps_only_what_fits(self):
+        """The mirror of the right edge: trim the overhang, keep the rest."""
+        self.screen.render(a_state(sprites=(Sprite(1, -2, ("ABCD",), COLOR_PLAYER),)))
+
+        self.assertEqual("CD", self.window.text_at(1, 0))
+
+    def test_a_sprite_past_the_left_edge_is_dropped(self):
+        self.screen.render(a_state(sprites=(Sprite(1, -5, ("ABC",), COLOR_PLAYER),)))
+
+        self.assertEqual([], [w for w in self.window.writes if w[0] == 1])
+
     def test_a_sprite_below_the_window_is_dropped(self):
         self.screen.render(a_state(sprites=(
             Sprite(PLAYFIELD_ROWS + 3, 0, ("ABC",), COLOR_PLAYER),

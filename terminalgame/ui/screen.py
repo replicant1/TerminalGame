@@ -356,6 +356,14 @@ class GameScreen:
         """
         if not (0 <= row < height) or col >= width:
             return
+        if col < 0:
+            # Clip the left edge the way the right one is clipped below.
+            # addnstr raises on a negative column and the except at the
+            # bottom would swallow the whole string rather than trim it.
+            text = text[-col:]
+            col = 0
+            if not text:
+                return
         limit = width - col
         if row == height - 1:
             limit -= 1  # never touch the final cell; it scrolls the window
