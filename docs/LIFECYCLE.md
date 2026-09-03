@@ -14,9 +14,9 @@ stateDiagram-v2
     Playing --> Playing: a tick moves the ghost, a key moves the player
     Playing --> Caught: the two share a cell
     Playing --> Cleared: the last pill is eaten
-    Playing --> [*]: q, Q or Esc
-    Caught --> [*]: q, Q or Esc
-    Cleared --> [*]: q, Q or Esc
+    Playing --> [*]: q or Q
+    Caught --> [*]: q or Q
+    Cleared --> [*]: q or Q
 ```
 
 `Caught` and `Cleared` are the same state as far as the code is concerned — one
@@ -102,7 +102,7 @@ looking at stays on the terminal at no cost at all — nothing is being redrawn.
 
 ## Leaving
 
-`q`, `Q` and Esc all quit, and they are read by the loop in `app/main.py`
+`q` and `Q` quit, and they are read by the loop in `app/main.py`
 rather than by anything in `presentation` — the ViewModel has no concept of
 quitting. The loop returns, the `with` block ends, `GameScreen.__exit__` runs
 `close()`, and the terminal gets its echo, its caret and its line discipline

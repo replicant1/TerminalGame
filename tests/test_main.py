@@ -64,9 +64,15 @@ class GameLoopTest(unittest.TestCase):
 
         self.assertEqual(1, len(screen.frames), "the loop ran on past the quit key")
 
-    def test_the_uppercase_and_escape_keys_quit_too(self):
-        for key in (ord("Q"), 27):
-            self.play([key])  # would raise LoopDidNotQuit if it kept reading
+    def test_the_uppercase_q_quits_too(self):
+        self.play([ord("Q")])  # would raise LoopDidNotQuit if it kept reading
+
+    def test_a_bare_escape_byte_does_not_quit(self):
+        """ncurses returns 27 for any escape sequence it cannot decode, so it
+        arrives from arrow keys, pastes and Option-f as well as from Esc."""
+        screen = self.play([27, QUIT])
+
+        self.assertEqual([], screen.keys, "the loop stopped before its quit key")
 
     def test_the_opening_frame_is_painted_before_any_key_arrives(self):
         screen = self.play([QUIT])
