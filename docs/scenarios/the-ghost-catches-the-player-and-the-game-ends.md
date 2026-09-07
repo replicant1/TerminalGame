@@ -17,11 +17,11 @@ the move that could have caused it.
 
 | The move | Where the check is | What it looks like to a player |
 |---|---|---|
-| The ghost steps onto the player | after the ghost's move, in [`tick`](../../terminalgame/presentation/view_model.py#L291) | the ghost came for them |
-| The player steps onto the ghost | after the player's move, in [`on_direction`](../../terminalgame/presentation/view_model.py#L310) | they walked into it |
+| The ghost steps onto the player | after the ghost's move, in [`tick`](../../terminalgame/presentation/view_model.py#L293) | the ghost came for them |
+| The player steps onto the ghost | after the player's move, in [`on_direction`](../../terminalgame/presentation/view_model.py#L312) | they walked into it |
 
 The check itself is
-[a comparison of two cells](../../terminalgame/presentation/view_model.py#L367),
+[a comparison of two cells](../../terminalgame/presentation/view_model.py#L369),
 and it is worth saying what is *not* there. The usual way a collision check of
 this kind is fooled is a swap: two things one cell apart trade places in the
 same step, pass through each other, and are never seen sharing a cell. That
@@ -40,7 +40,7 @@ It is unusual for one decision to pay for itself twice in unrelated ways.
 |---|---|
 | [`GameClock`](../../terminalgame/util/clock.py#L13) | The keeper of time, and on this path the **cause**: the ghost only ever moves because a tick was due |
 | [`GameViewModel`](../../terminalgame/presentation/view_model.py#L227) | The **referee**: it moves the ghost, asks whether the two are now on one cell, records which of the two endings happened, and builds the last picture of the game |
-| [`Wanderer`](../../terminalgame/presentation/ghost.py#L106) | The [`GhostStrategy`](../../terminalgame/presentation/ghost.py#L60) the game is built with, and here the **wanderer** in the literal sense: it picks the step that happens to land on the player, having been told where the player is and paid no attention. It knows nothing about capture, scores or endings — it returns a direction and the view model does the rest |
+| [`SimpleGhostStrategy`](../../terminalgame/presentation/ghost.py#L106) | The [`GhostStrategy`](../../terminalgame/presentation/ghost.py#L60) the game is built with, and here a **wanderer** in the literal sense: it picks the step that happens to land on the player, having been told where the player is and paid no attention. It knows nothing about capture, scores or endings — it returns a direction and the view model does the rest |
 | [`Maze`](../../terminalgame/presentation/maze.py#L31) | Consulted while the ghost is choosing where to walk, and not at all afterwards. It knows where corridors are and nothing about who is standing in them |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier, handed one more picture and then never troubled again |
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The painter. It draws the sprites in the order it is given them, which is how the ghost comes to be on top in this one frame and underneath in every other |
@@ -68,12 +68,12 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | `tick()` | An ordinary beat, seven a second. Nothing about it knows this one is different |
-| 2 | moves the ghost one cell, as it does every tick | The ghost carries straight on where it can and turns where it cannot, exactly as described in [A clock tick moves the ghost](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md). It is not hunting: the `Wanderer` is handed the player's cell along with everything else and simply does not read it, and this cell was chosen the same way as every other. A strategy that did read it would be a hunting ghost, and would need no change to the game around it |
-| 3 | asks whether the two are now on one cell | [The check](../../terminalgame/presentation/view_model.py#L367) is a comparison of two pairs of numbers, and it happens **after** the move rather than before it. Checking before would ask whether the ghost is about to be somewhere, which is a harder question with the same answer one moment later |
+| 2 | moves the ghost one cell, as it does every tick | The ghost carries straight on where it can and turns where it cannot, exactly as described in [A clock tick moves the ghost](a-clock-tick-moves-the-ghost-and-repaints-the-screen.md). It is not hunting: the `SimpleGhostStrategy` is handed the player's cell along with everything else and simply does not read it, and this cell was chosen the same way as every other. A strategy that did read it would be a hunting ghost, and would need no change to the game around it |
+| 3 | asks whether the two are now on one cell | [The check](../../terminalgame/presentation/view_model.py#L369) is a comparison of two pairs of numbers, and it happens **after** the move rather than before it. Checking before would ask whether the ghost is about to be somewhere, which is a harder question with the same answer one moment later |
 | 4 | they are -- records the ending as a capture | The game keeps a **reason** rather than a flag, because it now has two ways to end. Everything that stops when a game stops was already written against that one value, so nothing else had to change to add this ending |
 | 5 | `emit(the last picture of the game)` | The final frame differs from the one before it in two places: the ghost has moved onto the player, and the line of readings now says `CAUGHT` and the score |
 | 6 | `render(it)` | The screen is handed the picture in the ordinary way. It is not told that this is the last one, and there is nothing special about drawing it |
-| 7 | draws the sprites, ghost last, so it covers the player | The sprites are drawn in the order the picture lists them, and the last one wins where they overlap. Normally the player is last, so it stays visible as the ghost passes. On a capture that order would hide the thing that caused it, so [the picture lists them the other way round](../../terminalgame/presentation/view_model.py#L446) and the final frame shows a ghost where the player was |
+| 7 | draws the sprites, ghost last, so it covers the player | The sprites are drawn in the order the picture lists them, and the last one wins where they overlap. Normally the player is last, so it stays visible as the ghost passes. On a capture that order would hide the thing that caused it, so [the picture lists them the other way round](../../terminalgame/presentation/view_model.py#L448) and the final frame shows a ghost where the player was |
 
 ## The other way round
 
@@ -89,7 +89,7 @@ frame includes the pill they died on.
 **A capture beats a cleared arena.** If that pill was the last one on the
 board, both endings are true at once: the player has cleared it, and the player
 has walked into the ghost. The capture is
-[checked first](../../terminalgame/presentation/view_model.py#L332) and wins.
+[checked first](../../terminalgame/presentation/view_model.py#L334) and wins.
 The reasoning is that the ghost was already standing there, and a player who
 walks onto it has been caught whatever else was true of that cell.
 

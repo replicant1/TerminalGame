@@ -14,7 +14,7 @@ from terminalgame.presentation.ghost import (
     STEPS,
     GhostStrategy,
     Surroundings,
-    Wanderer,
+    SimpleGhostStrategy,
     open_steps,
 )
 from terminalgame.presentation.maze import Maze
@@ -79,10 +79,10 @@ def surroundings(rows, position, heading, player=(1, 1)):
 class PicksTheNth:
     """A stand-in for random.Random that always chooses the same index.
 
-    Records what it was offered as well as answering, because half of what the
-    Wanderer decides is which turns it puts up for choosing at all -- and a
-    strategy that offered the way it came would be wrong even on the ticks
-    where the coin happened to land elsewhere.
+    Records what it was offered as well as answering, because half of what
+    the SimpleGhostStrategy decides is which turns it puts up for choosing at
+    all -- and a strategy that offered the way it came would be wrong even on
+    the ticks where the coin happened to land elsewhere.
     """
 
     def __init__(self, index=0):
@@ -94,85 +94,90 @@ class PicksTheNth:
         return sequence[self._index]
 
 
-class WandererTest(unittest.TestCase):
+class SimpleGhostStrategyTest(unittest.TestCase):
     """The ghost the game ships with: straight on, then a turn at random."""
 
     def test_it_carries_straight_on_where_the_cell_ahead_is_open(self):
-        wanderer = Wanderer(PicksTheNth())
+        strategy = SimpleGhostStrategy(PicksTheNth())
 
-        step = wanderer.next_step(surroundings(CORRIDOR, (1, 1), (0, 1)))
+        step = strategy.next_step(surroundings(CORRIDOR, (1, 1), (0, 1)))
 
         self.assertEqual((0, 1), step)
 
     def test_carrying_straight_on_costs_no_randomness(self):
         """Otherwise every seeded game would burn a number a tick doing nothing."""
         rng = PicksTheNth()
-        wanderer = Wanderer(rng)
+        strategy = SimpleGhostStrategy(rng)
 
-        wanderer.next_step(surroundings(CORRIDOR, (1, 1), (0, 1)))
+        strategy.next_step(surroundings(CORRIDOR, (1, 1), (0, 1)))
 
         self.assertEqual([], rng.offered)
 
     def test_it_turns_where_the_cell_ahead_is_wall(self):
-        wanderer = Wanderer(PicksTheNth())
+        strategy = SimpleGhostStrategy(PicksTheNth())
 
-        step = wanderer.next_step(surroundings(ELBOW, (1, 2), (0, 1)))
+        step = strategy.next_step(surroundings(ELBOW, (1, 2), (0, 1)))
 
         self.assertEqual((1, 0), step, "it walked into the end of the corridor")
 
     def test_every_turn_but_the_way_it_came_is_offered(self):
         """The way back is open here, which is what makes the exclusion visible."""
         rng = PicksTheNth()
-        wanderer = Wanderer(rng)
+        strategy = SimpleGhostStrategy(rng)
 
-        wanderer.next_step(surroundings(ELBOW, (1, 2), (0, 1)))
+        strategy.next_step(surroundings(ELBOW, (1, 2), (0, 1)))
 
         self.assertEqual([((1, 0),)], rng.offered, "it was offered the way it came")
 
     def test_it_reverses_only_where_there_is_nothing_else(self):
         rng = PicksTheNth()
-        wanderer = Wanderer(rng)
+        strategy = SimpleGhostStrategy(rng)
 
-        step = wanderer.next_step(surroundings(DEAD_END, (1, 2), (0, 1)))
+        step = strategy.next_step(surroundings(DEAD_END, (1, 2), (0, 1)))
 
         self.assertEqual((0, -1), step)
         self.assertEqual([], rng.offered, "reversing is not a choice, so nothing was chosen")
 
     def test_a_heading_pointing_at_a_wall_is_coped_with(self):
         """The first tick of a game has a heading the ghost never actually took."""
-        wanderer = Wanderer(PicksTheNth())
+        strategy = SimpleGhostStrategy(PicksTheNth())
 
-        step = wanderer.next_step(surroundings(CORRIDOR, (1, 1), (-1, 0)))
+        step = strategy.next_step(surroundings(CORRIDOR, (1, 1), (-1, 0)))
 
         self.assertEqual((0, 1), step)
 
     def test_it_never_returns_a_step_into_a_wall(self):
         maze = Maze._from_rows(RING)
-        wanderer = Wanderer(random.Random(1))
+        strategy = SimpleGhostStrategy(random.Random(1))
         position, heading = (1, 1), (0, 1)
 
         for _ in range(200):
-            heading = wanderer.next_step(
+            heading = strategy.next_step(
                 Surroundings(maze=maze, position=position, heading=heading, player=(1, 1))
             )
             position = (position[0] + heading[0], position[1] + heading[1])
 
             self.assertTrue(
                 maze.is_open(*position),
-                "the wanderer stepped onto {}".format(position),
+                "the strategy stepped onto {}".format(position),
             )
 
     def test_the_same_seed_gives_the_same_turns(self):
-        """A seeded wanderer is what makes a whole seeded game reproducible."""
+        """A seeded strategy is what makes a whole seeded game reproducible."""
         junction = surroundings(RING, (1, 2), (1, 0))
 
-        first = [Wanderer(random.Random(3)).next_step(junction) for _ in range(20)]
-        second = [Wanderer(random.Random(3)).next_step(junction) for _ in range(20)]
+        def turns():
+            return [
+                SimpleGhostStrategy(random.Random(3)).next_step(junction)
+                for _ in range(20)
+            ]
+
+        first, second = turns(), turns()
 
         self.assertEqual(first, second)
 
     def test_it_brings_its_own_randomness_when_given_none(self):
-        step = Wanderer().next_step(surroundings(RING, (1, 2), (1, 0)))
+        step = SimpleGhostStrategy().next_step(surroundings(RING, (1, 2), (1, 0)))
 
         self.assertIn(step, ((0, -1), (0, 1)))
 

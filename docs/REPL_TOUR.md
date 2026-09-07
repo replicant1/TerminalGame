@@ -189,7 +189,7 @@ the game is ever told:
 The score went up once and then stayed. Walking back over a cell that has
 already been cleared scores nothing, because the pill is gone — the whole of
 that rule is one character comparison in
-[`_take_pill`](../terminalgame/presentation/view_model.py#L340).
+[`_take_pill`](../terminalgame/presentation/view_model.py#L342).
 
 A move into wall is refused, and refused *before* anything is published:
 

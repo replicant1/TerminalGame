@@ -547,7 +547,7 @@ class EndingTest(unittest.TestCase):
 class SwappableGhostTest(unittest.TestCase):
     """The ViewModel moves the ghost; a strategy passed in decides where to.
 
-    None of these build a Wanderer. That is the whole point of the seam: the
+    None of these build a SimpleGhostStrategy. That is the whole point of the seam: the
     ViewModel takes any GhostStrategy and never learns which kind it got, so a
     test can hand it one whose next move is known in advance -- which no
     seeded wanderer in a randomly carved maze ever is.

@@ -8,12 +8,12 @@ into a game without the rules of the game changing around it: the ViewModel
 takes one as a constructor argument and never learns which kind it got.
 
 A strategy is handed a `Surroundings` rather than a list of arguments, because
-the useful strategies do not all need the same things. `Wanderer` below reads
-only the maze and its own heading, while a ghost that hunts needs the player's
-cell as well -- and a later one that keeps out of another ghost's way would
-need something neither of them asks for. Growing the value object leaves every
-existing strategy compiling and running unchanged, which adding a fifth
-positional parameter would not.
+the useful strategies do not all need the same things. The
+`SimpleGhostStrategy` below reads only the maze and its own heading, while a
+ghost that hunts needs the player's cell as well -- and a later one that keeps
+out of another ghost's way would need something neither of them asks for.
+Growing the value object leaves every existing strategy compiling and running
+unchanged, which adding a fifth positional parameter would not.
 """
 
 import random
@@ -103,7 +103,7 @@ def open_steps(
     )
 
 
-class Wanderer(GhostStrategy):
+class SimpleGhostStrategy(GhostStrategy):
     """Carries straight on where it can, turns at random where it cannot.
 
     The ghost the game ships with. It does not hunt: it holds its heading

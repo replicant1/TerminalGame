@@ -6,7 +6,7 @@
   A companion to docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md.
 
   The arena below is a port of Maze._carve and Maze._braid, and the movement is
-  a port of Wanderer.next_step. The random numbers come from two
+  a port of SimpleGhostStrategy.next_step. The random numbers come from two
   MT19937 streams seeded and drawn from exactly as CPython's random module does
   -- one for the maze, one for the ghost's turns -- which is what
   GameViewModel(seed=n) makes. So a seed typed in here gives the arena, the
@@ -140,7 +140,7 @@
     <b>The rule, in three lines.</b> Try the cell ahead; if it is corridor, move
     there and keep going. Otherwise collect the sides that are corridor and are not
     the way it came, draw one of them at random, and turn. If there are none — a
-    dead end — reverse. That is <code>Wanderer.next_step</code> in full,
+    dead end — reverse. That is <code>SimpleGhostStrategy.next_step</code> in full,
     and there is nothing else: no target, no distance, no path.
   </p>
   <p class="note">
@@ -355,11 +355,11 @@ function listed(names) {
 }
 
 /**
- * Replays Wanderer.next_step as a list of ticks, each one move and
+ * Replays SimpleGhostStrategy.next_step as a list of ticks, each one move and
  * the reason for it. The draws happen in the order the Python makes them.
  */
 function ghostSteps(grid, player, start, seed, maxTicks) {
-  var rng = new Mt(seed);           // the Wanderer's own Random(seed)
+  var rng = new Mt(seed);           // the SimpleGhostStrategy's own Random(seed)
   var ghost = start.slice();
   var step = [0, 1];                // the opening heading is east
   var steps = [], trail = [ghost.slice()];

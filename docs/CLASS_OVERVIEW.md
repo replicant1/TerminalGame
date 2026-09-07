@@ -71,7 +71,7 @@ classDiagram
         +next_step(surroundings)* Step
     }
 
-    class Wanderer {
+    class SimpleGhostStrategy {
         <<presentation>>
         +next_step(surroundings) Step
     }
@@ -139,7 +139,7 @@ classDiagram
     GameViewModel *-- Maze : carves one at startup
     GameViewModel *-- StateFlow : owns the state flow
     GameViewModel o-- GhostStrategy : asks it where the ghost goes
-    Wanderer --|> GhostStrategy : the one the game ships with
+    SimpleGhostStrategy --|> GhostStrategy : the one the game ships with
     GhostStrategy ..> Surroundings : is handed one a tick
     Surroundings ..> Maze : asks which cells are open
     StateFlow ..> ViewState : T holds
@@ -161,8 +161,9 @@ The one-way flow the diagram encodes:
 for anything — it subscribes once and is pushed complete frames.
 
 The one hollow arrow is the app's only place to plug something in.
-`GameViewModel` holds a `GhostStrategy` rather than a `Wanderer`, so a
-different ghost is a constructor argument rather than an edit to the game.
+`GameViewModel` holds a `GhostStrategy` rather than a
+`SimpleGhostStrategy`, so a different ghost is a constructor argument rather
+than an edit to the game.
 
 ---
 
@@ -180,12 +181,12 @@ different ghost is a constructor argument rather than an edit to the game.
 > takes one as a constructor argument and never learns which kind it got.
 >
 > A strategy is handed a `Surroundings` rather than a list of arguments, because
-> the useful strategies do not all need the same things. `Wanderer` below reads
-> only the maze and its own heading, while a ghost that hunts needs the player's
-> cell as well -- and a later one that keeps out of another ghost's way would
-> need something neither of them asks for. Growing the value object leaves every
-> existing strategy compiling and running unchanged, which adding a fifth
-> positional parameter would not.
+> the useful strategies do not all need the same things. The
+> `SimpleGhostStrategy` below reads only the maze and its own heading, while a
+> ghost that hunts needs the player's cell as well -- and a later one that keeps
+> out of another ghost's way would need something neither of them asks for.
+> Growing the value object leaves every existing strategy compiling and running
+> unchanged, which adding a fifth positional parameter would not.
 
 ### `Surroundings` — `@dataclass(frozen=True)`
 
@@ -216,7 +217,7 @@ different ghost is a constructor argument rather than an edit to the game.
 > **Returns**
 > - One of `STEPS`. It should land on an open cell: a step into a wall is refused by the caller and the ghost stands still for that tick, which is a strategy quietly doing nothing rather than a ghost inside a wall.
 
-### `Wanderer` — inherits `GhostStrategy`
+### `SimpleGhostStrategy` — inherits `GhostStrategy`
 
 > Carries straight on where it can, turns at random where it cannot.
 >
