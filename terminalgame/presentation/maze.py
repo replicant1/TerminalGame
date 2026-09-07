@@ -340,10 +340,11 @@ class Maze:
             if not unvisited:
                 stack.pop()
                 continue
-            next_row, next_col = rng.choice(unvisited)
-            self._open[(row + next_row) // 2][(col + next_col) // 2] = True
-            self._open[next_row][next_col] = True
-            stack.append((next_row, next_col))
+            next_junction = rng.choice(unvisited)
+            wall = _wall_between((row, col), next_junction)
+            self._open[wall[0]][wall[1]] = True
+            self._open[next_junction[0]][next_junction[1]] = True
+            stack.append(next_junction)
 
     def _braid(
         self, rng: random.Random, junction_rows: Tuple[int, ...],
@@ -374,13 +375,14 @@ class Maze:
                         continue
                     exits, closed = 0, []
                     for d_row, d_col in _JUNCTION_STEPS:
-                        if not is_junction(row + d_row, col + d_col):
+                        neighbour = (row + d_row, col + d_col)
+                        if not is_junction(*neighbour):
                             continue
-                        wall = (row + d_row // 2, col + d_col // 2)
+                        wall = _wall_between((row, col), neighbour)
                         if self._open[wall[0]][wall[1]]:
                             exits += 1
                         else:
-                            closed.append((wall, (row + d_row, col + d_col)))
+                            closed.append((wall, neighbour))
                     if exits > 1 or not closed:
                         continue
                     wall, junction = rng.choice(closed)
@@ -412,6 +414,25 @@ class Maze:
         return "Maze({}x{}, {} open cells)".format(
             self.rows, self.cols, len(self._open_cells())
         )
+
+
+def _wall_between(a: Cell, b: Cell) -> Cell:
+    """Returns the wall cell separating two junctions.
+
+    Junctions sit two cells apart, so the one cell between them is their
+    midpoint -- and it is the only cell either pass ever opens to join a pair
+    of them. Both passes used to spell that arithmetic out, and differently:
+    the carve halved the sum of two cells, the braid halved a step. Both were
+    right, and a reader had to satisfy themselves of each separately.
+
+    Args:
+        a: One junction.
+        b: A junction two cells away from it, in one of `_JUNCTION_STEPS`.
+
+    Returns:
+        The single cell lying between the two.
+    """
+    return ((a[0] + b[0]) // 2, (a[1] + b[1]) // 2)
 
 
 def _junction_test(
