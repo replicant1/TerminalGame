@@ -22,7 +22,7 @@ sat on top of them. Taking a pill means the arena is no longer a constant, and
 the way that was arranged is the interesting part.
 
 The pill layer is kept twice over. There is
-[a list of rows](../../terminalgame/presentation/view_model.py#L273) that can be
+[a list of rows](../../terminalgame/presentation/view_model.py#L275) that can be
 edited, and there is the version handed out in pictures, which cannot be
 altered by anyone. When a pill is taken, one character in the editable list is
 replaced with a blank, and a fresh unalterable copy is made from it. That
@@ -92,14 +92,14 @@ left behind rather than as something happening underfoot.
 
 **The pill under the player at the start is taken silently.** The game places
 the player on a corridor cell, and every corridor cell has a pill. That one is
-[removed without scoring](../../terminalgame/presentation/view_model.py#L281),
+[removed without scoring](../../terminalgame/presentation/view_model.py#L283),
 which is why the opening score reads zero rather than one, and why a pill
 nobody can see is never the last one the game is waiting for.
 
 | Class | What it represents, and its part in this scenario |
 |---|---|
 | [`main`](../../terminalgame/app/main.py) | The way into the program. In this scenario it does nothing new: it turns a key into a direction, exactly as it does for any other move, and never learns that anything was eaten |
-| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L227) | Everything the game knows about where things are and what has been taken. In this scenario it is the **bookkeeper**: [`on_direction`](../../terminalgame/presentation/view_model.py#L310) moves the player, [`_take_pill`](../../terminalgame/presentation/view_model.py#L340) clears the cell if it still has a pill, and only then does the score go up |
+| [`GameViewModel`](../../terminalgame/presentation/view_model.py#L227) | Everything the game knows about where things are and what has been taken. In this scenario it is the **bookkeeper**: [`on_direction`](../../terminalgame/presentation/view_model.py#L312) moves the player, [`_take_pill`](../../terminalgame/presentation/view_model.py#L342) clears the cell if it still has a pill, and only then does the score go up |
 | [`Maze`](../../terminalgame/presentation/maze.py#L31) | The shape of the arena. In this scenario it is the **gate**: [`is_open`](../../terminalgame/presentation/maze.py#L128) decides whether the move happens at all. It knows nothing about pills, and is never told one has gone |
 | [`StateFlow`](../../terminalgame/util/flow.py#L13) | The carrier that holds the current picture, unchanged in its behaviour by any of this |
 | [`GameScreen`](../../terminalgame/ui/screen.py#L59) | The painter. It is handed a picture whose pill layer differs from the last one by a single character, and it never has to be told that is what changed |
@@ -134,11 +134,11 @@ sequenceDiagram
 | Step | Message | What is going on |
 |---:|---|---|
 | 1 | presses an arrow key | Nothing here is specific to eating. The key is gathered, checked against the quit keys, and looked up in the table of directions, exactly as described in the [arrow key scenario](an-arrow-key-moves-the-player-and-repaints-the-screen.md) |
-| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L310)`(0, 1)` | A pair of numbers meaning "no change to the row, one more column". The view model[^viewmodel] still never learns that a key exists |
+| 2 | [`on_direction`](../../terminalgame/presentation/view_model.py#L312)`(0, 1)` | A pair of numbers meaning "no change to the row, one more column". The view model[^viewmodel] still never learns that a key exists |
 | 3 | `is_open(the cell the step lands in)` | The wall check comes **first**, before any question about pills. A step into wall is refused outright and nothing else in this document happens: no pill is taken, no score changes, nothing is published |
 | 4 | yes, that cell is corridor | The maze answers about a cell, not a character position, and it has no idea whether that cell still has its pill. The two questions are kept apart on purpose: where the player may walk is a property of the maze, and what is left to collect is not |
 | 5 | puts the player there | One whole cell, never a fraction of one |
-| 6 | [`_take_pill`](../../terminalgame/presentation/view_model.py#L340)`(that cell)` | The cell is turned into a character position — the row as it stands, and the column doubled, because a cell is [two characters wide](../../terminalgame/presentation/state.py#L27) and the pill sits in the left one |
+| 6 | [`_take_pill`](../../terminalgame/presentation/view_model.py#L342)`(that cell)` | The cell is turned into a character position — the row as it stands, and the column doubled, because a cell is [two characters wide](../../terminalgame/presentation/state.py#L27) and the pill sits in the left one |
 | 7 | finds a pill, blanks one character, makes a fresh copy of the layer | The character at that position is compared against [the pill mark](../../terminalgame/presentation/view_model.py#L50). If it is anything else — because the player has walked here before — the answer is no, and steps 8 and 9 do not happen. This is the whole of the rule that a corridor cannot be eaten twice |
 | 8 | adds one to the score | One point per pill, and the score is only ever raised here. Nothing else in the program can change it |
 | 9 | counts down the pills left, and finds some remain | The count is what decides whether the game is over, and it is covered in [The last pill is eaten and the game is over](the-last-pill-is-eaten-and-the-game-is-over.md). On this pass it simply goes down by one |

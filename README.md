@@ -244,7 +244,7 @@ by itself when asked to run the game.
 | Playfield size | `PLAYFIELD_ROWS` / `PLAYFIELD_COLS` in `terminalgame/presentation/state.py` |
 | Cell shape | `CELL_ROWS` / `CELL_COLS` in `terminalgame/presentation/state.py` |
 | The maze | `Maze.generate()` in `terminalgame/presentation/maze.py` |
-| How the ghost moves | a `GhostStrategy` passed to `GameViewModel(ghost=...)`; the one the game ships with is `Wanderer` in `terminalgame/presentation/ghost.py` |
+| How the ghost moves | a `GhostStrategy` passed to `GameViewModel(ghost=...)`; the one the game ships with is `SimpleGhostStrategy` in `terminalgame/presentation/ghost.py` |
 | Wall, pill and sprite glyphs | the constants at the top of `terminalgame/presentation/view_model.py` |
 | Colours | `_init_colors()` in `terminalgame/ui/screen.py` |
 | Window title, font size, background | `WINDOW_TITLE` / `FONT_SIZE` / `BACKGROUND_COLOR` in `terminalgame/app/launcher.py` |

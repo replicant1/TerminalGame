@@ -8,7 +8,7 @@ import random
 from typing import Optional, Tuple
 
 from ..util.flow import StateFlow
-from .ghost import GhostStrategy, Step, Surroundings, Wanderer
+from .ghost import GhostStrategy, SimpleGhostStrategy, Step, Surroundings
 from .maze import Maze
 from .state import (
     CELL_COLS,
@@ -243,8 +243,8 @@ class GameViewModel:
                 about one. None gives a different maze every run.
             ghost: How the ghost decides where to go, which is the one part of
                 the game that can be swapped out from here. None gives the
-                `Wanderer` the game ships with, seeded from `seed` so a game
-                stays reproducible. A strategy passed in brings its own
+                `SimpleGhostStrategy` the game ships with, seeded from
+                `seed` so a game stays reproducible. A strategy passed in brings its own
                 randomness, if it wants any, and `seed` then reaches the maze
                 alone.
         """
@@ -252,7 +252,9 @@ class GameViewModel:
         # anything about one. Left out, every run gets a different maze.
         self._maze = Maze.generate(_odd(GRID_ROWS), _odd(GRID_COLS), seed=seed)
         self._walls, self._pills = _to_layers(self._maze)
-        self._ghost = ghost if ghost is not None else Wanderer(random.Random(seed))
+        self._ghost = (
+            ghost if ghost is not None else SimpleGhostStrategy(random.Random(seed))
+        )
         self._tick_count = 0
         # Positions are in game cells, not characters. Both have to start on
         # open corridor, which no fixed coordinate can promise once the maze

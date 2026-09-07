@@ -74,10 +74,10 @@ auto-repeat provides.
 So the player's speed is however fast they press, and the ghost's is fixed.
 Neither of them is chasing anything: the ghost carries straight on until the
 cell ahead is wall, and only then picks at random from the ways out that are
-not the way it came. That rule is a `GhostStrategy` — `Wanderer`, the one the
-game is built with — rather than something `GameViewModel` does itself. It is
-handed the player's cell every tick along with everything else, and does
-nothing with it.
+not the way it came. That rule is a `GhostStrategy` — `SimpleGhostStrategy`,
+the one the game is built with — rather than something `GameViewModel` does
+itself. It is handed the player's cell every tick along with everything else,
+and does nothing with it.
 
 ## The two endings inside the game
 

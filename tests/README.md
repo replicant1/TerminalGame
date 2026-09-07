@@ -67,7 +67,7 @@ what you broke.
 | [The launcher opens the game in its own window](../docs/scenarios/the-launcher-opens-the-game-in-its-own-terminal-window.md) | `test_launcher.py` — `CommandTest`, `SpawnTest`, `SentinelTest`, `WaitTest`, `LaunchTest` |
 | [A terminal too small is refused](../docs/scenarios/a-terminal-too-small-to-hold-the-playfield-is-refused.md) | `test_screen.py` — `LifecycleTest.test_a_terminal_too_small_to_hold_the_playfield_is_refused`; `test_main.py` — `PlayTest.test_a_terminal_too_small_exits_one_and_says_why` |
 | [The first frame is painted on subscribing](../docs/scenarios/the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md) | `test_screen.py` — `AttachTest`; `test_flow.py` — `StateFlowTest.test_subscribing_delivers_the_current_value_at_once` |
-| [A clock tick moves the ghost](../docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `test_ghost.py` — `WandererTest` for the choosing; `test_view_model.py` — `GhostMovementTest` for the moving, and `SwappableGhostTest` for the seam between them; `test_clock.py` — `GameClockTest`; `test_main.py` — `GameLoopTest.test_the_clock_is_polled_between_keys_so_the_ghost_moves` |
+| [A clock tick moves the ghost](../docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `test_ghost.py` — `SimpleGhostStrategyTest` for the choosing; `test_view_model.py` — `GhostMovementTest` for the moving, and `SwappableGhostTest` for the seam between them; `test_clock.py` — `GameClockTest`; `test_main.py` — `GameLoopTest.test_the_clock_is_polled_between_keys_so_the_ghost_moves` |
 | [An arrow key moves the player](../docs/scenarios/an-arrow-key-moves-the-player-and-repaints-the-screen.md) | `test_view_model.py` — `PlayerMovementTest`; `test_main.py` — `GameLoopTest` |
 | [A pill is eaten and the score goes up](../docs/scenarios/a-pill-is-eaten-and-the-score-goes-up.md) | `test_view_model.py` — `PlayerMovementTest`, and `NewGameTest.test_the_pill_under_the_player_is_taken_without_being_scored` |
 | [An unchanged frame is dropped](../docs/scenarios/an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `test_flow.py` — `StateFlowTest.test_emitting_an_equal_value_is_dropped`; `test_view_model.py` — `PlayerMovementTest.test_a_press_into_a_wall_publishes_nothing_at_all` |
@@ -145,8 +145,9 @@ back. It costs about a minute and it is the only proof the test works.
 
 The ghost tests were added later and checked the same way, separately from the
 forty-two above: four faults — the wall guard dropped from `_advance_ghost`,
-the `Wanderer` allowed to double back, its carry-straight-on branch removed,
-and the player's cell not passed through to the strategy — and each one turned
+the `SimpleGhostStrategy` allowed to double back, its carry-straight-on branch
+removed, and the player's cell not passed through to the strategy — and each
+one turned
 red in the test written for it. A fifth check failed to discriminate and the
 fixture was replaced: `RING` never puts an open cell *behind* a blocked ghost,
 so it could not tell "refuses to double back" from "has nowhere to double back

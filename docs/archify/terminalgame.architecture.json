@@ -103,7 +103,7 @@
       "type": "backend",
       "label": "GhostStrategy",
       "sublabel": "picks the ghost's next step",
-      "tag": "Wanderer",
+      "tag": "SimpleGhostStrategy",
       "pos": [
         1120,
         50
