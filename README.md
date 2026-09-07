@@ -32,6 +32,7 @@ recorded a frame at a time through the same false terminal.
       presentation/
         state.py                   ViewState     — one immutable frame
         maze.py                    Maze          — the carved playfield
+        ghost.py                   GhostStrategy — how a ghost picks its next step
         view_model.py              GameViewModel — game logic, owns the state
       ui/
         screen.py                  GameScreen    — curses rendering + keyboard
@@ -243,6 +244,7 @@ by itself when asked to run the game.
 | Playfield size | `PLAYFIELD_ROWS` / `PLAYFIELD_COLS` in `terminalgame/presentation/state.py` |
 | Cell shape | `CELL_ROWS` / `CELL_COLS` in `terminalgame/presentation/state.py` |
 | The maze | `Maze.generate()` in `terminalgame/presentation/maze.py` |
+| How the ghost moves | a `GhostStrategy` passed to `GameViewModel(ghost=...)`; the one the game ships with is `Wanderer` in `terminalgame/presentation/ghost.py` |
 | Wall, pill and sprite glyphs | the constants at the top of `terminalgame/presentation/view_model.py` |
 | Colours | `_init_colors()` in `terminalgame/ui/screen.py` |
 | Window title, font size, background | `WINDOW_TITLE` / `FONT_SIZE` / `BACKGROUND_COLOR` in `terminalgame/app/launcher.py` |
@@ -257,9 +259,11 @@ the maze is recarved or the eaten pills stay eaten, and where the player and
 the ghost stand when play resumes.
 
 The ghost does not hunt. It carries straight on until it runs out of corridor
-and then turns at random, so it finds the player by wandering into them. It
-knows where the player is -- the same object holds both positions -- and does
-nothing with that.
+and then turns at random, so it finds the player by wandering into them. It is
+handed the player's cell every tick and does nothing with it. The deciding is
+its own object now -- a `GhostStrategy`, which `GameViewModel` takes as a
+constructor argument -- so a ghost that does use that cell is a new class in
+`ghost.py` and one argument at the call site, rather than an edit to the game.
 
 The maze is random rather than authored. A real Pac-Man maze is 28x31 cells,
 which at one row by two columns per cell needs a 56 by 32 window rather than
@@ -325,14 +329,16 @@ documents assume -- cell, layer, glyph, braid, island, sentinel -- and starts
 with the distinction worth getting straight before any of it: a cell is one
 character row by two character columns, and the game counts in cells.
 
-[`tests/`](tests/) is 256 tests in plain `unittest`, none of which needs a
+[`tests/`](tests/) is 291 tests in plain `unittest`, none of which needs a
 terminal. Nobody should read all of it: the
 [test index](tests/README.md) picks out ten that cross the whole game in about
 twelve minutes, and maps each scenario document to the tests that pin it.
 
 [`docs/lessons/`](docs/lessons/) is for a reader who knows Kotlin or Java and
-not Python. Two documents, each covering the subset of the language one file
+not Python. Five documents, each covering the subset of the language one file
 actually uses and nothing else: [`view_model.py`](docs/lessons/view_model_py.md)
-for the everyday syntax, and [`flow.py`](docs/lessons/flow_py.md) for generics,
-functions as values and closures. Worth reading before the scenarios if the
-language is in the way.
+for the everyday syntax, [`flow.py`](docs/lessons/flow_py.md) for generics,
+functions as values and closures, and one each for
+[`clock.py`](docs/lessons/clock_py.md), [`screen.py`](docs/lessons/screen_py.md)
+and [`launcher.py`](docs/lessons/launcher_py.md). Worth reading before the
+scenarios if the language is in the way.

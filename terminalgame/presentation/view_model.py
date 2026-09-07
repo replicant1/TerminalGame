@@ -8,6 +8,7 @@ import random
 from typing import Optional, Tuple
 
 from ..util.flow import StateFlow
+from .ghost import GhostStrategy, Step, Surroundings, Wanderer
 from .maze import Maze
 from .state import (
     CELL_COLS,
@@ -231,19 +232,27 @@ class GameViewModel:
     curses: it publishes frames and never learns who is collecting them.
     """
 
-    def __init__(self, seed: Optional[int] = None) -> None:
+    def __init__(
+        self, seed: Optional[int] = None, ghost: Optional[GhostStrategy] = None
+    ) -> None:
         """Carves a maze, places the player and the ghost, and paints frame one.
 
         Args:
             seed: Seed for the maze and the ghost's choices. A seed makes a
                 game reproducible, which is what lets a test assert anything
                 about one. None gives a different maze every run.
+            ghost: How the ghost decides where to go, which is the one part of
+                the game that can be swapped out from here. None gives the
+                `Wanderer` the game ships with, seeded from `seed` so a game
+                stays reproducible. A strategy passed in brings its own
+                randomness, if it wants any, and `seed` then reaches the maze
+                alone.
         """
         # A seed makes a maze reproducible, which is what lets a test assert
         # anything about one. Left out, every run gets a different maze.
         self._maze = Maze.generate(_odd(GRID_ROWS), _odd(GRID_COLS), seed=seed)
         self._walls, self._pills = _to_layers(self._maze)
-        self._rng = random.Random(seed)
+        self._ghost = ghost if ghost is not None else Wanderer(random.Random(seed))
         self._tick_count = 0
         # Positions are in game cells, not characters. Both have to start on
         # open corridor, which no fixed coordinate can promise once the maze
@@ -254,7 +263,11 @@ class GameViewModel:
         self._ghost_row, self._ghost_col = self._maze.farthest_open(
             self._player_row, self._player_col
         )
-        self._ghost_step = (0, 1)
+        # The heading the strategy is told about on the first tick. Nothing
+        # has moved yet, so this is a way the ghost never actually came, and
+        # it may well point straight at a wall -- which is why a strategy has
+        # to cope with that rather than trust the heading.
+        self._ghost_step: Step = (0, 1)
         # The pill layer is no longer fixed for the game, so it is kept as a
         # mutable list of rows and re-frozen into `self._pills` each time one
         # is eaten -- once per pill, not once per frame.
@@ -376,29 +389,31 @@ class GameViewModel:
         )
 
     def _advance_ghost(self) -> None:
-        """Moves the ghost one cell, carrying straight on where possible.
+        """Asks the strategy which way to go, and moves the ghost there.
 
-        Because the maze has no dead ends, a ghost that has just arrived
-        somewhere always has a way on that is not the way it came. Reversing
-        is a last resort rather than the usual outcome.
+        Where it goes is the strategy's business; that it goes exactly one
+        open cell is this method's. A step onto a wall is refused rather than
+        trusted, so a strategy with a bug in it leaves the ghost standing
+        still for a tick instead of putting it inside the maze -- where it
+        would be drawn over a wall and could never be caught up with.
+
+        The heading is only updated when the ghost actually moves, so a
+        refused step leaves the strategy facing the way it was and free to
+        choose again next tick.
         """
-        d_row, d_col = self._ghost_step
-        ahead = (self._ghost_row + d_row, self._ghost_col + d_col)
-        if self._maze.is_open(*ahead):
-            self._ghost_row, self._ghost_col = ahead
+        step = self._ghost.next_step(
+            Surroundings(
+                maze=self._maze,
+                position=(self._ghost_row, self._ghost_col),
+                heading=self._ghost_step,
+                player=(self._player_row, self._player_col),
+            )
+        )
+        row, col = self._ghost_row + step[0], self._ghost_col + step[1]
+        if not self._maze.is_open(row, col):
             return
-        back = (-d_row, -d_col)
-        turns = [
-            step
-            for step in ((-1, 0), (1, 0), (0, -1), (0, 1))
-            if step != back
-            and self._maze.is_open(self._ghost_row + step[0], self._ghost_col + step[1])
-        ]
-        if not turns:
-            turns = [back]
-        self._ghost_step = self._rng.choice(turns)
-        self._ghost_row += self._ghost_step[0]
-        self._ghost_col += self._ghost_step[1]
+        self._ghost_step = step
+        self._ghost_row, self._ghost_col = row, col
 
     def _status_line(self) -> str:
         """Builds the row of readings under the playfield.

@@ -2,7 +2,8 @@
 
 For somebody fluent in Kotlin or Java who has not written Python. It covers the
 subset the game's [view model](../../terminalgame/presentation/view_model.py)
-actually uses, and nothing else. Every snippet below is from that file.
+actually uses, and nothing else. Every snippet below is from that file, bar the
+one marked as coming from the ghost strategy it delegates to.
 
 ## Five differences to absorb before any syntax
 
@@ -86,7 +87,7 @@ _art}` is the same thing producing a `Set`.
 
 | Python | Kotlin |
 |---|---|
-| `d_row, d_col = self._ghost_step` | `val (dRow, dCol) = ghostStep` |
+| `d_row, d_col = surroundings.heading` | `val (dRow, dCol) = heading` |
 | `walls, pills = [], []` | two declarations at once |
 | `self._maze.is_open(*ahead)` | spread a pair into two arguments |
 
@@ -140,13 +141,14 @@ assigning into it. `line[:n]` and `line[n+1:]` are `substring(0, n)` and
 `substring(n+1)`; negative indices count from the end, so `line[-1]` is the last
 character.
 
-Moving the ghost:
+Choosing where the ghost goes, which lives next door in
+[`ghost.py`](../../terminalgame/presentation/ghost.py) — the view model applies
+the step, the strategy picks it:
 
 ```python
 if not turns:            # an empty list is falsey -- Kotlin: if (turns.isEmpty())
-    turns = [back]
-self._ghost_step = self._rng.choice(turns)
-self._ghost_row += self._ghost_step[0]
+    return back
+return self._rng.choice(turns)
 ```
 
 `if not turns` is the idiom you would write as `isEmpty()`. Empty list, empty
