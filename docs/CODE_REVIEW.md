@@ -8,7 +8,7 @@ been done.
   2,207 lines across 13 files, as a body of code rather than as a diff.
 - **Commit:** `0c702ef`, 2 September 2026. Line numbers are as of that commit,
   so they have drifted where a fix has landed since.
-- **Status:** as of `d1af551`, 3 September 2026. Seven of the thirteen are
+- **Status:** as of `0e37b7d`, 7 September 2026. Eight of the thirteen are
   fixed, every correctness finding among them. The findings themselves are
   left as they were written -- this is a review with its outcome recorded
   against it, not a review rewritten to match what happened next.
@@ -39,7 +39,7 @@ between a bug and a suspicion:
 | 9 | `launch` returns 0 for a game that never reported | `app/launcher.py:379` | Ambiguity | Reported | Open |
 | 10 | Rows built by `+=` on strings | `presentation/view_model.py:220` | Idiom | Confirmed in code | Open |
 | 11 | An undocumented two-column dead margin | `presentation/state.py:32` | Ambiguity | Reproduced | Open |
-| 12 | One midpoint, two spellings | `presentation/maze.py:331, 365` | Idiom | Confirmed in code | Open |
+| 12 | One midpoint, two spellings | `presentation/maze.py:331, 365` | Idiom | Confirmed in code | [Fixed](https://github.com/replicant1/TerminalGame/pull/52) |
 | 13 | A re-export rule the only consumer does not follow | `presentation/__init__.py` | Ambiguity | Confirmed in code | Open |
 
 ---
@@ -215,6 +215,13 @@ touching `_wall_cell`, `_pills_left` and `_take_pill` together.
 
 **Fixed** — [#40](https://github.com/replicant1/TerminalGame/pull/40), commit `85eb9a6`. Generation of the shipped size went from 0.66 to 0.47 ms.
 
+That fix put the same five lines into both passes rather than into one, and
+the duplication stood until
+[#51](https://github.com/replicant1/TerminalGame/pull/51), commit `e9f1b25`,
+which moved the test into `_junction_test` and had both passes ask for it.
+Not a finding of this review, since the code it describes did not exist at
+`0c702ef` — but it belongs here, recorded against the fix that introduced it.
+
 Both `_carve` and `_braid` define `is_junction` as `row in junction_rows and
 col in junction_cols`, where both are tuples, so each test is a linear scan;
 `_braid` re-runs its full sweep until a pass changes nothing. `FrozenSet` is
@@ -287,6 +294,8 @@ nothing wasted.
 
 `presentation/maze.py:331` and `:365` — **confirmed in code.**
 
+**Fixed** — [#52](https://github.com/replicant1/TerminalGame/pull/52), commit `0e37b7d`. `_wall_between` says it once and both passes ask for it; the mazes produced were compared cell for cell against the previous code over 200 seeds at five sizes, all 1000 identical.
+
 ```python
 self._open[(row + next_row) // 2][(col + next_col) // 2] = True   # _carve
 wall = (row + d_row // 2, col + d_col // 2)                       # _braid
@@ -342,10 +351,11 @@ The order this section originally recommended, kept as it was written:
 > The rest are tidiness, and 9, 11 and 13 are each a sentence of documentation
 > rather than a code change.
 
-That order was followed, and 4, 7 and 8 went with it. What is left is the
-tidiness: **6** and **12** are a docstring and a spelling, **10** is an idiom
-worth about two per cent of a call that runs once a game, and **9**, **11** and
-**13** are still a sentence of documentation each.
+That order was followed, and 4, 7 and 8 went with it. **12** was picked up
+later and out of that order, on a pass looking for simplifications rather than
+for faults. What is left is the tidiness: **6** is a docstring, **10** is an
+idiom worth about two per cent of a call that runs once a game, and **9**,
+**11** and **13** are still a sentence of documentation each.
 
 Nothing left here can produce a wrong result. The remaining correctness
 findings are in [the second review](CODE_REVIEW_2.md).
