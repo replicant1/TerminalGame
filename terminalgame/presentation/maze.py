@@ -18,7 +18,16 @@ part of an island rather than part of the border.
 """
 
 import random
-from typing import FrozenSet, Iterable, Iterator, List, Optional, Sequence, Tuple
+from typing import (
+    Callable,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 Cell = Tuple[int, int]
 Grid = List[List[bool]]
@@ -315,11 +324,7 @@ class Maze:
             junction_rows: The rows junctions sit on, every other row.
             junction_cols: The columns junctions sit on, every other column.
         """
-        junction_row_set = frozenset(junction_rows)
-        junction_col_set = frozenset(junction_cols)
-
-        def is_junction(row: int, col: int) -> bool:
-            return row in junction_row_set and col in junction_col_set
+        is_junction = _junction_test(junction_rows, junction_cols)
 
         start = (rng.choice(junction_rows), rng.choice(junction_cols))
         self._open[start[0]][start[1]] = True
@@ -359,11 +364,7 @@ class Maze:
             junction_rows: The rows junctions sit on, every other row.
             junction_cols: The columns junctions sit on, every other column.
         """
-        junction_row_set = frozenset(junction_rows)
-        junction_col_set = frozenset(junction_cols)
-
-        def is_junction(row: int, col: int) -> bool:
-            return row in junction_row_set and col in junction_col_set
+        is_junction = _junction_test(junction_rows, junction_cols)
 
         while True:
             changed = False
@@ -411,6 +412,36 @@ class Maze:
         return "Maze({}x{}, {} open cells)".format(
             self.rows, self.cols, len(self._open_cells())
         )
+
+
+def _junction_test(
+    junction_rows: Iterable[int], junction_cols: Iterable[int]
+) -> Callable[[int, int], bool]:
+    """Builds the test both generation passes ask of a cell.
+
+    A junction is a cell the maze can carve between, so one whose row and
+    column are both junction lines. Carving and braiding need exactly the same
+    test and neither of them owns it, which is why it is built out here rather
+    than written twice.
+
+    The lines are put into sets rather than searched as tuples because the
+    test runs in the innermost loop of a sweep that repeats until it changes
+    nothing, where a linear scan is needless work.
+
+    Args:
+        junction_rows: The rows junctions sit on, every other row.
+        junction_cols: The columns junctions sit on, every other column.
+
+    Returns:
+        A function taking a row and a column, reporting whether that cell is
+        a junction.
+    """
+    rows, cols = frozenset(junction_rows), frozenset(junction_cols)
+
+    def is_junction(row: int, col: int) -> bool:
+        return row in rows and col in cols
+
+    return is_junction
 
 
 def _distance(a: Cell, b: Cell) -> int:
