@@ -19,7 +19,14 @@ part of an island rather than part of the border.
 
 import random
 from typing import (
-    Callable, FrozenSet, Iterable, Iterator, List, Optional, Sequence, Tuple,
+    Callable,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
 )
 
 Cell = Tuple[int, int]
