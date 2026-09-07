@@ -10,6 +10,12 @@ reaching into it.
 
 import unittest
 
+from terminalgame.presentation.ghost import (
+    STEPS,
+    GhostStrategy,
+    Surroundings,
+    open_steps,
+)
 from terminalgame.presentation.maze import Maze
 from terminalgame.presentation.state import (
     CELL_COLS,
@@ -30,7 +36,6 @@ from terminalgame.presentation.view_model import (
 )
 
 SEED = 1
-STEPS = ((-1, 0), (1, 0), (0, -1), (0, 1))
 
 
 def sprite_in(state, color):
@@ -537,6 +542,133 @@ class EndingTest(unittest.TestCase):
             self.view_model.on_direction(*step)
 
         self.assertEqual(resting, player_cell(self.view_model.state.value))
+
+
+class SwappableGhostTest(unittest.TestCase):
+    """The ViewModel moves the ghost; a strategy passed in decides where to.
+
+    None of these build a Wanderer. That is the whole point of the seam: the
+    ViewModel takes any GhostStrategy and never learns which kind it got, so a
+    test can hand it one whose next move is known in advance -- which no
+    seeded wanderer in a randomly carved maze ever is.
+    """
+
+    def test_a_strategy_passed_in_moves_the_ghost_instead_of_the_default(self):
+        ghost = Recorder(lambda given: open_steps(given)[0])
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+        before = ghost_cell(view_model.state.value)
+
+        view_model.tick()
+
+        step = ghost.returned[0]
+        self.assertEqual(
+            (before[0] + step[0], before[1] + step[1]),
+            ghost_cell(view_model.state.value),
+        )
+
+    def test_the_strategy_is_asked_once_a_tick_and_not_otherwise(self):
+        ghost = Recorder(lambda given: open_steps(given)[0])
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+        self.assertEqual(0, len(ghost.seen), "it was asked while the game was still being set up")
+
+        view_model.tick()
+        view_model.tick()
+
+        self.assertEqual(2, len(ghost.seen))
+
+    def test_the_strategy_is_told_where_the_ghost_is_standing(self):
+        ghost = Recorder(lambda given: open_steps(given)[0])
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+        before = ghost_cell(view_model.state.value)
+
+        view_model.tick()
+        after_one_tick = ghost_cell(view_model.state.value)
+        view_model.tick()
+
+        self.assertEqual(before, ghost.seen[0].position)
+        self.assertEqual(after_one_tick, ghost.seen[1].position)
+
+    def test_the_strategy_is_told_where_the_player_is(self):
+        """So a ghost that hunts can be written without the ViewModel changing."""
+        ghost = Recorder(lambda given: open_steps(given)[0])
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+        step = uneaten_directions(view_model.state.value, player_cell(view_model.state.value))[0]
+
+        view_model.on_direction(*step)
+        view_model.tick()
+
+        self.assertEqual(player_cell(view_model.state.value), ghost.seen[0].player)
+
+    def test_the_strategy_is_told_the_step_the_ghost_last_took(self):
+        ghost = Recorder(lambda given: open_steps(given)[0])
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+
+        view_model.tick()
+        view_model.tick()
+
+        self.assertEqual(ghost.returned[0], ghost.seen[1].heading)
+
+    def test_a_step_onto_a_wall_leaves_the_ghost_standing_still(self):
+        """A strategy with a bug in it must not put the ghost inside the maze."""
+        ghost = Recorder(StepsOffTheBoard())
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+        before = ghost_cell(view_model.state.value)
+
+        for _ in range(3):
+            view_model.tick()
+
+        self.assertEqual(before, ghost_cell(view_model.state.value))
+
+    def test_a_refused_step_leaves_the_heading_alone(self):
+        """So the strategy is asked again from where it actually is."""
+        ghost = Recorder(StepsOffTheBoard())
+        view_model = GameViewModel(seed=SEED, ghost=ghost)
+
+        view_model.tick()
+        view_model.tick()
+
+        self.assertEqual(ghost.seen[0].heading, ghost.seen[1].heading)
+
+    def test_the_default_ghost_is_still_seeded_by_the_seed(self):
+        """Leaving `ghost` out has to give the game it always gave."""
+        played = GameViewModel(seed=SEED)
+        again = GameViewModel(seed=SEED)
+
+        for _ in range(20):
+            played.tick()
+            again.tick()
+
+        self.assertEqual(ghost_cell(played.state.value), ghost_cell(again.state.value))
+
+
+class Recorder(GhostStrategy):
+    """A strategy that answers however it was told to, and remembers being asked.
+
+    Args:
+        choose: Called with the Surroundings; its result is the step.
+    """
+
+    def __init__(self, choose):
+        self._choose = choose
+        self.seen = []
+        self.returned = []
+
+    def next_step(self, surroundings):
+        self.seen.append(surroundings)
+        self.returned.append(self._choose(surroundings))
+        return self.returned[-1]
+
+
+class StepsOffTheBoard:
+    """A strategy's answer that is always refused, however the maze came out.
+
+    Off the board rather than merely into a wall: a wall next to the ghost is
+    not something a test can count on, since a crossroads has none, while
+    outside the maze is refused wherever the ghost happens to be standing.
+    """
+
+    def __call__(self, surroundings):
+        return (-surroundings.maze.rows, 0)
 
 
 if __name__ == "__main__":

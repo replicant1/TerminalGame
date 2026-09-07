@@ -1,6 +1,6 @@
 # The test suite
 
-256 tests over eight files, in plain `unittest`. The project has no
+291 tests over nine files, in plain `unittest`. The project has no
 dependencies and the suite does not give it one.
 
 Nobody should read all of it. Most of these tests exist so that when something
@@ -14,7 +14,7 @@ the links keep working when a file is edited.
 
 ## Running it
 
-    python3 -m unittest discover -s tests -t .        # all 256, about 0.3s
+    python3 -m unittest discover -s tests -t .        # all 291, about 0.3s
 
 Nothing here needs a terminal, a window, or a network. `osascript` is never
 run, so the suite behaves the same on a machine with no Terminal.app.
@@ -67,7 +67,7 @@ what you broke.
 | [The launcher opens the game in its own window](../docs/scenarios/the-launcher-opens-the-game-in-its-own-terminal-window.md) | `test_launcher.py` — `CommandTest`, `SpawnTest`, `SentinelTest`, `WaitTest`, `LaunchTest` |
 | [A terminal too small is refused](../docs/scenarios/a-terminal-too-small-to-hold-the-playfield-is-refused.md) | `test_screen.py` — `LifecycleTest.test_a_terminal_too_small_to_hold_the_playfield_is_refused`; `test_main.py` — `PlayTest.test_a_terminal_too_small_exits_one_and_says_why` |
 | [The first frame is painted on subscribing](../docs/scenarios/the-first-frame-is-painted-when-the-screen-subscribes-to-the-view-model.md) | `test_screen.py` — `AttachTest`; `test_flow.py` — `StateFlowTest.test_subscribing_delivers_the_current_value_at_once` |
-| [A clock tick moves the ghost](../docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `test_view_model.py` — `GhostMovementTest`; `test_clock.py` — `GameClockTest`; `test_main.py` — `GameLoopTest.test_the_clock_is_polled_between_keys_so_the_ghost_moves` |
+| [A clock tick moves the ghost](../docs/scenarios/a-clock-tick-moves-the-ghost-and-repaints-the-screen.md) | `test_ghost.py` — `WandererTest` for the choosing; `test_view_model.py` — `GhostMovementTest` for the moving, and `SwappableGhostTest` for the seam between them; `test_clock.py` — `GameClockTest`; `test_main.py` — `GameLoopTest.test_the_clock_is_polled_between_keys_so_the_ghost_moves` |
 | [An arrow key moves the player](../docs/scenarios/an-arrow-key-moves-the-player-and-repaints-the-screen.md) | `test_view_model.py` — `PlayerMovementTest`; `test_main.py` — `GameLoopTest` |
 | [A pill is eaten and the score goes up](../docs/scenarios/a-pill-is-eaten-and-the-score-goes-up.md) | `test_view_model.py` — `PlayerMovementTest`, and `NewGameTest.test_the_pill_under_the_player_is_taken_without_being_scored` |
 | [An unchanged frame is dropped](../docs/scenarios/an-unchanged-frame-is-dropped-before-it-reaches-the-terminal.md) | `test_flow.py` — `StateFlowTest.test_emitting_an_equal_value_is_dropped`; `test_view_model.py` — `PlayerMovementTest.test_a_press_into_a_wall_publishes_nothing_at_all` |
@@ -93,11 +93,12 @@ In dependency order, which is also roughly easiest to hardest.
 |---|---:|---:|---|
 | [`test_flow.py`](test_flow.py) | 10 | 5 min | The pub/sub primitive: replay on subscribe, equal values dropped, a subscriber unsubscribing while being notified |
 | [`test_state.py`](test_state.py) | 13 | 4 min | Frozen frames compared by value — the equality the dropping rests on |
-| [`test_clock.py`](test_clock.py) | 13 | 5 min | Deadline arithmetic against a fake `time`: no drift, the catch-up cap, resynchronising |
+| [`test_clock.py`](test_clock.py) | 14 | 5 min | Deadline arithmetic against a fake `time`: no drift, the catch-up cap, resynchronising |
 | [`test_maze.py`](test_maze.py) | 43 | 10 min | The grid and its questions, then what generation promises, over four sizes and eight seeds |
-| [`test_view_model.py`](test_view_model.py) | 59 | 18 min | The game: the glyph table, the two layers, movement, scoring, the ghost, both endings |
-| [`test_screen.py`](test_screen.py) | 47 | 15 min | What reaches the terminal, and the curses lifetime, with no terminal attached |
-| [`test_main.py`](test_main.py) | 29 | 10 min | The game loop driven for real, then the command line |
+| [`test_ghost.py`](test_ghost.py) | 16 | 5 min | How a ghost picks its next step, against hand-built mazes of a few cells — no game and no terminal needed to ask |
+| [`test_view_model.py`](test_view_model.py) | 67 | 20 min | The game: the glyph table, the two layers, movement, scoring, the ghost, both endings |
+| [`test_screen.py`](test_screen.py) | 56 | 15 min | What reaches the terminal, and the curses lifetime, with no terminal attached |
+| [`test_main.py`](test_main.py) | 30 | 10 min | The game loop driven for real, then the command line |
 | [`test_launcher.py`](test_launcher.py) | 42 | 12 min | The shell line, the sentinel file, spawning and waiting — without `osascript` |
 | [`fakes.py`](fakes.py) | — | 6 min | The three stand-ins the rest of the suite is built on |
 
@@ -141,6 +142,15 @@ equivalent mutant — the bounds guard in `_put` is unobservable behind the
 **If you add a test, do the same to it.** Break the line it covers, watch it go
 red, read the message and check it names the real fault, then put the line
 back. It costs about a minute and it is the only proof the test works.
+
+The ghost tests were added later and checked the same way, separately from the
+forty-two above: four faults — the wall guard dropped from `_advance_ghost`,
+the `Wanderer` allowed to double back, its carry-straight-on branch removed,
+and the player's cell not passed through to the strategy — and each one turned
+red in the test written for it. A fifth check failed to discriminate and the
+fixture was replaced: `RING` never puts an open cell *behind* a blocked ghost,
+so it could not tell "refuses to double back" from "has nowhere to double back
+to". `ELBOW` was added for exactly that.
 
 ## What the suite cannot tell you
 

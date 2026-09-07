@@ -1,6 +1,7 @@
 """Skeleton for a retro character-based terminal game."""
 
 from .app import launcher
+from .presentation.ghost import GhostStrategy, Surroundings, Wanderer
 from .presentation.state import PLAYFIELD_COLS, PLAYFIELD_ROWS, Sprite, ViewState
 from .presentation.view_model import GameViewModel
 from .ui.screen import GameScreen, TerminalTooSmall
@@ -12,6 +13,9 @@ __all__ = [
     "GameClock",
     "GameScreen",
     "GameViewModel",
+    "GhostStrategy",
+    "Surroundings",
+    "Wanderer",
     "StateFlow",
     "Sprite",
     "ViewState",
