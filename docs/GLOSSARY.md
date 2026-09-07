@@ -81,6 +81,8 @@ Defined in [`util/`](../terminalgame/util) and driven from
 | Term | What it means here |
 |---|---|
 | **tick** | One fixed-timestep step of the simulation, every 0.15 seconds. The ghost moves on a tick; the player does not, moving on a key instead |
+| **ghost strategy** | The object that decides which way a ghost goes, and nothing else — it is handed the maze, the ghost's cell, its heading and the player's cell, and answers with a step. `GameViewModel` still owns where the ghost stands and does the moving, which is what lets a different ghost be a constructor argument |
+| **heading** | The step a ghost took to arrive where it is, which is what "carry straight on" means. The first tick of a game has one the ghost never actually took, so it may point at a wall |
 | **poll** | Asking the clock whether a tick is due. The clock never runs on its own, because a tick arriving on another thread while the main one is mid-refresh would corrupt the screen |
 | **StateFlow** | A value that can be watched: it always holds something, a new subscriber is handed the current value at once, and emitting a value equal to the one held does nothing |
 | **emit** | Offering a new value to the flow. An emission equal to the last one is dropped, which is what keeps an idle game from writing to the terminal at all |

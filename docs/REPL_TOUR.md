@@ -150,7 +150,7 @@ Eleven cells, twenty-two characters.
 
 ## 3. A whole game, with no terminal
 
-[`GameViewModel`](../terminalgame/presentation/view_model.py#L226) is the game.
+[`GameViewModel`](../terminalgame/presentation/view_model.py#L227) is the game.
 Constructing one carves a maze, places the player and the ghost, and builds the
 first frame — all before anything has been drawn anywhere.
 
@@ -189,7 +189,7 @@ the game is ever told:
 The score went up once and then stayed. Walking back over a cell that has
 already been cleared scores nothing, because the pill is gone — the whole of
 that rule is one character comparison in
-[`_take_pill`](../terminalgame/presentation/view_model.py#L327).
+[`_take_pill`](../terminalgame/presentation/view_model.py#L340).
 
 A move into wall is refused, and refused *before* anything is published:
 

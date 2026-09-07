@@ -16,7 +16,7 @@ flowchart TB
     App["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>app</b> &nbsp;·&nbsp; composition root &nbsp;·&nbsp; main.py, launcher.py &nbsp;·&nbsp; wires everything below&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"]
     UI["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ui</b> &nbsp;·&nbsp; terminalgame/ui/ &nbsp;·&nbsp; GameScreen &nbsp;·&nbsp; curses drawing, keyboard input&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"]
     Pres["<b>presentation</b> &nbsp;·&nbsp; terminalgame/presentation/ &nbsp;·&nbsp; GameViewModel, ViewState, Sprite"]
-    Dom["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>domain</b> &nbsp;·&nbsp; no package of its own &nbsp;·&nbsp; Maze &nbsp;·&nbsp; the carved playfield&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"]
+    Dom["&nbsp;&nbsp;&nbsp;&nbsp;<b>domain</b> &nbsp;·&nbsp; no package of its own &nbsp;·&nbsp; Maze, GhostStrategy &nbsp;·&nbsp; the playfield, and how a ghost crosses it&nbsp;&nbsp;&nbsp;&nbsp;"]
     Data["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>data</b> &nbsp;·&nbsp; not present &nbsp;·&nbsp; no files, no network, no database&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"]
     Util["<b>util</b><br/><br/>StateFlow<br/>GameClock<br/><br/><i>not a layer —<br/>any layer may use it</i>"]
     App --> UI
@@ -99,13 +99,21 @@ There is domain logic here, but no `domain/` package. It is in two places:
   islands. It knows nothing about pills, scores, sprites or drawing, and it
   imports nothing from the rest of the program. It is the one class here that
   would move into a `domain/` package unchanged.
-- **The rules** — what eating a pill does, when the ghost catches the player,
-  when the game is over — live in `GameViewModel` alongside the state they act
-  on, rather than in domain objects of their own.
+- **`GhostStrategy`** (`presentation/ghost.py`) is the second, and the one rule
+  that has already been lifted out. It answers a question about cells — given
+  the maze, a position and a heading, which way now — and holds no state of the
+  game's: `GameViewModel` still owns where the ghost stands and does the moving.
+  Like `Maze` it imports nothing but the maze and would move into a `domain/`
+  package unchanged.
+- **The remaining rules** — what eating a pill does, when the ghost catches the
+  player, when the game is over — live in `GameViewModel` alongside the state
+  they act on, rather than in domain objects of their own.
 
 For a game of this size that is a reasonable place for them. The seam to watch
 is `GameViewModel`: if the rules grow enough that it is hard to say whether a
-method is a rule or a presentation concern, that is the signal to lift them out.
+method is a rule or a presentation concern, that is the signal to lift them out
+— which is exactly what happened to the ghost's, and what the `ghost` argument
+on the constructor is.
 
 ## data
 
