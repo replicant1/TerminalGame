@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "A maze is carved, then braided until it has no dead ends",
+    "output": "a-maze-is-carved.html",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1460, 810],
+    "views": [
+      {
+        "id": "carve",
+        "label": "The carve",
+        "focus": ["maze", "carve", "rng"],
+        "note": "A depth-first walk between junctions, opening two cells of corridor per step."
+      },
+      {
+        "id": "braid",
+        "label": "The braid",
+        "focus": ["maze", "braid", "rng"],
+        "note": "A sweep that opens a second exit beside every junction that has only one."
+      },
+      {
+        "id": "placement",
+        "label": "Where things start",
+        "focus": ["viewmodel", "maze"],
+        "note": "The player and the ghost are placed by asking the finished maze, not by fixed coordinates."
+      }
+    ]
+  },
+  "participants": [
+    { "id": "viewmodel", "type": "backend", "label": "GameViewModel" },
+    { "id": "maze", "type": "backend", "label": "Maze.generate" },
+    { "id": "carve", "type": "backend", "label": "Maze._carve" },
+    { "id": "braid", "type": "backend", "label": "Maze._braid" },
+    { "id": "rng", "type": "external", "label": "random.Random" }
+  ],
+  "segments": [
+    { "from": 155, "to": 394, "label": "Carve a perfect maze" },
+    { "from": 402, "to": 584, "label": "Braid the dead ends away" },
+    { "from": 592, "to": 740, "label": "Place the player and the ghost" }
+  ],
+  "messages": [
+    {
+      "id": "generate",
+      "from": "viewmodel",
+      "to": "maze",
+      "y": 185,
+      "label": "generate(29, 19)",
+      "variant": "emphasis",
+      "note": "Odd both ways, so the wall border stays one cell thick. Under 5 x 5 is refused."
+    },
+    {
+      "id": "call-carve",
+      "from": "maze",
+      "to": "carve",
+      "y": 223,
+      "label": "_carve(rng, the junction rows and columns)",
+      "note": "A junction is every second cell in from the edge; the cells between them are the walls to open."
+    },
+    { "id": "pick-start", "from": "carve", "to": "rng", "y": 261, "label": "choice() -> a junction to start from" },
+    { "id": "pick-next", "from": "carve", "to": "rng", "y": 299, "label": "choice() -> an unvisited junction two cells away" },
+    {
+      "id": "open-wall",
+      "from": "carve",
+      "to": "maze",
+      "y": 337,
+      "label": "opens the dividing wall and the junction beyond",
+      "note": "Two cells of corridor per step. With nothing new two cells away the walk backs up, and every retreat leaves a dead end."
+    },
+    { "id": "perfect", "from": "carve", "to": "maze", "y": 375, "label": "a perfect maze: one route between any two cells", "variant": "return" },
+    { "id": "call-braid", "from": "maze", "to": "braid", "y": 413, "label": "_braid(rng, the junction rows and columns)" },
+    { "id": "pick-wall", "from": "braid", "to": "rng", "y": 451, "label": "choice() -> which closed wall beside a dead end" },
+    {
+      "id": "second-exit",
+      "from": "braid",
+      "to": "maze",
+      "y": 489,
+      "label": "opens it, giving two junctions an extra exit at once",
+      "note": "Nothing ever loses an exit, so a junction once fixed stays fixed and the sweep only repeats until a pass changes nothing."
+    },
+    { "id": "no-dead-ends", "from": "braid", "to": "maze", "y": 527, "label": "no junction left with a single way out", "variant": "return" },
+    { "id": "finished-maze", "from": "maze", "to": "viewmodel", "y": 565, "label": "a maze with loops, islands and no dead ends", "variant": "return" },
+    { "id": "nearest", "from": "viewmodel", "to": "maze", "y": 603, "label": "nearest_open(14, 10)" },
+    { "id": "player-cell", "from": "maze", "to": "viewmodel", "y": 641, "label": "where the player starts", "variant": "return" },
+    { "id": "farthest", "from": "viewmodel", "to": "maze", "y": 679, "label": "farthest_open(the player's cell)" },
+    { "id": "ghost-cell", "from": "maze", "to": "viewmodel", "y": 717, "label": "where the ghost starts", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "maze", "from": 180, "to": 722, "type": "backend" },
+    { "participant": "carve", "from": 218, "to": 380, "type": "backend" },
+    { "participant": "braid", "from": 408, "to": 532, "type": "backend" },
+    { "participant": "rng", "from": 256, "to": 304, "type": "external" },
+    { "participant": "rng", "from": 446, "to": 468, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two passes, opposite jobs",
+      "items": [
+        "The carve leaves a perfect maze: one route everywhere, so dead ends everywhere.",
+        "Braiding opens a second exit beside each, trading perfectness for loops."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What is guaranteed",
+      "items": [
+        "Every corridor cell reaches every other, so no pill is stranded.",
+        "No corridor stops, so the simplest ghost never has to turn round."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Repeatable, and checkable",
+      "items": [
+        "A seed repeats a maze; _dead_ends and _islands report what came out.",
+        "One thread, before the game loop and before curses draws anything."
+      ]
+    }
+  ]
+}

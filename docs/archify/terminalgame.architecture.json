@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TerminalGame \u2014 how a key press becomes a frame",
+    "output": "terminalgame-architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1380,
+      740
+    ],
+    "repository": {
+      "url": "https://github.com/replicant1/TerminalGame",
+      "revision": "a6ee2554107d47350196a89ded2f917cef506821"
+    },
+    "views": [
+      {
+        "id": "key-to-frame",
+        "label": "Key to frame",
+        "focus": [
+          "player",
+          "screen",
+          "loop",
+          "viewmodel",
+          "flow"
+        ],
+        "note": "A key press travels to the ViewModel and comes back as a pushed frame."
+      },
+      {
+        "id": "clock-tick",
+        "label": "Clock tick",
+        "focus": [
+          "loop",
+          "clock",
+          "viewmodel",
+          "flow",
+          "screen"
+        ],
+        "note": "The clock is polled by the loop, never by a thread of its own."
+      },
+      {
+        "id": "domain",
+        "label": "Domain",
+        "focus": [
+          "viewmodel",
+          "maze",
+          "ghost"
+        ],
+        "note": "The playfield and the ghost's step rule, both owned by the ViewModel."
+      },
+      {
+        "id": "startup",
+        "label": "Startup",
+        "focus": [
+          "loop",
+          "launcher",
+          "terminal"
+        ],
+        "note": "Without --here the process opens its own correctly sized window first."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "terminal",
+      "type": "external",
+      "label": "Terminal.app",
+      "sublabel": "30 \u00d7 40 characters",
+      "tag": "macOS window",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "launcher",
+      "type": "backend",
+      "label": "app.launcher",
+      "sublabel": "opens the window, waits on a sentinel",
+      "tag": "osascript",
+      "pos": [
+        400,
+        50
+      ],
+      "size": [
+        210,
+        70
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/app/launcher.py",
+          "line": 218,
+          "label": "launch()"
+        }
+      ]
+    },
+    {
+      "id": "ghost",
+      "type": "backend",
+      "label": "GhostStrategy",
+      "sublabel": "picks the ghost's next step",
+      "tag": "Wanderer",
+      "pos": [
+        1120,
+        50
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "clock",
+      "type": "backend",
+      "label": "GameClock",
+      "sublabel": "fixed timestep, polled not threaded",
+      "tag": "0.15 s step",
+      "pos": [
+        760,
+        220
+      ],
+      "size": [
+        210,
+        70
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/util/clock.py",
+          "line": 13,
+          "label": "GameClock"
+        }
+      ]
+    },
+    {
+      "id": "player",
+      "type": "external",
+      "label": "Player",
+      "sublabel": "keyboard and eyes",
+      "pos": [
+        60,
+        410
+      ],
+      "size": [
+        190,
+        74
+      ]
+    },
+    {
+      "id": "screen",
+      "type": "frontend",
+      "label": "GameScreen",
+      "sublabel": "draws a frame, reads the keyboard",
+      "tag": "the only curses code",
+      "pos": [
+        400,
+        410
+      ],
+      "size": [
+        210,
+        74
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/ui/screen.py",
+          "line": 87,
+          "label": "GameScreen"
+        }
+      ]
+    },
+    {
+      "id": "loop",
+      "type": "backend",
+      "label": "app.main",
+      "sublabel": "composition root and game loop",
+      "tag": "single thread",
+      "pos": [
+        760,
+        410
+      ],
+      "size": [
+        210,
+        74
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/app/main.py",
+          "line": 48,
+          "label": "_run()"
+        }
+      ]
+    },
+    {
+      "id": "viewmodel",
+      "type": "backend",
+      "label": "GameViewModel",
+      "sublabel": "game rules and state",
+      "tag": "knows nothing of curses",
+      "pos": [
+        1120,
+        410
+      ],
+      "size": [
+        220,
+        74
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/presentation/view_model.py",
+          "line": 228,
+          "label": "GameViewModel"
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "type": "messagebus",
+      "label": "StateFlow[ViewState]",
+      "sublabel": "one value, pushed to subscribers",
+      "tag": "distinct until changed",
+      "pos": [
+        400,
+        610
+      ],
+      "size": [
+        210,
+        74
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/util/flow.py",
+          "line": 13,
+          "label": "StateFlow"
+        }
+      ]
+    },
+    {
+      "id": "maze",
+      "type": "backend",
+      "label": "Maze",
+      "sublabel": "the playfield grid",
+      "tag": "carve then braid",
+      "pos": [
+        1120,
+        610
+      ],
+      "size": [
+        220,
+        74
+      ],
+      "sources": [
+        {
+          "path": "terminalgame/presentation/maze.py",
+          "line": 31,
+          "label": "Maze"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "keys-in",
+      "from": "player",
+      "to": "screen",
+      "label": "arrow keys \u00b7 q to quit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "frame-out",
+      "from": "screen",
+      "to": "player",
+      "label": "repaints changed cells",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          505,
+          358
+        ],
+        [
+          155,
+          358
+        ]
+      ]
+    },
+    {
+      "id": "key-code",
+      "from": "screen",
+      "to": "loop",
+      "label": "read_key()"
+    },
+    {
+      "id": "direction",
+      "from": "loop",
+      "to": "viewmodel",
+      "label": "on_direction(dr, dc)",
+      "variant": "emphasis",
+      "labelDy": 14
+    },
+    {
+      "id": "poll",
+      "from": "loop",
+      "to": "clock",
+      "label": "poll() every 33 ms"
+    },
+    {
+      "id": "tick",
+      "from": "clock",
+      "to": "viewmodel",
+      "label": "tick() every 0.15 s"
+    },
+    {
+      "id": "emit",
+      "from": "viewmodel",
+      "to": "flow",
+      "label": "emit(ViewState)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "push-frame",
+      "from": "flow",
+      "to": "screen",
+      "label": "pushes each changed frame",
+      "variant": "emphasis"
+    },
+    {
+      "id": "next-step",
+      "from": "viewmodel",
+      "to": "ghost",
+      "label": "Surroundings \u2192 Step"
+    },
+    {
+      "id": "playfield",
+      "from": "viewmodel",
+      "to": "maze",
+      "label": "is_open / nearest_open",
+      "labelDy": 80
+    },
+    {
+      "id": "spawn",
+      "from": "loop",
+      "to": "launcher",
+      "label": "launch() unless --here",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          865,
+          530
+        ],
+        [
+          722,
+          530
+        ],
+        [
+          722,
+          85
+        ]
+      ]
+    },
+    {
+      "id": "window",
+      "from": "launcher",
+      "to": "terminal",
+      "label": "osascript sizes the tab",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The frame path",
+      "items": [
+        "Keys travel down the stack; frames come back up a subscription, never an import.",
+        "StateFlow drops an unchanged frame, so an idle tick never touches curses."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Layers",
+      "items": [
+        "ui is the only package that imports curses; presentation holds the domain too.",
+        "util is plumbing any layer may use, and there is no data layer at all."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "One thread",
+      "items": [
+        "curses is not thread-safe, so the clock is polled by the loop, never fired by a timer.",
+        "Nothing outlives the process: no files, no network, no database."
+      ]
+    }
+  ]
+}
