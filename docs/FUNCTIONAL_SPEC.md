@@ -37,7 +37,7 @@ rather than filling the gap from somewhere else.
 Contents:
 
 1. [The game](#1-the-game)
-2. [Target platform and implied technology](#2-target-platform-and-implied-technology)
+2. [Target platform](#2-target-platform)
 3. [Screen geometry](#3-screen-geometry)
 4. [The maze](#4-the-maze)
 5. [What the screen looks like](#5-what-the-screen-looks-like)
@@ -130,7 +130,7 @@ The game reasons in **cells**, not characters. Positions, movement and
 collisions are all counted in cells; the conversion to character coordinates
 happens in exactly one place, when a frame is assembled.
 
-**One cell is 1 character row by 2 character columns.**
+**One cell is made up of 1 character row by 2 character columns.**
 
     one game cell
     ┌──────────────┬──────────────┐
@@ -161,11 +161,8 @@ continuation eastwards, and is otherwise blank.
 | Always blank | character columns 37, 38, 39 | Filler of the last cell, plus the odd column dropped |
 
 A maze must be an **odd** number of cells in each direction, because it needs a
-wall cell on both sides of every junction. Given an even number, the last column
-would have no junction to serve and would be drawn as a second border running
-alongside the first — invisible when walls are solid blocks, an obvious ladder
-once they are lines. The grid's 20 columns are therefore reduced to 19. The 29
-rows are already odd and are used as they are.
+wall cell on both sides of every junction. The grid's 20 columns are therefore
+reduced to 19. The 29 rows are already odd and are used as they are.
 
 ---
 
@@ -182,12 +179,6 @@ corridor**. A freshly generated maze shall satisfy all of the following:
 * **No dead ends.** Every open cell has at least two **open neighbours** — at
   least two of the four orthogonally adjacent cells are corridor. This is a
   guarantee, not an attempt.
-
-Note that *open neighbour* here is a property of **any** open cell against
-**any** adjacent cell. Generation works with a second, narrower notion — a
-junction's *exits* (§[4.2](#42-generation)) — and the two are not
-interchangeable. The guarantee above is the one a player and a ghost
-experience; exits are the bookkeeping that delivers it.
 * **Random.** A different maze is generated every run unless a seed is supplied.
 
 The absence of dead ends is what makes the ghost's behaviour work: a ghost that
@@ -197,7 +188,8 @@ game should show zero reversals.
 
 ### 4.2 Generation
 
-Generation is two passes over a grid that begins entirely wall.
+Maze generation occurs in two passes over a grid that begins with nothing but
+wall.
 
 **Junctions** are the cells whose row and column are both junction lines:
 
@@ -848,7 +840,7 @@ quite differently.
 Taking over the terminal involves asking it to do several things a limited
 terminal cannot. Hiding the caret is the one that bites: a terminal whose
 description does not cover it
-(§[2](#2-target-platform-and-implied-technology)) refuses, and the refusal is
+(§[2](#2-target-platform)) refuses, and the refusal is
 fatal. Switching the arrow keys into decoded form, or setting up colour, can
 fail the same way on a sufficiently threadbare description.
 
