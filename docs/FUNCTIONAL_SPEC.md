@@ -83,66 +83,29 @@ score table, and nothing is persisted between runs.
 
 ---
 
-## 2. Target platform and implied technology
+## 2. Target platform
 
-**Target platform: macOS, with the game written in Python 3.**
-
-macOS is not a stylistic preference. The default way of starting the game opens
-a Terminal window of its own and drives it through AppleScript, and before it
-will try, it checks two things: that it is running on macOS, and that the
-system's AppleScript tool is installed. Starting the game **in place**, in the
-terminal it was launched from, involves none of that and assumes no particular
-operating system.
+The game should run on macOS. The default way of starting the game opens
+a Terminal window of its own.
 
 The application shall run with **nothing to install and nothing to build**.
-Everything it needs comes with the language it is written in: there is no
+It comes only in an English version, and there is no
 dependency to fetch, no compilation step, no configuration file and no
-generated code. This is a requirement rather than an observation — the program
-is meant to run from a copied folder and a single command, and taking on an
-outside dependency would end that.
+generated code.
 
 What the program does need, it needs from the terminal and the operating system.
 The following are required, and are what the choice of technology implies:
 
-* **A character-cell terminal, addressed as a grid.** The application draws by
-  writing characters at chosen row and column positions and changing their
-  colour and weight as it goes. It never scrolls the screen and never assumes
-  it can. It also needs the terminal's capabilities to be described to it, in
-  the usual way such descriptions are held on a Unix-like system, and that
-  description **must include the ability to hide and restore the caret**: the
-  application hides the caret at start-up, and a terminal that cannot be told
-  to do so makes the attempt fail outright
-  (§[11.3](#113-other-start-up-failures)). This rules out the oldest terminal
-  types, `vt100` and `dumb` among them, even though the playfield is well
-  within what a VT100 could draw — so "a VT100-class display" describes the
-  *drawing model* here, not a terminal type the game will accept.
-* **Colour capability.** The application requests colour and adapts to what it
-  finds: it uses the 256-colour cube where the terminal reports 256 or more
-  colours, the 8 ANSI colours with bold/dim attributes where it does not, and
-  the terminal's default (uncoloured) attribute where the terminal reports no
-  colour at all. Absence of colour must not prevent play.
-* **UTF-8 output and Unicode box-drawing and block-element glyphs.** The
+* **Colour capability.** The maze walls are dark blue, the pills are brown, the ghost
+is light blue and the pac-man is bright yellow.
+* **Glyphs.** The
   playfield is drawn with double-line box-drawing characters
   (`║ ═ ╔ ╗ ╚ ╝ ╠ ╣ ╦ ╩ ╬`), block elements (`█ ▐ ▌ ▗ ▖ ■`) and the small black
-  square (`▪`). Before writing any of them, the program adopts the character
-  encoding the environment specifies rather than a bare default, so the
-  environment shall specify one that can represent them.
-* **Decoding of the arrow keys.** An arrow key reaches a program as a short
-  escape sequence, and the application asks the terminal to hand those over
-  already decoded — as "up", "down", "left", "right" — rather than as raw
-  bytes. Switching that on also switches the terminal into the matching cursor
-  mode. An arrow key sent in the *other* cursor mode is not recognised, and its
-  leading escape byte arrives on its own; the game ignores it
-  (§[9](#9-input)), so the press simply does nothing. This document does not
-  fix which byte sequences the two modes use: that belongs to the terminal's
-  own description, not to the application.
-* **The xterm window-manipulation sequence.** The application asks the terminal
-  to resize itself by writing `ESC [ 8 ; 30 ; 40 t`. A terminal that honours it
-  resizes; one that ignores it is then measured and, if too small, refused
-  (§[11.2](#112-the-terminal-is-too-small)).
-* **AppleScript control of Terminal.app**, for the default launch mode only.
-  This is the one macOS-specific requirement, and it applies only when the game
-  is asked to open its own window. An in-place start has no such need.
+  square (`▪`).
+* **Arrow keys.** The up, left, down and right arrow keys
+are used to move the pac-man around the maze.
+* **The terminal window.** The game exists within a fixed size terminal
+window of its own.
 
 **How the game is started is not a free choice.** It shall be launched by name,
 which is what lets the program's parts locate one another. Pointing the language
@@ -155,15 +118,10 @@ anything is drawn.
 
 ### 3.1 The playfield
 
-The playfield is **30 character rows by 40 character columns**, anchored at the
-top-left of the terminal window. A window larger than that is permitted: the
-playfield does not grow to fill it, and the surplus rows and columns are
-**blanked** — every frame erases the whole window before drawing
-(§[10.2](#102-full-repaint-delta-on-the-wire)), so whatever was on the terminal
-before the game started does not show through. A window smaller than the
-playfield is refused at startup.
+The playfield is **30 character rows by 40 character columns** and fits exactly within
+the terminal window.
 
-The **last of the 30 rows is the status line**. The remaining 29 rows are the
+The **last of the 30 rows is the status line**. The first 29 rows are the
 arena.
 
 ### 3.2 Cells
@@ -176,24 +134,18 @@ happens in exactly one place, when a frame is assembled.
 
     one game cell
     ┌──────────────┬──────────────┐
-    │  centre      │  filler      │   1 character row high
+    │  left.       │  right       │   1 character row high
     │  character   │  character   │
     └──────────────┴──────────────┘
-      char col 2c     char col 2c+1
+      char col x     char col x+1
 
-The shape is chosen so that a cell is very nearly square on screen: at the font
-size the game asks for when it opens a window of its own, a terminal character
-measures about 11.9 by 24.6
-points, so one row by two columns is about 23.9 by 24.6 — square — whereas a
-2×2 cell would be twice as tall as it is wide.
+This layout is chosen because using the default font, a 1x2 cell appears
+very nearly square on screen.
 
 The **left character of a cell is the centre line**. Everything that has to line
 up with everything else — a wall's line, a pill, the middle of a sprite — sits
-in that character. The right character carries only a horizontal wall's
-continuation eastwards, and is otherwise blank. This is forced by the geometry:
-a cell two characters wide and one tall has no column *between* its two
-characters for a vertical line to occupy, so one of them must be the shared
-centre line.
+in the left hand character. The right character carries only a horizontal wall's
+continuation eastwards, and is otherwise blank. 
 
 ### 3.3 Derived dimensions
 
