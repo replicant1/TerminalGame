@@ -157,6 +157,27 @@ its halves for a vertical wall to occupy. The left one was chosen. Where the
 rest of this document needs to name a character it says **left** or **right**;
 *centre line* means the alignment column and nothing else.
 
+The division shows up plainly if the ink in a real frame is counted. Taking the
+sample of §[5.1](#51-a-sample-frame) — a 29 by 19 maze, so 287 wall cells and
+264 open ones:
+
+| Layer | Ink in a **left** character | Ink in a **right** character |
+|---|---|---|
+| Walls | 287 — one for every wall cell, without exception | 122 — only those cells whose wall continues eastwards |
+| Pills | 263 — one for every pill on the board | **0** |
+
+The pill row is the one to take away: a pill never touches a right character at
+all, in any maze. Its 263 is one short of the 264 open cells because the pill
+under the player was taken during set-up
+(§[7.2](#72-pills-and-scoring)). The wall row shows the single exception to the
+rule and how partial it is — fewer than half the wall cells reach into their
+right character, and those that do put nothing there but the `═` that joins them
+to the cell next door.
+
+Those counts are illustrative: another maze gives other totals. What does not
+vary is the shape of the table — every wall cell and every pill in the left
+column, and a zero in the bottom right.
+
 ### 3.3 Derived dimensions
 
 | Quantity | Value | How it follows |
