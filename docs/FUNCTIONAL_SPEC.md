@@ -1105,7 +1105,6 @@ All row and column numbers below are indexed from zero.
 | Status line | Row 29, the last of the 30 |
 | Status line character budget | 39 |
 | Always-blank character columns | 37, 38, 39 |
-| Minimum maze size | 5 × 5 cells |
 | Sprite art | 3 characters wide, 1 row tall, odd width required |
 
 **Timing**
