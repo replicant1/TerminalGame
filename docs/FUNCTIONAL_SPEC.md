@@ -258,11 +258,6 @@ has run — nothing is open yet — with each cell marked by what may become of 
 | `·` | The one cell **between two junctions** | Open if a pass joined that pair, wall if not. Every choice either pass makes is a choice about one of these |
 | `#` | The border, and every cell with an **even row and an even column** | **Never** opened. Each interior one sits with four junctions around it, and these are what the pillars and islands are made of |
 
-**Minimum size.** Generation shall refuse a maze that has fewer than two
-junction rows or fewer than two junction columns, because braiding could only
-give such a maze a second exit by breaching the border. In practice this means
-**at least 5 rows and 5 columns**.
-
 ### 4.3 Starting positions
 
 * The **player** starts on the open cell nearest, by Manhattan distance, to the
@@ -396,9 +391,6 @@ which is the whole reason the centre line exists. A pill straddling the two
 characters would land half a character to the right of that line, and a pill
 drawn from half-height blocks would sit on the floor of the row while the
 horizontal walls run through the middle of theirs.
-
-Wall cells never carry a pill, so the solid islands braiding leaves behind come
-out blank inside without anything having to go looking for them.
 
 An eaten pill is replaced by a blank in the pill layer, permanently, for the
 rest of the game.
@@ -623,9 +615,9 @@ Precisely:
    random.
 3. If there is no such step at all, return the reverse of the heading.
 
-Because the maze is braided and so has no dead ends, step 3 is unreachable in
-normal play from any cell the ghost arrived at by moving. Reversing is a last
-resort, not the usual outcome, and a full run should show zero reversals.
+Because the maze has no dead ends, step 3 is unreachable in normal play from
+any cell the ghost arrived at by moving. Reversing is a last resort, not the
+usual outcome, and a full run should show zero reversals.
 
 ### 7.5 Endings
 
@@ -822,8 +814,8 @@ the terminal it was started from — the game itself starts the same way:
    hidden, arrow keys decoded, colours initialised.
 4. The terminal is measured. If it is **shorter than 30 rows or narrower than 40
    columns**, startup fails (§[11.2](#112-the-terminal-is-too-small)).
-5. The game state is created: a maze is carved and braided, the player and ghost
-   are placed, and the first frame is built.
+5. The game state is created: a maze is carved out of solid wall, the player
+   and ghost are placed, and the first frame is built.
 6. The screen subscribes to the game state, **and subscribing paints the first
    frame immediately**.
 7. The input timeout is set and the clock is started.
