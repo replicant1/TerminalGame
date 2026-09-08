@@ -19,8 +19,8 @@ informed it, and it points at nothing else.
 **Normative and illustrative.** A numeric constant quoted in this document is
 normative: a conforming implementation must produce that number, not merely
 something like it. Three things are **illustrative** and are marked as such
-where they appear — the sample frame in §[6.1](#61-a-sample-frame) and any
-statement about what a particular seed produces (§[15.1](#151-seeding)).
+where they appear — the sample frame in §[5.1](#51-a-sample-frame) and any
+statement about what a particular seed produces (§[14.1](#141-seeding)).
 
 **Indexing.** Character rows and columns are numbered **from zero**: the
 playfield spans rows 0–29 and columns 0–39, and the status line is row 29. Cell
@@ -38,21 +38,20 @@ Contents:
 
 1. [The game](#1-the-game)
 2. [Target platform and implied technology](#2-target-platform-and-implied-technology)
-3. [Process model](#3-process-model)
-4. [Screen geometry](#4-screen-geometry)
-5. [The maze](#5-the-maze)
-6. [What the screen looks like](#6-what-the-screen-looks-like)
-7. [Colour](#7-colour)
-8. [Rules of play](#8-rules-of-play)
-9. [Timing](#9-timing)
-10. [Input](#10-input)
-11. [Rendering behaviour](#11-rendering-behaviour)
-12. [Startup, failure and shutdown](#12-startup-failure-and-shutdown)
-13. [Exit codes](#13-exit-codes)
-14. [Environment](#14-environment)
-15. [Determinism and the extension point](#15-determinism-and-the-extension-point)
-16. [Prerequisites](#16-prerequisites)
-17. [Constants, collected](#17-constants-collected)
+3. [Screen geometry](#3-screen-geometry)
+4. [The maze](#4-the-maze)
+5. [What the screen looks like](#5-what-the-screen-looks-like)
+6. [Colour](#6-colour)
+7. [Rules of play](#7-rules-of-play)
+8. [Timing](#8-timing)
+9. [Input](#9-input)
+10. [Rendering behaviour](#10-rendering-behaviour)
+11. [Startup, failure and shutdown](#11-startup-failure-and-shutdown)
+12. [Exit codes](#12-exit-codes)
+13. [Environment](#13-environment)
+14. [Determinism and the extension point](#14-determinism-and-the-extension-point)
+15. [Prerequisites](#15-prerequisites)
+16. [Constants, collected](#16-constants-collected)
 
 ---
 
@@ -89,12 +88,11 @@ score table, and nothing is persisted between runs.
 **Target platform: macOS, with the game written in Python 3.**
 
 macOS is not a stylistic preference. The default way of starting the game opens
-a Terminal window and drives it through AppleScript, and before it will try, it
-checks two things: that it is running on macOS, and that the system's
-AppleScript tool is installed
-(§[3](#3-process-model)). Starting the game **in place**, in the terminal it
-was launched from, involves none of that and assumes no particular operating
-system.
+a Terminal window of its own and drives it through AppleScript, and before it
+will try, it checks two things: that it is running on macOS, and that the
+system's AppleScript tool is installed. Starting the game **in place**, in the
+terminal it was launched from, involves none of that and assumes no particular
+operating system.
 
 The application shall run with **nothing to install and nothing to build**.
 Everything it needs comes with the language it is written in: there is no
@@ -114,7 +112,7 @@ The following are required, and are what the choice of technology implies:
   description **must include the ability to hide and restore the caret**: the
   application hides the caret at start-up, and a terminal that cannot be told
   to do so makes the attempt fail outright
-  (§[12.3](#123-other-start-up-failures)). This rules out the oldest terminal
+  (§[11.3](#113-other-start-up-failures)). This rules out the oldest terminal
   types, `vt100` and `dumb` among them, even though the playfield is well
   within what a VT100 could draw — so "a VT100-class display" describes the
   *drawing model* here, not a terminal type the game will accept.
@@ -135,13 +133,13 @@ The following are required, and are what the choice of technology implies:
   bytes. Switching that on also switches the terminal into the matching cursor
   mode. An arrow key sent in the *other* cursor mode is not recognised, and its
   leading escape byte arrives on its own; the game ignores it
-  (§[10](#10-input)), so the press simply does nothing. This document does not
+  (§[9](#9-input)), so the press simply does nothing. This document does not
   fix which byte sequences the two modes use: that belongs to the terminal's
   own description, not to the application.
 * **The xterm window-manipulation sequence.** The application asks the terminal
   to resize itself by writing `ESC [ 8 ; 30 ; 40 t`. A terminal that honours it
   resizes; one that ignores it is then measured and, if too small, refused
-  (§[12.2](#122-the-terminal-is-too-small)).
+  (§[11.2](#112-the-terminal-is-too-small)).
 * **AppleScript control of Terminal.app**, for the default launch mode only.
   This is the one macOS-specific requirement, and it applies only when the game
   is asked to open its own window. An in-place start has no such need.
@@ -153,91 +151,22 @@ anything is drawn.
 
 ---
 
-## 3. Process model
+## 3. Screen geometry
 
-The game normally opens a Terminal window of its own, sized exactly to the
-playfield, and plays there. That arrangement involves **two processes, not
-one**: the process that was started does not play the game at all. It becomes a
-*launcher*, and the following shall happen:
-
-1. The launcher refuses outright if it detects that it is itself a spawned
-   child (§[14](#14-environment)). Without this guard, a copy that failed to
-   recognise its own role would open a window, whose copy would open another,
-   without limit — and each one is a real window on the screen.
-2. The launcher refuses if the platform cannot drive Terminal.app — that is, if
-   it is not macOS, or the system's AppleScript tool is not installed. The
-   message shall point the player at the in-place start instead.
-3. A private temporary directory is created holding a *sentinel* file, which is
-   how the two processes communicate.
-4. Terminal.app is asked, in one AppleScript invocation, to:
-   * remember the bounds of the frontmost existing window, if any, *before* the
-     new one exists;
-   * start the game in a new tab;
-   * set that tab's font size, background colour, row count and column count —
-     in that order, so the window size is settled against the final character
-     size;
-   * set the tab's custom title to **`Terminal Game`** and turn off the shell
-     path, device name and window size components of the title, so the internal
-     plumbing does not appear in the title bar;
-   * identify the new window by the terminal device its new tab is attached
-     to — matching on a title or a name is unreliable, because the window
-     running this very request can match a search for one;
-   * move that window — without resizing it — to a fixed offset down and right
-     of the remembered anchor bounds, so it cannot land on a display that is no
-     longer attached or in the gap between two displays;
-   * bring Terminal to the front.
-5. What the new window is told to run moves to the program's own folder, clears
-   the screen, sets the two environment variables of §[14](#14-environment),
-   and then **replaces its command shell with a second copy of the game** rather
-   than running the game underneath it. That leaves no leftover shell in the
-   tab, so nothing prompts for confirmation when the tab closes.
-6. The launcher then blocks, polling **the sentinel file** — not Terminal — at
-   0.1-second intervals. It never queries the game window over AppleScript. **At
-   most two** AppleScript requests are made per run: one to open the window, and
-   one to close it — the second is skipped when the window could not be
-   identified (below), and a failed opening costs one.
-7. The child writes `pid <n>` to the sentinel as soon as it is running, and
-   `exit <code>` on the way out. Each write is made to a temporary file and
-   renamed into place, so the launcher can never read a half-written sentinel.
-8. If no `pid` line appears within **20 seconds**, the launcher fails with an
-   error saying the window did not start.
-9. If the pid is known but the process has disappeared without an `exit` line —
-   which is what closing the window by hand looks like — the launcher treats the
-   run as a normal exit with code 0.
-10. On reading `exit <code>`, the launcher waits (up to **5 seconds**) for the
-    child process to actually leave before asking Terminal to close the window.
-    Closing it earlier would catch Terminal with a running process in the tab
-    and put up a modal "terminate running process?" dialog, which would block
-    every AppleScript request made after it. The closing request independently
-    checks whether the tab is still running something, as a second guard, and
-    never closes one that is.
-11. The temporary sentinel file and its directory are removed on every exit
-    path.
-12. The launcher exits with the code the child reported, so
-    starting the game behaves like running any other blocking command: it
-    occupies the terminal until the game is over, then returns a status.
-
-If the window opens but cannot be identified, the launcher continues normally
-and simply never closes it.
-
----
-
-## 4. Screen geometry
-
-### 4.1 The playfield
+### 3.1 The playfield
 
 The playfield is **30 character rows by 40 character columns**, anchored at the
 top-left of the terminal window. A window larger than that is permitted: the
 playfield does not grow to fill it, and the surplus rows and columns are
 **blanked** — every frame erases the whole window before drawing
-(§[11.2](#112-full-repaint-delta-on-the-wire)), so whatever was on the terminal
+(§[10.2](#102-full-repaint-delta-on-the-wire)), so whatever was on the terminal
 before the game started does not show through. A window smaller than the
 playfield is refused at startup.
 
 The **last of the 30 rows is the status line**. The remaining 29 rows are the
 arena.
 
-### 4.2 Cells
+### 3.2 Cells
 
 The game reasons in **cells**, not characters. Positions, movement and
 collisions are all counted in cells; the conversion to character coordinates
@@ -253,7 +182,8 @@ happens in exactly one place, when a frame is assembled.
       char col 2c     char col 2c+1
 
 The shape is chosen so that a cell is very nearly square on screen: at the font
-size the launcher requests, a terminal character measures about 11.9 by 24.6
+size the game asks for when it opens a window of its own, a terminal character
+measures about 11.9 by 24.6
 points, so one row by two columns is about 23.9 by 24.6 — square — whereas a
 2×2 cell would be twice as tall as it is wide.
 
@@ -265,7 +195,7 @@ a cell two characters wide and one tall has no column *between* its two
 characters for a vertical line to occupy, so one of them must be the shared
 centre line.
 
-### 4.3 Derived dimensions
+### 3.3 Derived dimensions
 
 | Quantity | Value | How it follows |
 |---|---|---|
@@ -287,9 +217,9 @@ rows are already odd and are used as they are.
 
 ---
 
-## 5. The maze
+## 4. The maze
 
-### 5.1 Properties
+### 4.1 Properties
 
 A maze is a rectangular grid of cells, each either **wall** or **open
 corridor**. A freshly generated maze shall satisfy all of the following:
@@ -303,7 +233,7 @@ corridor**. A freshly generated maze shall satisfy all of the following:
 
 Note that *open neighbour* here is a property of **any** open cell against
 **any** adjacent cell. Generation works with a second, narrower notion — a
-junction's *exits* (§[5.2](#52-generation)) — and the two are not
+junction's *exits* (§[4.2](#42-generation)) — and the two are not
 interchangeable. The guarantee above is the one a player and a ghost
 experience; exits are the bookkeeping that delivers it.
 * **Random.** A different maze is generated every run unless a seed is supplied.
@@ -313,7 +243,7 @@ has just arrived somewhere always has a way on that is not the way it came, so
 reversing is a last resort rather than the usual outcome. A run of the shipped
 game should show zero reversals.
 
-### 5.2 Generation
+### 4.2 Generation
 
 Generation is two passes over a grid that begins entirely wall.
 
@@ -325,7 +255,7 @@ Generation is two passes over a grid that begins entirely wall.
 For an odd dimension that runs up to `rows − 2`, leaving a border one cell
 thick; for an even one it stops at `rows − 3`, leaving a border two cells thick
 down one side, which is why the maze is always given odd dimensions
-(§[4.3](#43-derived-dimensions)). In the 29×19 maze the junction lines are rows
+(§[3.3](#33-derived-dimensions)). In the 29×19 maze the junction lines are rows
 1–27 and columns 1–17: 14 junction rows, 9 junction columns, 126 junctions.
 
 Junctions are two cells apart, so exactly one cell lies between any adjacent
@@ -381,7 +311,7 @@ junction rows or fewer than two junction columns, because braiding could only
 give such a maze a second exit by breaching the border. In practice this means
 **at least 5 rows and 5 columns**.
 
-### 5.3 Starting positions
+### 4.3 Starting positions
 
 * The **player** starts on the open cell nearest, by Manhattan distance, to the
   centre of **the grid** — not of the maze. The reference point is
@@ -399,16 +329,16 @@ give such a maze a second exit by breaching the border. In practice this means
 
 ---
 
-## 6. What the screen looks like
+## 5. What the screen looks like
 
-### 6.1 A sample frame
+### 5.1 A sample frame
 
 **Illustrative, not normative.** This is the opening frame of one particular
 game — the reference implementation's, from seed 7 — reproduced character for
 character with the three always-blank right-hand columns trimmed. It shows what
 a frame *looks like*. It is **not** a frame a conforming implementation is
 obliged to produce from that seed, for the reason given in
-§[15.1](#151-seeding).
+§[14.1](#141-seeding).
 
     ╔═══════════════════════╦═══════════╗
     ║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ║ ▪ ▪ ▪ ▪ ▪ ║
@@ -447,11 +377,11 @@ here, at rows 18 and 22 (numbered from zero, as everywhere in this document).
 
 This is the frame before anything has happened, so every corridor cell still
 carries its pill except the one under the player, whose pill was taken during
-set-up (§[8.2](#82-pills-and-scoring)) and which the sprite covers anyway. Once
+set-up (§[7.2](#72-pills-and-scoring)) and which the sprite covers anyway. Once
 play begins, **a corridor cell showing blank is one the player has already
 walked**, and the trail of them is the score made visible.
 
-### 6.2 The four things drawn, and their order
+### 5.2 The four things drawn, and their order
 
 A frame is composed of exactly four things, drawn in this order, later ones
 painting over earlier ones:
@@ -460,7 +390,7 @@ painting over earlier ones:
    layer has something.
 2. **The pill layer** — blank wherever the wall layer has something.
 3. **The sprites** — the player and the ghost, in an order that depends on the
-   ending (§[8.5](#85-endings)).
+   ending (§[7.5](#75-endings)).
 4. **The status line** — the last row.
 
 The maze arrives as two separate layers rather than one because a layer is drawn
@@ -469,7 +399,7 @@ different colour from the walls they sit between. Blank positions in a layer are
 skipped rather than written: a space is a character like any other, and writing
 one would paint over whatever an earlier pass put there.
 
-### 6.3 Wall glyphs
+### 5.3 Wall glyphs
 
 A wall is drawn as a **line**, not a solid block, so each wall cell must choose
 a glyph that joins the lines of its wall neighbours. Double lines are used
@@ -509,7 +439,7 @@ every other wall cell leaves.
     │           │  else ' ' │
     └───────────┴───────────┘
 
-### 6.4 Pills
+### 5.4 Pills
 
 Every open cell carries **exactly one** pill — one dot, because one cell is one
 place a sprite can stand, and two dots would say there were two. The pill is the
@@ -528,7 +458,7 @@ out blank inside without anything having to go looking for them.
 An eaten pill is replaced by a blank in the pill layer, permanently, for the
 rest of the game.
 
-### 6.5 Sprites
+### 5.5 Sprites
 
 | Sprite | Art | Reads as |
 |---|---|---|
@@ -558,7 +488,7 @@ game that starts and then misdraws.
 The player and the ghost are told apart by shape as well as by colour, so the
 game remains playable on a terminal without colour.
 
-### 6.6 The status line
+### 5.6 The status line
 
 The bottom row of the playfield. Its content depends on the state of the game
 and takes one of exactly three forms:
@@ -588,7 +518,7 @@ either way — the word, the score, the key that leaves. A line reading
 `GAME OVER` would say what happened but not why.
 
 The budget for the line is **39 characters**, and that is the figure to design
-to. It comes from the clipping rule in §[11.3](#113-clipping), which protects
+to. It comes from the clipping rule in §[10.3](#103-clipping), which protects
 the final cell of the **window's** last row: in a window exactly 30 rows tall
 the status line *is* that row and loses its fortieth column, whereas in a taller
 window it is not the last row and all 40 columns are in fact writable. Design to
@@ -599,7 +529,7 @@ which is a few hundred pills, and a fourth would still fit.
 
 ---
 
-## 7. Colour
+## 6. Colour
 
 The application uses **logical colour slots**, mapped onto the terminal's
 capabilities at start-up. The game logic never names a terminal colour.
@@ -615,8 +545,8 @@ capabilities at start-up. The game logic never names a terminal colour.
 Rules:
 
 * The terminal's **own background** is kept where the terminal supports a
-  default background colour; black is used where it does not. In the spawned
-  window the background is set to black explicitly by the launcher.
+  default background colour; black is used where it does not. A window the game
+  opens for itself is given a black background explicitly.
 * On a terminal reporting **no colour at all**, every slot draws in the default
   attribute and the game remains fully playable — the shapes distinguish
   everything that matters.
@@ -636,9 +566,9 @@ Rules:
 
 ---
 
-## 8. Rules of play
+## 7. Rules of play
 
-### 8.1 The player
+### 7.1 The player
 
 * The player occupies exactly one cell.
 * One arrow-key press moves the player exactly **one whole cell** in that
@@ -651,7 +581,7 @@ Rules:
   however fast they press.**
 * Movement is orthogonal only. There is no diagonal move.
 
-### 8.2 Pills and scoring
+### 7.2 Pills and scoring
 
 * On entering a cell, the player eats the pill there if one remains: the pill
   disappears from the board permanently and the score increases by **one**.
@@ -666,15 +596,15 @@ Rules:
   what makes the opening score `0` rather than `1`, and it stops a pill nobody
   can see from being the one the game is waiting on.
 * The initial number of pills is therefore *(number of open cells) − 1*. For the
-  seeded example in §[6.1](#61-a-sample-frame) that is 263 of 264.
+  seeded example in §[5.1](#51-a-sample-frame) that is 263 of 264.
 
-### 8.3 The ghost
+### 7.3 The ghost
 
 * There is exactly one ghost.
 * The ghost moves **one cell per clock tick** and at no other time.
 * The ghost does not eat pills and does not affect the score.
 * The ghost's decision of where to go is made by a replaceable **ghost
-  strategy** (§[15](#15-determinism-and-the-extension-point)). Each tick, the
+  strategy** (§[14](#14-determinism-and-the-extension-point)). Each tick, the
   strategy is told the maze, the ghost's cell, the ghost's current heading, and
   the player's cell, and returns one step.
 * **The move is validated, not trusted.** A step onto a wall cell is refused and
@@ -688,7 +618,7 @@ Rules:
   actually took, which may well point straight at a wall. A strategy must cope
   with that rather than trust the heading.
 
-### 8.4 The shipped ghost strategy
+### 7.4 The shipped ghost strategy
 
 The ghost the game ships with **carries straight on where it can and turns at
 random where it cannot**. It does not hunt: it is handed the player's cell every
@@ -706,7 +636,7 @@ Because the maze is braided and so has no dead ends, step 3 is unreachable in
 normal play from any cell the ghost arrived at by moving. Reversing is a last
 resort, not the usual outcome, and a full run should show zero reversals.
 
-### 8.5 Endings
+### 7.5 Endings
 
 **Capture.** The player and the ghost are considered to have collided when they
 occupy **the same cell** — a cell, not a character position. The two sprites
@@ -744,13 +674,13 @@ the ghost, and the game is `CAUGHT`, not `CLEARED`.
 
 Two inputs still do something. A quit key still quits, and **a resize
 notification is still honoured**: the terminal is re-measured and the final
-frame is repainted (§[11.4](#114-resize-during-play)), because the freeze is a
+frame is repainted (§[10.4](#104-resize-during-play)), because the freeze is a
 property of the game state and not of the screen. Everything else — arrow keys
 included — is inert.
 
 ---
 
-## 9. Timing
+## 8. Timing
 
 | Quantity | Value | What it is |
 |---|---|---|
@@ -773,7 +703,7 @@ acted on and rendered the moment it arrives, not on the next tick.
 
 ---
 
-## 10. Input
+## 9. Input
 
 Keys are read one at a time, with a bounded wait. Each iteration of the main
 loop reads at most one key and then polls the clock.
@@ -801,9 +731,9 @@ and keys are delivered without waiting for Return.
 
 ---
 
-## 11. Rendering behaviour
+## 10. Rendering behaviour
 
-### 11.1 Whole frames, published on change
+### 10.1 Whole frames, published on change
 
 The game logic publishes **complete frames**. It never issues incremental draw
 commands, and the screen never asks the game logic for anything: the screen
@@ -828,7 +758,7 @@ change that publishes a frame speculatively from costing anything. It is not an
 optimisation that earns its keep on every frame today — and it is required all
 the same.
 
-### 11.2 Full repaint, delta on the wire
+### 10.2 Full repaint, delta on the wire
 
 Every layer of every frame is drawn in full into an off-screen copy of the
 screen. What actually reaches the terminal is then worked out by comparing that
@@ -856,7 +786,7 @@ free of flicker and artifacts:
 * **The caret is hidden, and parked** at the bottom-left corner, so nothing
   visibly chases the drawing across the screen.
 
-### 11.3 Clipping
+### 10.3 Clipping
 
 Drawing shall clip rather than fail:
 
@@ -870,7 +800,7 @@ Drawing shall clip rather than fail:
 * If the window is shorter than the playfield, only the rows that fit are drawn
   and the status line moves up to the last row that exists.
 
-### 11.4 Resize during play
+### 10.4 Resize during play
 
 On being told the terminal has been resized, the game re-measures the terminal,
 marks the screen for a full repaint, and immediately redraws the current frame.
@@ -878,14 +808,14 @@ marks the screen for a full repaint, and immediately redraws the current frame.
 * A window made **larger** is fine. The playfield stays 30×40 in the top-left
   and the surplus is left blank.
 * A window made **smaller** mid-game is not treated as fatal. The frame is
-  clipped to what fits (§[11.3](#113-clipping)) and play continues. The minimum
+  clipped to what fits (§[10.3](#103-clipping)) and play continues. The minimum
   size is enforced only at start-up.
 
 ---
 
-## 12. Startup, failure and shutdown
+## 11. Startup, failure and shutdown
 
-### 12.1 Startup sequence
+### 11.1 Startup sequence
 
 Whichever of the two modes is in use — a window the game opened for itself, or
 the terminal it was started from — the game itself starts the same way:
@@ -894,19 +824,20 @@ the terminal it was started from — the game itself starts the same way:
    wide glyph is written.
 2. The terminal is asked to resize itself to 30×40 by writing
    `ESC [ 8 ; 30 ; 40 t`, and **150 milliseconds** are allowed for the resize to
-   land, because Terminal.app resizes asynchronously. On the spawned path this
-   is a harmless no-op, since the window is already the right size.
+   land, because Terminal.app resizes asynchronously. Where the game opened the
+   window itself this is a harmless no-op, the window already being the right
+   size.
 3. The terminal is taken over: keys delivered immediately and unechoed, caret
    hidden, arrow keys decoded, colours initialised.
 4. The terminal is measured. If it is **shorter than 30 rows or narrower than 40
-   columns**, startup fails (§[12.2](#122-the-terminal-is-too-small)).
+   columns**, startup fails (§[11.2](#112-the-terminal-is-too-small)).
 5. The game state is created: a maze is carved and braided, the player and ghost
    are placed, and the first frame is built.
 6. The screen subscribes to the game state, **and subscribing paints the first
    frame immediately**.
 7. The input timeout is set and the clock is started.
 
-### 12.2 The terminal is too small
+### 11.2 The terminal is too small
 
 If the terminal ignored the resize request and is still too small, the game
 shall not start. A **single line** is written to standard error — it is shown
@@ -920,12 +851,12 @@ be resized by hand:
 Sizes read *rows* × *columns*, in that order, on both halves of the message. The
 exit code is 1.
 
-**If the game is running inside a window the launcher opened**, the failure
-message would vanish with the window, so the process shall additionally hold the
-window open with the prompt `Press Return to close this window.` until Return is
+**If the game is running inside a window opened for it**, the failure message
+would vanish with the window, so the process shall additionally hold the window
+open with the prompt `Press Return to close this window.` until Return is
 pressed. End-of-input or an interrupt at that prompt is treated as Return.
 
-### 12.3 Other start-up failures
+### 11.3 Other start-up failures
 
 Being too small is the failure the game *handles*. There is a second class it
 does not, and an implementer needs to know it exists because the two behave
@@ -940,19 +871,20 @@ fail the same way on a sufficiently threadbare description.
 
 When that happens:
 
-* the terminal is handed back first (§[12.4](#124-rollback-of-a-failed-start-up));
+* the terminal is handed back first (§[11.4](#114-rollback-of-a-failed-start-up));
 * the failure is **not** turned into a friendly message. It escapes unhandled,
   a diagnostic dump aimed at whoever is maintaining the program is written to
   standard error, and the process exits **1**;
-* in a spawned window there is no "press Return" hold — that hold is specific to
-  the too-small case — so the window closes and takes the diagnostic with it.
+* in a window opened for the game there is no "press Return" hold — that hold is
+  specific to the too-small case — so the window closes and takes the
+  diagnostic with it.
   The exit code 1 still reaches the terminal the command was typed into.
 
 An implementation may improve on this by reporting such failures as tidily as
 the too-small case. It shall not do worse: whatever happens, the terminal is
 handed back and the exit code is non-zero.
 
-### 12.4 Rollback of a failed start-up
+### 11.4 Rollback of a failed start-up
 
 Taking over the terminal is the first irreversible act. Anything that fails
 *after* that point — including a terminal that cannot hide its caret, which is
@@ -963,7 +895,7 @@ This matters because the terminal belongs to the user and outlives the process:
 exiting alone does not undo the echo and line-discipline changes made when the
 terminal was taken over.
 
-### 12.5 Shutdown
+### 11.5 Shutdown
 
 On any exit — a quit key, Ctrl-C, an ending followed by a quit, a startup
 failure, or an unhandled fault — the terminal shall be restored: caret visible,
@@ -973,7 +905,7 @@ safe to perform twice.
 
 ---
 
-## 13. Exit codes
+## 12. Exit codes
 
 | Code | Meaning |
 |---|---|
@@ -981,23 +913,28 @@ safe to perform twice.
 | **1** | The terminal was too small; **or** the window could not be opened; **or** the game fell over with an unhandled fault |
 | **2** | The game was asked to start in a way it did not understand |
 
-Notes:
+Where the game opens a window of its own there are two processes, and the code
+has to cross between them: the process that was started — the **launcher** —
+opens the window and waits, while a second copy inside the window plays. They
+communicate through a file the inner copy writes its progress to
+(§[13](#13-environment)). Notes:
 
 * Both endings *inside* the game — `CAUGHT` and `CLEARED` — exit 0. They are
   outcomes of play, not failures. Neither exits by itself; the player still
   presses a quit key.
-* A crash shall never be reported to the launcher as success. The exit code
-  reported through the sentinel defaults to 1 and is cleared to 0 only by an
-  ending that actually reached one of the normal exits.
-* The launcher forwards the child's exit code unchanged, so the code seen at the
-  shell is the game's own.
-* Failures on the launcher's own side — Terminal refusing to open the window,
-  the window not starting within 20 seconds, an unsupported platform — print a
+* A crash shall never be reported to the launcher as success. The code written
+  to that file defaults to 1 and is cleared to 0 only by an ending that actually
+  reached one of the normal exits.
+* The launcher forwards the inner copy's exit code unchanged, so the code the
+  player's terminal sees is the game's own, and starting the game behaves like
+  running any other blocking command.
+* Failures on the launcher's own side — Terminal refusing to open a window, the
+  window not starting within **20 seconds**, an unsupported platform — print a
   message on standard error and exit 1.
 
 ---
 
-## 14. Environment
+## 13. Environment
 
 Two environment variables form part of the interface between the launcher and
 the game process it starts. They are used **instead of** command-line arguments
@@ -1008,7 +945,7 @@ sentinel path trailing it.
 
 | Variable | Set by | Meaning |
 |---|---|---|
-| `TERMINALGAME_CHILD` | The launcher, to `1` | This process is the copy running inside a window the launcher opened. It shall therefore play in place rather than open a window of its own, and it shall hold a fatal start-up error on screen (§[12.2](#122-the-terminal-is-too-small)) because the window is about to close. It is also the guard that makes a nested spawn refuse outright. |
+| `TERMINALGAME_CHILD` | The launcher, to `1` | This process is the copy running inside a window the launcher opened. It shall therefore play in place rather than open a window of its own, and it shall hold a fatal start-up error on screen (§[11.2](#112-the-terminal-is-too-small)) because the window is about to close. It is also the guard that makes a nested spawn refuse outright. |
 | `TERMINALGAME_SENTINEL` | The launcher, to a path | The progress file this process reports `pid <n>` and `exit <code>` to. |
 
 Both are read at start-up and neither is required. With no sentinel the process
@@ -1019,7 +956,7 @@ takes itself for a launcher and opens a window.
 One further part of the environment is read explicitly. Before the terminal is
 touched, the application **initialises the locale from the environment** — it
 adopts whatever the environment specifies rather than the C default, which is
-what allows the box-drawing and block glyphs of §[6](#6-what-the-screen-looks-like)
+what allows the box-drawing and block glyphs of §[5](#5-what-the-screen-looks-like)
 to be written. The environment shall therefore specify a locale whose encoding
 can represent them; a UTF-8 locale does.
 
@@ -1030,9 +967,9 @@ library's business and is not fixed here.
 
 ---
 
-## 15. Determinism and the extension point
+## 14. Determinism and the extension point
 
-### 15.1 Seeding
+### 14.1 Seeding
 
 A game can be set up with an optional **seed** — a starting number for the
 randomness. With no seed, every run gets a different maze and different turns. With one, a run is reproducible:
@@ -1052,7 +989,7 @@ wants any, and the seed then reaches the maze alone.
 ones.** This document fixes neither the method used to produce the random
 numbers nor the order in which the two carving passes ask for them, so the same
 seed will not give the same maze to someone who builds the game afresh from this
-document — which is exactly why the sample in §[6.1](#61-a-sample-frame) is
+document — which is exactly why the sample in §[5.1](#51-a-sample-frame) is
 marked illustrative. What is required is that a given build's output depend on
 the seed and nothing else: same seed, same build, same maze, same two starting
 cells, same ghost route. Matching mazes *between* builds would need the method
@@ -1063,7 +1000,7 @@ that.
 played by an actual player is therefore unseeded, and so different from every
 other.
 
-### 15.2 Replacing the ghost
+### 14.2 Replacing the ghost
 
 **How the ghost decides where to go is the one part of the game that is designed
 to be swapped out**, and it is part of the public interface.
@@ -1071,7 +1008,7 @@ to be swapped out**, and it is part of the public interface.
 A ghost strategy is a replaceable part that answers exactly one question: shown
 its surroundings, which single step should the ghost take? It holds none of the
 game's own information and cannot move anything itself — it advises, and the
-game decides whether to act on the advice (§[8.3](#83-the-ghost)).
+game decides whether to act on the advice (§[7.3](#73-the-ghost)).
 
 The surroundings it is shown are one bundle of readings, which it may look at
 but not alter:
@@ -1104,7 +1041,7 @@ should have to write them out again:
 
 Dropping in a different ghost shall require no change to the rules of the game.
 
-### 15.3 What else is adjustable
+### 14.3 What else is adjustable
 
 These are settings rather than a stable interface — nothing outside the game
 depends on them — but each has one prescribed home, and a change made anywhere
@@ -1122,20 +1059,20 @@ else is a change made in the wrong place:
 Two of these have consequences elsewhere. Changing the playfield size changes
 the maze size and therefore the number of pills. Changing the cell shape
 re-imposes the odd-width rule on the sprite characters, which is checked as the
-program loads (§[6.5](#65-sprites)).
+program loads (§[5.5](#55-sprites)).
 
 ---
 
-## 16. Prerequisites
+## 15. Prerequisites
 
-### 16.1 What playing it needs
+### 15.1 What playing it needs
 
 | Requirement | Detail |
 |---|---|
 | Operating system | **macOS** for the default way of starting, which is the only platform-specific part: it checks for macOS and for the system's AppleScript tool, and refuses on anything else. An in-place start names no operating system and needs none |
 | Language runtime | Python 3. No particular release is required, and this document names none |
 | Add-on software | **None.** Nothing to install, nothing to build, nothing to configure |
-| Terminal | Terminal.app in windowed mode. In place, any terminal that can be sized to at least 30 rows by 40 columns, can emit UTF-8, and can be told to hide its caret. 256 colours are **preferred, not required** — the 8-colour and no-colour fallbacks of §[7](#7-colour) are conforming |
+| Terminal | Terminal.app in windowed mode. In place, any terminal that can be sized to at least 30 rows by 40 columns, can emit UTF-8, and can be told to hide its caret. 256 colours are **preferred, not required** — the 8-colour and no-colour fallbacks of §[6](#6-colour) are conforming |
 | Permissions | Permission to let the game control Terminal.app, for the default mode only. Refused permission produces the message `Terminal.app refused to open the window`, and the in-place start is the stated way round it |
 
 The default mode's window is opened at **font size 18** on a **black
@@ -1146,9 +1083,9 @@ so a larger font grows the window in pixels and leaves the playfield exactly
 will hand back fewer rows than were asked for, and the game will refuse to
 start.
 
-### 16.2 What checking it needs
+### 15.2 What checking it needs
 
-Nothing beyond §[16.1](#161-what-playing-it-needs). Two properties of the
+Nothing beyond §[15.1](#151-what-playing-it-needs). Two properties of the
 program make it checkable without a terminal at all, and both shall be
 preserved:
 
@@ -1166,7 +1103,7 @@ This document does not prescribe how that is arranged.
 
 ---
 
-## 17. Constants, collected
+## 16. Constants, collected
 
 Every normative number in this specification, in one place.
 
@@ -1197,18 +1134,15 @@ All row and column numbers below are indexed from zero.
 | Maximum catch-up ticks per poll | 3 |
 | Terminal resize settle | 150 ms |
 
-**Launcher**
+**The window the game opens for itself**
 
 | Constant | Value |
 |---|---|
-| Child startup timeout | 20 s |
-| Child exit timeout before closing the window | 5 s |
-| Sentinel poll interval | 0.1 s |
-| Window title | `Terminal Game` |
-| Window font size | 18 |
-| Window background | Black |
-| Window offset from the anchor window | 48 points, down and right |
-| AppleScript requests per run | 2 at most (1 if the window could not be identified) |
+| Title | `Terminal Game` |
+| Font size | 18 |
+| Background | Black |
+| Offset from the window that was in front | 48 points, down and right |
+| How long the game inside it has to start | 20 s |
 
 **Colour**
 
