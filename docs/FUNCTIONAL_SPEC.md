@@ -258,60 +258,6 @@ has run — nothing is open yet — with each cell marked by what may become of 
 | `·` | The one cell **between two junctions** | Open if a pass joined that pair, wall if not. Every choice either pass makes is a choice about one of these |
 | `#` | The border, and every cell with an **even row and an even column** | **Never** opened. Each interior one sits with four junctions around it, and these are what the pillars and islands are made of |
 
-Read a junction row across — row 1, say — and it alternates `J · J · J`: four
-places to stand and three walls that may or may not be opened between them.
-Read across an even row and the alternation is the other way round, `· # · # ·`:
-the vertical joins, separated by cells that stay wall for the whole life of the
-maze.
-
-The real maze is 29 by 19 rather than 9 by 9, so the same three marks run to
-rows 1–27 and columns 1–17 — 126 junctions — but the pattern does not change
-with the size.
-
-**Pass 1 — carve a perfect maze.** A depth-first walk over the junctions.
-
-1. Choose a starting junction at random. **Open it**, and make it the sole
-   entry on the stack. (Opening the start is easy to miss and leaves a
-   one-cell hole in the middle of an otherwise correct maze if it is.)
-2. Look at the junction on top of the stack. Collect the junctions two cells
-   away — north, south, west, east — that are still closed.
-3. If there are none, pop and go to 2.
-4. Otherwise choose one at random, open **both** the single wall cell between
-   the pair and the junction beyond it, push the new junction, and go to 2.
-5. Stop when the stack is empty.
-
-Every junction is reachable from every other through the junction lattice, so
-the walk visits all of them and every junction ends up open. The result is a
-*perfect* maze: exactly one route between any two cells — and therefore nothing
-but dead ends, because every branch that is not the route to somewhere
-terminates.
-
-**Pass 2 — braid the dead ends away.** An **exit** of a junction, for this pass
-only, is an *opened wall cell between that junction and an adjacent junction*.
-A junction two cells from the border has fewer than four candidate exits,
-because a neighbour off the junction lattice is not counted at all.
-
-Sweep every open junction in turn:
-
-* count its exits, and collect the still-closed ones;
-* if it has **two or more** exits, leave it alone;
-* if it has **fewer than two** and there is at least one closed candidate, pick
-  one at random and open both that wall cell and the junction beyond it.
-
-Repeat the whole sweep until a pass changes nothing. That terminates, and
-terminates quickly, because opening a wall raises the exit count of two
-junctions at once and never lowers one.
-
-The test is "fewer than two", not "exactly one". After a carve every junction
-already has at least one exit, so the two conditions coincide in practice — but
-the pass is specified on the weaker test so that it is also correct on a grid
-it did not carve itself.
-
-Braiding deliberately destroys perfectness. The maze gains loops, and the wall
-between two corridors that have just been joined stops being part of the border
-and becomes part of an **island** — a region of wall entirely surrounded by
-corridor. Islands hold no pills, because they hold no open cells.
-
 **Minimum size.** Generation shall refuse a maze that has fewer than two
 junction rows or fewer than two junction columns, because braiding could only
 give such a maze a second exit by breaching the border. In practice this means
@@ -330,21 +276,13 @@ give such a maze a second exit by breaching the border. In practice this means
   cell, by Manhattan distance. Pairing "nearest to the middle" with "furthest
   from that" is what keeps the two from starting on top of each other whatever
   shape the maze took.
-* Ties in either case are broken in reading order: top row first, and within a
-  row, leftmost first.
-
----
 
 ## 5. What the screen looks like
 
 ### 5.1 A sample frame
 
 **Illustrative, not normative.** This is the opening frame of one particular
-game — the reference implementation's, from seed 7 — reproduced character for
-character with the three always-blank right-hand columns trimmed. It shows what
-a frame *looks like*. It is **not** a frame a conforming implementation is
-obliged to produce from that seed, for the reason given in
-§[14.1](#141-seeding).
+game .
 
     ╔═══════════════════════╦═══════════╗
     ║ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ║ ▪ ▪ ▪ ▪ ▪ ║
@@ -383,9 +321,7 @@ here, at rows 18 and 22 (numbered from zero, as everywhere in this document).
 
 This is the frame before anything has happened, so every corridor cell still
 carries its pill except the one under the player, whose pill was taken during
-set-up (§[7.2](#72-pills-and-scoring)) and which the sprite covers anyway. Once
-play begins, **a corridor cell showing blank is one the player has already
-walked**, and the trail of them is the score made visible.
+set-up .
 
 ### 5.2 The four things drawn, and their order
 
@@ -438,6 +374,7 @@ would leave the wall touching the pill in the next cell with none of the gap
 every other wall cell leaves.
 
     a wall cell, two characters wide
+       left        right
     ┌───────────┬───────────┐
     │  glyph    │  ═ if the │
     │  from the │  wall goes│
