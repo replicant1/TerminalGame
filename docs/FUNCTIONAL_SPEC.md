@@ -147,6 +147,16 @@ up with everything else — a wall's line, a pill, the middle of a sprite — si
 in the left hand character. The right character carries only a horizontal wall's
 continuation eastwards, and is otherwise blank.
 
+Two things are meant by *centre* here, and only one of them is about the cell.
+A cell two characters wide has no middle character, so neither half is the
+centre of anything. What the left characters form is a **centre line**: stack a
+column of cells and their left characters line up into one unbroken column, and
+that column is what everything aligns to. One of the two halves has to play that
+part, because a cell two characters wide and one tall has no column *between*
+its halves for a vertical wall to occupy. The left one was chosen. Where the
+rest of this document needs to name a character it says **left** or **right**;
+*centre line* means the alignment column and nothing else.
+
 ### 3.3 Derived dimensions
 
 | Quantity | Value | How it follows |
@@ -157,8 +167,8 @@ continuation eastwards, and is otherwise blank.
 | Grid | 29 × 20 cells | 29 rows ÷ 1; 40 cols ÷ 2 |
 | Maze | **29 × 19 cells** | The grid, reduced to an odd number of columns |
 | Maze, in characters | 29 rows × 38 cols | 19 cells × 2 |
-| Rightmost ink | character column 36 | The last cell's centre character |
-| Always blank | character columns 37, 38, 39 | Filler of the last cell, plus the odd column dropped |
+| Rightmost ink | character column 36 | The last cell's left character |
+| Always blank | character columns 37, 38, 39 | The last cell's right character, plus the odd column dropped |
 
 A maze must be an **odd** number of cells in each direction, because it needs a
 wall cell on both sides of every junction. The grid's 20 columns are therefore
@@ -384,7 +394,7 @@ pills either side of it needs.
 For each wall cell, the four sides on which the *immediately adjacent cell is
 also wall* are determined. **Out of bounds counts as not-wall**, which is what
 closes the border into a rectangle instead of leaving it with arms pointing off
-the playfield. The glyph placed in the cell's centre character is then:
+the playfield. The glyph placed in the cell's left character is then:
 
 | Sides that are wall | Glyph | | Sides that are wall | Glyph |
 |---|---|---|---|---|
@@ -401,7 +411,7 @@ neighbours at all is a one-cell island — a pillar rather than a length of wall
 and is drawn as a filled square `■`, deliberately larger than a pill so the two
 do not read as the same thing.
 
-The cell's **filler character** carries `═` if and only if the cell continues
+The cell's **right character** carries `═` if and only if the cell continues
 eastwards into another wall, and a blank otherwise. Filling it in any other case
 would leave the wall touching the pill in the next cell with none of the gap
 every other wall cell leaves.
@@ -418,14 +428,16 @@ every other wall cell leaves.
 
 Every open cell carries **exactly one** pill — one dot, because one cell is one
 place a sprite can stand, and two dots would say there were two. The pill is the
-character `▪` placed in the cell's **centre** character; the filler character is
+character `▪` placed in the cell's **left** character; the right character is
 blank.
 
-The glyph is a small square centred in its own character, so it is centred both
-horizontally and vertically within the cell. A pill straddling the two
-characters would land half a character to the right of the corridor's middle,
-and a pill drawn from half-height blocks would sit on the floor of the row while
-the horizontal walls run through the middle of theirs.
+The glyph is a small square centred within its own character, so it sits
+centred both across and down **on the centre line**. It is not centred within
+the cell, and could not be: a cell has no middle character to be centred in,
+which is the whole reason the centre line exists. A pill straddling the two
+characters would land half a character to the right of that line, and a pill
+drawn from half-height blocks would sit on the floor of the row while the
+horizontal walls run through the middle of theirs.
 
 Wall cells never carry a pill, so the solid islands braiding leaves behind come
 out blank inside without anything having to go looking for them.
@@ -441,10 +453,11 @@ rest of the game.
 | Ghost | `▗█▖` | A full-height middle with lower halves either side — narrower on top, wider at the foot |
 
 Both are **three characters wide and one row tall**, and both are drawn
-**centred on the cell's centre character**, so their left character overhangs
-into the previous cell's filler position and their right character into their
-own cell's filler position. Both of those are blank next to an open cell, since
-a wall carries its line eastwards only when the next cell is also wall.
+**centred on the cell's left character** — the centre line. The middle of the
+art sits there, so the art's first character overhangs into the right character
+of the cell before, and its last into the right character of its own cell. Both
+of those are blank next to an open cell, since a wall carries its line eastwards
+only when the next cell is also wall.
 
 Sprite art shall be an **odd** number of characters wide. Ink centred on a
 character's middle can be one character wide, or three, but never two: two
