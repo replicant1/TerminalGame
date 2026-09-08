@@ -417,6 +417,51 @@ of the cell before, and its last into the right character of its own cell. Both
 of those are blank next to an open cell, since a wall carries its line eastwards
 only when the next cell is also wall.
 
+Two cases show what that comes to. Both are read off the sample frame of
+§[5.1](#51-a-sample-frame), so both can be checked against it.
+
+**In open corridor.** The player in cell 10 of row 13, corridor either side:
+
+    cell         │      9      │     10      │     11      │
+    char column  │  18  │  19  │  20  │  21  │  22  │  23  │
+    half of cell │  L   │  R   │  L   │  R   │  L   │  R   │
+                 ├──────┼──────┼──────┼──────┼──────┼──────┤
+    pill layer   │  ▪   │      │      │      │  ▪   │      │
+    the player   │      │  ▐   │  █   │  ▌   │      │      │
+                 ├──────┼──────┼──────┼──────┼──────┼──────┤
+    on screen    │  ▪   │  ▐   │  █   │  ▌   │  ▪   │      │
+
+The art is centred on column 20 — cell 10's left half, the centre line. Its
+first character lands on column 19, which is not its own cell at all but the
+right half of cell 9; its last lands on column 21, its own right half. Both were
+empty, so the overhang costs nothing, and the pills of cells 9 and 11 are
+untouched two columns away on either side. Cell 10's own pill is absent rather
+than hidden: the player ate it on arrival, which is what standing there means.
+
+**Against a wall.** The same frame's layers, with the player placed in cell 13
+of row 1, whose western neighbour is the wall cell 12:
+
+    cell         │  12 (wall)  │     13      │     14      │
+    char column  │  24  │  25  │  26  │  27  │  28  │  29  │
+    half of cell │  L   │  R   │  L   │  R   │  L   │  R   │
+                 ├──────┼──────┼──────┼──────┼──────┼──────┤
+    wall layer   │  ║   │      │      │      │      │      │
+    pill layer   │      │      │  ▪   │      │  ▪   │      │
+    the player   │      │  ▐   │  █   │  ▌   │      │      │
+                 ├──────┼──────┼──────┼──────┼──────┼──────┤
+    on screen    │  ║   │  ▐   │  █   │  ▌   │  ▪   │      │
+
+This is the case the eastward-continuation rule exists for. Column 25 is the
+*right* half of a wall cell, and the sprite's first character lands squarely on
+it. It is empty only because cell 13 is corridor — a wall puts `═` in its right
+half solely when the cell beyond is wall as well. Were that not the rule, the
+wall and the player would be contending for column 25, and the wall is drawn
+first, so the player would win and the wall would appear to break.
+
+The second table also shows the layering: cell 13's pill is still in the pill
+layer at column 26, and the sprite is simply drawn over it. A sprite hides what
+it stands on rather than removing it.
+
 Sprite art shall be an **odd** number of characters wide. Ink centred on a
 character's middle can be one character wide, or three, but never two: two
 characters are centred on the join between them, half a character off the line
