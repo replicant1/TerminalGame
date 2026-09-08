@@ -214,6 +214,37 @@ Junctions are two cells apart, so exactly one cell lies between any adjacent
 pair, and that single cell is the only one either pass ever opens to join
 them.
 
+Those two rules sort every cell in the grid into one of three kinds, and the
+pattern is easier seen than described. Here is a 9×9 maze *before* either pass
+has run — nothing is open yet — with each cell marked by what may become of it:
+
+          0 1 2 3 4 5 6 7 8
+      0   # # # # # # # # #
+      1   # J · J · J · J #
+      2   # · # · # · # · #
+      3   # J · J · J · J #
+      4   # · # · # · # · #
+      5   # J · J · J · J #
+      6   # · # · # · # · #
+      7   # J · J · J · J #
+      8   # # # # # # # # #
+
+| Mark | The cell | What becomes of it |
+|---|---|---|
+| `J` | A **junction**: odd row, odd column, inside the border | **Always** ends up open. Both passes move between these and nothing else |
+| `·` | The one cell **between two junctions** | Open if a pass joined that pair, wall if not. Every choice either pass makes is a choice about one of these |
+| `#` | The border, and every cell with an **even row and an even column** | **Never** opened. Each interior one sits with four junctions around it, and these are what the pillars and islands are made of |
+
+Read a junction row across — row 1, say — and it alternates `J · J · J`: four
+places to stand and three walls that may or may not be opened between them.
+Read across an even row and the alternation is the other way round, `· # · # ·`:
+the vertical joins, separated by cells that stay wall for the whole life of the
+maze.
+
+The real maze is 29 by 19 rather than 9 by 9, so the same three marks run to
+rows 1–27 and columns 1–17 — 126 junctions — but the pattern does not change
+with the size.
+
 **Pass 1 — carve a perfect maze.** A depth-first walk over the junctions.
 
 1. Choose a starting junction at random. **Open it**, and make it the sole
