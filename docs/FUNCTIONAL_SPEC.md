@@ -134,7 +134,7 @@ happens in exactly one place, when a frame is assembled.
 
     one game cell
     ┌──────────────┬──────────────┐
-    │  left.       │  right       │   1 character row high
+    │  left        │  right       │   1 character row high
     │  character   │  character   │
     └──────────────┴──────────────┘
       char col x     char col x+1
@@ -145,7 +145,7 @@ very nearly square on screen.
 The **left character of a cell is the centre line**. Everything that has to line
 up with everything else — a wall's line, a pill, the middle of a sprite — sits
 in the left hand character. The right character carries only a horizontal wall's
-continuation eastwards, and is otherwise blank. 
+continuation eastwards, and is otherwise blank.
 
 ### 3.3 Derived dimensions
 
